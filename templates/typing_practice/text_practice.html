@@ -11,10 +11,10 @@
     .typed { color: #6b7280; }
     .stats-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 8px;
+        padding: 0.75rem;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .stats-card.wpm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card.accuracy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
@@ -24,76 +24,101 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <!-- Stats Cards - Fixed at top -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="max-w-5xl mx-auto">
+    <!-- Compact Stats Cards at top -->
+    <div class="grid grid-cols-4 gap-2 mb-4">
         <div class="stats-card wpm">
-            <p class="text-sm opacity-90 mb-1">WPM</p>
-            <p class="text-4xl font-bold" id="wpm">0</p>
+            <p class="text-xs opacity-90 mb-0.5">WPM</p>
+            <p class="text-xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
-            <p class="text-sm opacity-90 mb-1">Accuracy</p>
-            <p class="text-4xl font-bold" id="accuracy">100%</p>
+            <p class="text-xs opacity-90 mb-0.5">Aniqlik</p>
+            <p class="text-xl font-bold" id="accuracy">100%</p>
         </div>
         <div class="stats-card time">
-            <p class="text-sm opacity-90 mb-1">Time</p>
-            <p class="text-4xl font-bold" id="timer">0s</p>
+            <p class="text-xs opacity-90 mb-0.5">Vaqt</p>
+            <p class="text-xl font-bold" id="timer">0s</p>
         </div>
         <div class="stats-card cpm">
-            <p class="text-sm opacity-90 mb-1">CPM</p>
-            <p class="text-4xl font-bold" id="cpm">0</p>
+            <p class="text-xs opacity-90 mb-0.5">CPM</p>
+            <p class="text-xl font-bold" id="cpm">0</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
-        <div class="mb-4">
-            <h2 class="text-xl font-semibold text-gray-700 mb-2">{{ text.title }}</h2>
-            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {% if difficulty == 'easy' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                {{ difficulty|title }}
-            </span>
+    <!-- Main Content - Text and Typing Area -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="mb-3 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700">{{ text.title }}</h2>
+                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium {% if difficulty == 'easy' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {{ difficulty|title }}
+                </span>
+            </div>
+            <div class="flex space-x-2">
+                <button id="reset-btn" class="flex items-center space-x-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-1.5 rounded text-sm font-medium transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Qayta</span>
+                </button>
+                <button id="finish-btn" class="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Tugatish</span>
+                </button>
+            </div>
         </div>
         
-        <div id="text-display" class="text-xl leading-relaxed p-6 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[250px] mb-4 font-mono">
+        <!-- Text Display - Larger and more prominent -->
+        <div id="text-display" class="text-2xl leading-relaxed p-8 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[300px] mb-4 font-mono">
             <!-- Text will be loaded here -->
         </div>
         
+        <!-- Typing Input - Larger and more prominent -->
         <textarea 
             id="typing-input" 
-            class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg font-mono"
-            rows="4"
-            placeholder="Start typing here..."
+            class="w-full p-6 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-xl font-mono"
+            rows="5"
+            placeholder="Bu yerga yozishni boshlang..."
             autofocus
             spellcheck="false"
         ></textarea>
-        
-        <div class="mt-4 flex space-x-4">
-            <button id="reset-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition">Reset</button>
-            <button id="finish-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Finish</button>
-        </div>
     </div>
     
-    <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
-        <h3 class="text-2xl font-bold mb-6 text-center">Results</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="text-center p-4 bg-blue-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">WPM</p>
-                <p class="text-3xl font-bold text-blue-600" id="result-wpm">0</p>
-            </div>
-            <div class="text-center p-4 bg-green-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">CPM</p>
-                <p class="text-3xl font-bold text-green-600" id="result-cpm">0</p>
-            </div>
-            <div class="text-center p-4 bg-purple-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">Accuracy</p>
-                <p class="text-3xl font-bold text-purple-600" id="result-accuracy">0%</p>
-            </div>
-            <div class="text-center p-4 bg-red-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">Mistakes</p>
-                <p class="text-3xl font-bold text-red-600" id="result-mistakes">0</p>
-            </div>
+    <!-- Compact Results -->
+    <div id="results" class="hidden mt-4 bg-white rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold flex items-center space-x-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span>Natijalar</span>
+            </h3>
+            <a href="{% url 'typing_practice:index' %}" class="flex items-center space-x-1 text-sm text-blue-600 hover:underline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Mashq qilishga qaytish</span>
+            </a>
         </div>
-        <div class="text-center">
-            <a href="{% url 'typing_practice:index' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Back to Practice</a>
+        <div class="grid grid-cols-4 gap-3">
+            <div class="text-center p-2 bg-blue-50 rounded">
+                <p class="text-xs text-gray-600 mb-0.5">WPM</p>
+                <p class="text-xl font-bold text-blue-600" id="result-wpm">0</p>
+            </div>
+            <div class="text-center p-2 bg-green-50 rounded">
+                <p class="text-xs text-gray-600 mb-0.5">CPM</p>
+                <p class="text-xl font-bold text-green-600" id="result-cpm">0</p>
+            </div>
+            <div class="text-center p-2 bg-purple-50 rounded">
+                <p class="text-xs text-gray-600 mb-0.5">Aniqlik</p>
+                <p class="text-xl font-bold text-purple-600" id="result-accuracy">0%</p>
+            </div>
+            <div class="text-center p-2 bg-red-50 rounded">
+                <p class="text-xs text-gray-600 mb-0.5">Xatolar</p>
+                <p class="text-xl font-bold text-red-600" id="result-mistakes">0</p>
+            </div>
         </div>
     </div>
 </div>

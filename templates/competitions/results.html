@@ -6,28 +6,38 @@
 {% block content %}
 <div class="max-w-7xl mx-auto">
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h1 class="text-3xl font-bold mb-2">{{ competition.name }} - Final Results</h1>
+        <h1 class="text-3xl font-bold mb-2 flex items-center space-x-2">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>{{ competition.name }} - Yakuniy natijalar</span>
+        </h1>
         <div class="flex items-center space-x-4 text-sm text-gray-600">
             <span>{{ competition.mode|upper }}</span>
             <span>•</span>
-            <span>{% if competition.difficulty == 'easy' %}🌱 Easy{% else %}🔥 Hard{% endif %}</span>
+            <span>{% if competition.difficulty == 'easy' %}🌱 Oson{% else %}🔥 Qiyin{% endif %}</span>
             <span>•</span>
-            <span>{{ participants.count }} Participants</span>
+            <span>{{ participants.count }} ishtirokchi</span>
         </div>
     </div>
 
     <!-- Overall Leaderboard -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 class="text-2xl font-bold mb-4">🏆 Overall Leaderboard</h2>
+        <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2">
+            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <span>Umumiy reyting</span>
+        </h2>
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                     <tr>
-                        <th class="px-6 py-3 text-left">Rank</th>
-                        <th class="px-6 py-3 text-left">User</th>
-                        <th class="px-6 py-3 text-left">Avg WPM</th>
-                        <th class="px-6 py-3 text-left">Avg Accuracy</th>
-                        <th class="px-6 py-3 text-left">Total Mistakes</th>
+                        <th class="px-6 py-3 text-left">O'rin</th>
+                        <th class="px-6 py-3 text-left">Foydalanuvchi</th>
+                        <th class="px-6 py-3 text-left">O'rtacha WPM</th>
+                        <th class="px-6 py-3 text-left">O'rtacha aniqlik</th>
+                        <th class="px-6 py-3 text-left">Jami xatolar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -67,7 +77,7 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h3 class="text-xl font-bold mb-4 flex items-center">
                 <span class="text-3xl mr-3">🎯</span>
-                Stage {{ stage.stage_number }}
+                Bosqich {{ stage.stage_number }}
                 {% if stage.text %}
                 <span class="ml-4 text-sm font-normal text-gray-600">- {{ stage.text.title }}</span>
                 {% elif stage.code_snippet %}
@@ -79,12 +89,12 @@
                 <table class="min-w-full">
                     <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-4 py-2 text-left">Rank</th>
-                            <th class="px-4 py-2 text-left">User</th>
+                            <th class="px-4 py-2 text-left">O'rin</th>
+                            <th class="px-4 py-2 text-left">Foydalanuvchi</th>
                             <th class="px-4 py-2 text-left">WPM</th>
-                            <th class="px-4 py-2 text-left">Accuracy</th>
-                            <th class="px-4 py-2 text-left">Mistakes</th>
-                            <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-left">Aniqlik</th>
+                            <th class="px-4 py-2 text-left">Xatolar</th>
+                            <th class="px-4 py-2 text-left">Holat</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -127,9 +137,9 @@
                             </td>
                             <td class="px-4 py-2">
                                 {% if stage_result and stage_result.is_finished %}
-                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">Completed</span>
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">Tugallangan</span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Not Started</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Boshlanmagan</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -144,7 +154,12 @@
     </div>
 
     <div class="mt-6 text-center">
-        <a href="{% url 'competitions:list' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Back to Competitions</a>
+        <a href="{% url 'competitions:list' %}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Musobaqalarga qaytish</span>
+        </a>
     </div>
 </div>
 {% endblock %}

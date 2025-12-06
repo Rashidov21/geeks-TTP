@@ -20,6 +20,7 @@
     .stats-card.wpm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card.accuracy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .stats-card.time { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stats-card.cpm { background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); }
 </style>
 {% endblock %}
 
@@ -47,24 +48,28 @@
         </div>
         <div class="text-center">
             <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
-                Stage {{ stage_number }} of 3
+                Bosqich {{ stage_number }} / 3
             </span>
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
+    <!-- Stats Cards - All statistics at top -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stats-card wpm">
             <p class="text-sm opacity-90 mb-1">WPM</p>
             <p class="text-4xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
-            <p class="text-sm opacity-90 mb-1">Accuracy</p>
+            <p class="text-sm opacity-90 mb-1">Aniqlik</p>
             <p class="text-4xl font-bold" id="accuracy">100%</p>
         </div>
         <div class="stats-card time">
-            <p class="text-sm opacity-90 mb-1">Time</p>
+            <p class="text-sm opacity-90 mb-1">Vaqt</p>
             <p class="text-4xl font-bold" id="timer">0s</p>
+        </div>
+        <div class="stats-card cpm">
+            <p class="text-sm opacity-90 mb-1">Xatolar</p>
+            <p class="text-4xl font-bold" id="mistakes-count">0</p>
         </div>
     </div>
 
@@ -88,37 +93,46 @@
             id="typing-input" 
             class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg font-mono"
             rows="6"
-            placeholder="Start typing here..."
+            placeholder="Bu yerga yozishni boshlang..."
             autofocus
             spellcheck="false"
         ></textarea>
         
         <div class="mt-4 flex space-x-4">
-            <button id="finish-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Finish Stage</button>
+            <button id="finish-btn" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Bosqichni tugatish</span>
+            </button>
         </div>
     </div>
     
     <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
-        <h3 class="text-2xl font-bold mb-4 text-center">Stage {{ stage_number }} Results</h3>
-        <div class="grid grid-cols-3 gap-4 mb-6">
+        <h3 class="text-2xl font-bold mb-4 text-center">Bosqich {{ stage_number }} natijalari</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="text-center p-4 bg-blue-50 rounded-lg">
                 <p class="text-sm text-gray-600 mb-1">WPM</p>
                 <p class="text-3xl font-bold text-blue-600" id="result-wpm">0</p>
             </div>
             <div class="text-center p-4 bg-purple-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">Accuracy</p>
+                <p class="text-sm text-gray-600 mb-1">Aniqlik</p>
                 <p class="text-3xl font-bold text-purple-600" id="result-accuracy">0%</p>
             </div>
             <div class="text-center p-4 bg-green-50 rounded-lg">
-                <p class="text-sm text-gray-600 mb-1">Time</p>
+                <p class="text-sm text-gray-600 mb-1">Vaqt</p>
                 <p class="text-3xl font-bold text-green-600" id="result-time">0s</p>
+            </div>
+            <div class="text-center p-4 bg-red-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Xatolar</p>
+                <p class="text-3xl font-bold text-red-600" id="result-mistakes">0</p>
             </div>
         </div>
         <div class="text-center">
             {% if stage_number < 3 %}
-            <a href="{% url 'competitions:play' competition.id stage_number|add:1 %}" id="next-stage-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Continue to Stage {{ stage_number|add:1 }}</a>
+            <a href="{% url 'competitions:play' competition.id stage_number|add:1 %}" id="next-stage-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Bosqich {{ stage_number|add:1 }}ga o'tish</a>
             {% else %}
-            <a href="{% url 'competitions:results' competition.id %}" id="view-results-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">View Final Results</a>
+            <a href="{% url 'competitions:results' competition.id %}" id="view-results-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Yakuniy natijalarni ko'rish</a>
             {% endif %}
         </div>
     </div>
@@ -242,6 +256,7 @@ function updateDisplay() {
         document.getElementById('wpm').textContent = Math.round(wpm);
         document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
         document.getElementById('timer').textContent = Math.round(elapsed) + 's';
+        document.getElementById('mistakes-count').textContent = mistakes;
         
         if (typed.trim() === originalText.trim()) {
             finishTyping(wpm, accuracy, mistakes);
@@ -276,6 +291,7 @@ function finishTyping(wpm, accuracy, mistakes) {
     document.getElementById('result-wpm').textContent = Math.round(wpm);
     document.getElementById('result-accuracy').textContent = Math.round(accuracy) + '%';
     document.getElementById('result-time').textContent = Math.round(duration) + 's';
+    document.getElementById('result-mistakes').textContent = mistakes;
     resultsDiv.classList.remove('hidden');
     
     // Save result

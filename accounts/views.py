@@ -13,8 +13,8 @@ def register_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Create user profile
-            UserProfile.objects.create(user=user, is_manager=False)
+            # Create user profile (signal will handle it, but ensure it exists)
+            UserProfile.objects.get_or_create(user=user, defaults={'is_manager': False})
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}!')
             login(request, user)
