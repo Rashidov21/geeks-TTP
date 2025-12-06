@@ -16,73 +16,87 @@ def index(request):
     period = request.GET.get('period', 'all')
     leaderboard_type = request.GET.get('type', 'wpm')
     
-    # Calculate date range
-    if period == 'week':
-        start_date = timezone.now() - timedelta(days=7)
-    elif period == 'month':
-        start_date = timezone.now() - timedelta(days=30)
-    else:
-        start_date = None
+    # Validate inputs
+    if period not in ['all', 'week', 'month']:
+        period = 'all'
+    if leaderboard_type not in ['wpm', 'code_wpm', 'accuracy']:
+        leaderboard_type = 'wpm'
     
-    # Filter results
-    if start_date:
-        results = UserResult.objects.filter(time__gte=start_date)
-    else:
-        results = UserResult.objects.all()
+    # Cache key
+    cache_key = f'leaderboard_{period}_{leaderboard_type}'
+    leaderboard_data = cache.get(cache_key)
     
-    # Get leaderboard based on type
-    if leaderboard_type == 'wpm':
-        # Overall WPM leaderboard
-        user_stats = results.values('user__username', 'user__id').annotate(
-            avg_wpm=Avg('wpm'),
-            max_wpm=Max('wpm'),
-            total_sessions=Count('id')
-        ).order_by('-max_wpm')[:100]
+    if leaderboard_data is None:
+        # Calculate date range
+        if period == 'week':
+            start_date = timezone.now() - timedelta(days=7)
+        elif period == 'month':
+            start_date = timezone.now() - timedelta(days=30)
+        else:
+            start_date = None
         
-        leaderboard_data = []
-        for i, stat in enumerate(user_stats, 1):
-            leaderboard_data.append({
-                'rank': i,
-                'username': stat['user__username'],
-                'wpm': round(stat['max_wpm'], 2),
-                'avg_wpm': round(stat['avg_wpm'], 2),
-                'sessions': stat['total_sessions']
-            })
-    
-    elif leaderboard_type == 'code_wpm':
-        # Code WPM leaderboard
-        code_results = results.filter(session_type='code')
-        user_stats = code_results.values('user__username', 'user__id').annotate(
-            avg_wpm=Avg('wpm'),
-            max_wpm=Max('wpm'),
-            total_sessions=Count('id')
-        ).order_by('-max_wpm')[:100]
+        # Filter results
+        if start_date:
+            results = UserResult.objects.filter(time__gte=start_date)
+        else:
+            results = UserResult.objects.all()
         
-        leaderboard_data = []
-        for i, stat in enumerate(user_stats, 1):
-            leaderboard_data.append({
-                'rank': i,
-                'username': stat['user__username'],
-                'wpm': round(stat['max_wpm'], 2),
-                'avg_wpm': round(stat['avg_wpm'], 2),
-                'sessions': stat['total_sessions']
-            })
-    
-    else:  # accuracy
-        # Accuracy leaderboard
-        user_stats = results.values('user__username', 'user__id').annotate(
-            avg_accuracy=Avg('accuracy'),
-            total_sessions=Count('id')
-        ).filter(total_sessions__gte=5).order_by('-avg_accuracy')[:100]
+        # Get leaderboard based on type with optimized query
+        if leaderboard_type == 'wpm':
+            # Overall WPM leaderboard
+            user_stats = results.values('user__username', 'user__id').annotate(
+                avg_wpm=Avg('wpm'),
+                max_wpm=Max('wpm'),
+                total_sessions=Count('id')
+            ).order_by('-max_wpm')[:100]
+            
+            leaderboard_data = []
+            for i, stat in enumerate(user_stats, 1):
+                leaderboard_data.append({
+                    'rank': i,
+                    'username': stat['user__username'],
+                    'wpm': round(stat['max_wpm'] or 0, 2),
+                    'avg_wpm': round(stat['avg_wpm'] or 0, 2),
+                    'sessions': stat['total_sessions']
+                })
         
-        leaderboard_data = []
-        for i, stat in enumerate(user_stats, 1):
-            leaderboard_data.append({
-                'rank': i,
-                'username': stat['user__username'],
-                'accuracy': round(stat['avg_accuracy'], 2),
-                'sessions': stat['total_sessions']
-            })
+        elif leaderboard_type == 'code_wpm':
+            # Code WPM leaderboard
+            code_results = results.filter(session_type='code')
+            user_stats = code_results.values('user__username', 'user__id').annotate(
+                avg_wpm=Avg('wpm'),
+                max_wpm=Max('wpm'),
+                total_sessions=Count('id')
+            ).order_by('-max_wpm')[:100]
+            
+            leaderboard_data = []
+            for i, stat in enumerate(user_stats, 1):
+                leaderboard_data.append({
+                    'rank': i,
+                    'username': stat['user__username'],
+                    'wpm': round(stat['max_wpm'] or 0, 2),
+                    'avg_wpm': round(stat['avg_wpm'] or 0, 2),
+                    'sessions': stat['total_sessions']
+                })
+        
+        else:  # accuracy
+            # Accuracy leaderboard
+            user_stats = results.values('user__username', 'user__id').annotate(
+                avg_accuracy=Avg('accuracy'),
+                total_sessions=Count('id')
+            ).filter(total_sessions__gte=5).order_by('-avg_accuracy')[:100]
+            
+            leaderboard_data = []
+            for i, stat in enumerate(user_stats, 1):
+                leaderboard_data.append({
+                    'rank': i,
+                    'username': stat['user__username'],
+                    'accuracy': round(stat['avg_accuracy'] or 0, 2),
+                    'sessions': stat['total_sessions']
+                })
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, leaderboard_data, 300)
     
     # Get user's rank
     user_rank = None

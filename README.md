@@ -6,8 +6,10 @@ Geeks Andijan o'quvchilari uchun typing tezligi va code typing malakasini oshiri
 
 - **Backend**: Django 6.0
 - **Frontend**: HTML + TailwindCSS (CDN)
-- **Database**: SQLite
+- **Database**: SQLite (development), PostgreSQL (production recommended)
 - **Syntax Highlighting**: highlight.js
+- **Caching**: Django LocMemCache (configurable)
+- **Logging**: File and console logging
 
 ## Funksiyalar
 
@@ -76,31 +78,49 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Migrationslarni ishga tushirish:
+4. Environment variables sozlash:
+```bash
+# .env.example faylini .env ga nusxalang va sozlang
+cp .env.example .env
+# .env faylida SECRET_KEY, DEBUG, ALLOWED_HOSTS ni sozlang
+```
+
+5. Migrationslarni ishga tushirish:
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-5. Superuser yaratish:
+6. Superuser yaratish:
 ```bash
 python manage.py createsuperuser
 ```
 
-6. Seed data yuklash:
+7. Seed data yuklash:
 ```bash
 python manage.py seed_data
 ```
 
-7. Development serverni ishga tushirish:
+8. Development serverni ishga tushirish:
 ```bash
 python manage.py runserver
 ```
 
-8. Brauzerda ochish:
+9. Brauzerda ochish:
 ```
 http://127.0.0.1:8000
 ```
+
+## Production Deployment
+
+Batafsil ma'lumot uchun [DEPLOYMENT.md](DEPLOYMENT.md) faylini ko'ring.
+
+Asosiy qadamlar:
+1. Environment variables sozlash
+2. Static files to'plash: `python manage.py collectstatic`
+3. Database migration: `python manage.py migrate`
+4. WSGI server sozlash (Gunicorn)
+5. Web server sozlash (Nginx/Apache)
 
 ## Manager rolini berish
 
@@ -130,6 +150,37 @@ Superuser credentials bilan kirish mumkin.
 
 Platforma faqat Django views va templates ishlatadi. API yo'q.
 
+## Optimizatsiyalar
+
+Loyiha quyidagi optimizatsiyalar bilan jihozlangan:
+
+### Performance
+- ✅ Database indexes (barcha asosiy query'lar uchun)
+- ✅ Query optimization (select_related, prefetch_related)
+- ✅ Caching strategiyasi (leaderboard, user stats, competitions)
+- ✅ Efficient random selection (order_by('?') o'rniga)
+- ✅ Single aggregate queries
+
+### Security
+- ✅ Environment variables (SECRET_KEY, DEBUG, ALLOWED_HOSTS)
+- ✅ CSRF protection
+- ✅ Input validation va sanitization
+- ✅ Security headers (XSS, HSTS, etc.)
+- ✅ SQL injection prevention (Django ORM)
+
+### Code Quality
+- ✅ Exception handling va logging
+- ✅ Utility functions (code reuse)
+- ✅ Model methods (business logic)
+- ✅ Transaction management
+- ✅ Error messages (O'zbek tilida)
+
+### Database
+- ✅ Optimized indexes
+- ✅ Foreign key relationships
+- ✅ Query optimization
+- ✅ Connection pooling ready
+
 ## Qo'shimcha funksiyalar (optional)
 
 - WebSocket orqali real-time musobaqa
@@ -137,4 +188,6 @@ Platforma faqat Django views va templates ishlatadi. API yo'q.
 - Mobile App (Flutter)
 - Custom text sharhlash
 - Friend system
+- Rate limiting
+- Background tasks (Celery)
 

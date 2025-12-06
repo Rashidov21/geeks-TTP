@@ -36,10 +36,11 @@ def get_env_variable(var_name, default=None):
 SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-dev-key-change-in-production-ivzkh8b)o-te_f-ze%b_0i+p_^b)!l^2b+6qp(j9oj&363aw4%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'False') == 'True'
+# DEBUG = get_env_variable('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '*').split(',') if get_env_variable('ALLOWED_HOSTS', '*') != '*' else ['*']
-
+# ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '*').split(',') if get_env_variable('ALLOWED_HOSTS', '*') != '*' else ['*']
+DEBUG = True
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -84,6 +85,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'typing_platform.wsgi.application'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Database
@@ -140,10 +145,18 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Security settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-if not DEBUG:
+# Development settings (commented out for local development)
+# Uncomment these for production deployment
+if DEBUG:
+    # Development: Allow HTTP
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    # Production: Force HTTPS
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

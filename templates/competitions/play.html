@@ -392,7 +392,7 @@ function finishTyping(wpm, accuracy, mistakes) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({
             wpm: wpm,
