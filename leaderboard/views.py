@@ -2,9 +2,13 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Max, Count
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 from typing_practice.models import UserResult
 from django.contrib.auth.models import User
+import logging
+
+logger = logging.getLogger('typing_platform')
 
 
 @login_required

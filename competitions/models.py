@@ -47,6 +47,9 @@ class CompetitionStage(models.Model):
     class Meta:
         unique_together = ['competition', 'stage_number']
         ordering = ['stage_number']
+        indexes = [
+            models.Index(fields=['competition', 'stage_number']),
+        ]
     
     def __str__(self):
         return f"{self.competition.name} - Stage {self.stage_number}"
@@ -66,9 +69,24 @@ class CompetitionParticipant(models.Model):
     class Meta:
         unique_together = ['user', 'competition']
         ordering = ['-result_wpm']
+        indexes = [
+            models.Index(fields=['competition', '-result_wpm']),
+            models.Index(fields=['user', 'competition']),
+            models.Index(fields=['is_finished', '-result_wpm']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.competition.name}"
+    
+    def calculate_average_results(self):
+        """Calculate and update average results from all stages"""
+        from django.db.models import Avg
+        stage_results = self.stage_results.filter(is_finished=True)
+        if stage_results.exists():
+            self.result_wpm = stage_results.aggregate(avg=Avg('wpm'))['avg']
+            self.accuracy = stage_results.aggregate(avg=Avg('accuracy'))['avg']
+            self.mistakes = sum(sr.mistakes for sr in stage_results)
+            self.save()
 
 
 class CompetitionParticipantStage(models.Model):
@@ -84,6 +102,10 @@ class CompetitionParticipantStage(models.Model):
     class Meta:
         unique_together = ['participant', 'stage']
         ordering = ['stage__stage_number']
+        indexes = [
+            models.Index(fields=['participant', 'stage']),
+            models.Index(fields=['is_finished', '-wpm']),
+        ]
 
     def __str__(self):
         return f"{self.participant.user.username} - {self.stage.competition.name} - Stage {self.stage.stage_number}"

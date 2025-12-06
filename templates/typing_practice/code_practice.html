@@ -6,21 +6,26 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
     .word { margin-right: 0.5rem; }
-    .correct { color: #10b981; }
+    .correct { color: #7FE680; }
     .incorrect { background-color: #fee2e2; color: #dc2626; }
-    .current { background-color: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; padding-left: 2px; }
+    .current { background-color: rgba(127, 230, 128, 0.2); border-left: 3px solid #7FE680; padding-left: 2px; }
     .typed { color: #6b7280; }
     .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%);
         border-radius: 8px;
         padding: 0.75rem;
         color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
     }
-    .stats-card.wpm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .stats-card.accuracy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .stats-card.time { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .stats-card.cpm { background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); }
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    .stats-card.wpm { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
+    .stats-card.accuracy { background: linear-gradient(135deg, #7FE680 0%, #9fffa0 100%); color: #292929; }
+    .stats-card.time { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
+    .stats-card.cpm { background: linear-gradient(135deg, #7FE680 0%, #9fffa0 100%); color: #292929; }
     #code-display {
         font-family: 'Fira Code', 'Courier New', monospace;
         font-size: 15px;
@@ -73,13 +78,13 @@
             </div>
         </div>
         <div class="flex space-x-2">
-            <button id="reset-btn" class="flex items-center space-x-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-1.5 rounded text-sm font-medium transition">
+            <button id="reset-btn" class="flex items-center space-x-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-1.5 rounded text-sm font-medium transition-all duration-300 hover:scale-105">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                 </svg>
                 <span>Qayta</span>
             </button>
-            <button id="finish-btn" class="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <button id="finish-btn" class="flex items-center space-x-1 gradient-secondary text-primary px-4 py-1.5 rounded text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -178,6 +183,9 @@ const resetBtn = document.getElementById('reset-btn');
 const finishBtn = document.getElementById('finish-btn');
 const resultsDiv = document.getElementById('results');
 
+let lastTypedLength = 0;
+let expectedNextChar = null;
+
 // Initialize syntax highlighting
 hljs.highlightAll();
 
@@ -187,7 +195,84 @@ function initCodeDisplay() {
     const code = pre.querySelector('code');
     const highlighted = hljs.highlight(code.textContent, { language: '{{ code.language }}' });
     code.innerHTML = highlighted.value;
+    lastTypedLength = 0;
+    expectedNextChar = originalCode[0] || null;
 }
+
+// Prevent copy-paste
+typingInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+typingInput.addEventListener('copy', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+typingInput.addEventListener('cut', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+// Track each character input
+typingInput.addEventListener('keydown', (e) => {
+    // Allow backspace, delete, tab, escape, enter
+    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(e.key)) {
+        return;
+    }
+    
+    // Allow Ctrl/Cmd combinations for shortcuts
+    if (e.ctrlKey || e.metaKey) {
+        return;
+    }
+    
+    const currentValue = typingInput.value;
+    const currentLength = currentValue.length;
+    const originalLength = originalCode.length;
+    
+    // Prevent typing beyond the original code
+    if (currentLength >= originalLength) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Get the expected character at current position
+    const expectedChar = originalCode[currentLength];
+    const typedChar = e.key;
+    
+    expectedNextChar = originalCode[currentLength + 1] || null;
+});
+
+typingInput.addEventListener('input', (e) => {
+    const currentValue = typingInput.value;
+    const currentLength = currentValue.length;
+    const previousLength = lastTypedLength;
+    
+    // Detect if multiple characters were added at once (paste or drag-drop)
+    if (currentLength - previousLength > 1) {
+        // Reset to previous valid state
+        typingInput.value = currentValue.substring(0, previousLength);
+        return;
+    }
+    
+    // Check if character matches expected
+    if (currentLength > 0 && previousLength < currentLength) {
+        const expectedChar = originalCode[previousLength];
+        const typedChar = currentValue[previousLength];
+        
+        // If character doesn't match, remove it
+        if (expectedChar !== typedChar && typedChar !== undefined) {
+            // Invalid character, remove it
+            typingInput.value = currentValue.substring(0, previousLength);
+            return;
+        }
+    }
+    
+    lastTypedLength = typingInput.value.length;
+    startTyping();
+    updateDisplay();
+});
 
 function updateDisplay() {
     const typed = typingInput.value;
@@ -330,6 +415,8 @@ function reset() {
     startTime = null;
     isFinished = false;
     mistakesList = [];
+    lastTypedLength = 0;
+    expectedNextChar = originalCode[0] || null;
     clearInterval(timerInterval);
     timerInterval = null;
     finishBtn.disabled = true;
@@ -342,10 +429,7 @@ function reset() {
     typingInput.focus();
 }
 
-typingInput.addEventListener('input', () => {
-    startTyping();
-    updateDisplay();
-});
+// Input event is already handled above with paste prevention
 
 finishBtn.addEventListener('click', () => {
     const typed = typingInput.value;

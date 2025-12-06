@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
     <h1 class="text-3xl font-bold mb-6 text-center flex items-center justify-center space-x-2">
-        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
         </svg>
         <span>Reyting</span>
@@ -15,7 +15,7 @@
         <div class="flex flex-wrap gap-4 mb-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Davr</label>
-                <select id="period-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="period-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary transition-all duration-300">
                     <option value="all" {% if period == 'all' %}selected{% endif %}>Barcha vaqt</option>
                     <option value="month" {% if period == 'month' %}selected{% endif %}>Oxirgi oy</option>
                     <option value="week" {% if period == 'week' %}selected{% endif %}>Oxirgi hafta</option>
@@ -23,7 +23,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Turi</label>
-                <select id="type-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="type-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary transition-all duration-300">
                     <option value="wpm" {% if leaderboard_type == 'wpm' %}selected{% endif %}>Umumiy WPM</option>
                     <option value="code_wpm" {% if leaderboard_type == 'code_wpm' %}selected{% endif %}>Kod WPM</option>
                     <option value="accuracy" {% if leaderboard_type == 'accuracy' %}selected{% endif %}>Aniqlik</option>
@@ -32,8 +32,8 @@
         </div>
         
         {% if user_rank %}
-        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
-            <p class="text-blue-800 font-semibold">Sizning o'rningiz: <span class="text-2xl font-bold">#{{ user_rank }}</span></p>
+        <div class="gradient-secondary border-2 border-secondary-dark rounded-lg p-4 mb-4 animate-pulse-glow" style="background-color: rgba(127, 230, 128, 0.2); border-color: #7FE680;">
+            <p class="text-primary font-semibold">Sizning o'rningiz: <span class="text-2xl font-bold text-secondary">#{{ user_rank }}</span></p>
         </div>
         {% endif %}
     </div>
@@ -41,7 +41,7 @@
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full">
-                <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <thead class="gradient-primary text-white">
                     <tr>
                         <th class="px-6 py-4 text-left text-sm font-semibold uppercase">O'rin</th>
                         <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Foydalanuvchi</th>
@@ -56,7 +56,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     {% for entry in leaderboard_data %}
-                    <tr class="{% if entry.username == user.username %}bg-blue-50 border-l-4 border-blue-500{% endif %} hover:bg-gray-50 transition">
+                    <tr class="{% if entry.username == user.username %}bg-secondary border-l-4 border-secondary{% endif %} hover:bg-gray-50 transition-all duration-300" style="{% if entry.username == user.username %}background-color: rgba(127, 230, 128, 0.1); border-color: #7FE680;{% endif %}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 {% if entry.rank == 1 %}
@@ -77,14 +77,14 @@
                             <div class="flex items-center space-x-2">
                                 <span class="font-semibold text-lg">{{ entry.username }}</span>
                                 {% if entry.username == user.username %}
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">Siz</span>
+                                <span class="px-2 py-1 gradient-secondary text-primary text-xs font-bold rounded-full">Siz</span>
                                 {% endif %}
                             </div>
                         </td>
                         {% if leaderboard_type == 'accuracy' %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
-                                <span class="text-2xl font-bold text-green-600">{{ entry.accuracy }}%</span>
+                                <span class="text-2xl font-bold text-secondary">{{ entry.accuracy }}%</span>
                                 {% if entry.accuracy >= 95 %}
                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Mukammal</span>
                                 {% elif entry.accuracy >= 90 %}
@@ -97,7 +97,7 @@
                         {% else %}
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
-                                <span class="text-2xl font-bold text-blue-600">{{ entry.wpm }}</span>
+                                <span class="text-2xl font-bold text-primary">{{ entry.wpm }}</span>
                                 {% if entry.wpm >= 100 %}
                                 <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full">Elite</span>
                                 {% elif entry.wpm >= 80 %}

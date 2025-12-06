@@ -3,20 +3,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.core.cache import cache
 from django.db.models import Avg
+from django.db import transaction
 from .models import Competition, CompetitionParticipant, CompetitionStage, CompetitionParticipantStage
 from typing_practice.models import Text, CodeSnippet
+from typing_practice.utils import get_random_text, get_random_code
 import json
 import secrets
 import random
+import logging
+
+logger = logging.getLogger('typing_platform')
 
 
 @login_required
 def competition_list(request):
-    # Show all public competitions and user's competitions
-    all_competitions = Competition.objects.filter(is_public=True).order_by('-start_time')
-    user_competitions = Competition.objects.filter(participants=request.user).order_by('-start_time')
+    # Show all public competitions and user's competitions with optimized queries
+    cache_key_all = 'competitions_all_public'
+    cache_key_user = f'competitions_user_{request.user.id}'
+    
+    all_competitions = cache.get(cache_key_all)
+    if all_competitions is None:
+        all_competitions = Competition.objects.filter(
+            is_public=True
+        ).select_related('created_by').prefetch_related('participants').order_by('-start_time')[:20]
+        cache.set(cache_key_all, list(all_competitions), 120)  # 2 minutes
+    
+    user_competitions = cache.get(cache_key_user)
+    if user_competitions is None:
+        user_competitions = Competition.objects.filter(
+            participants=request.user
+        ).select_related('created_by').prefetch_related('participants').order_by('-start_time')[:20]
+        cache.set(cache_key_user, list(user_competitions), 120)  # 2 minutes
     
     return render(request, 'competitions/list.html', {
         'user_competitions': user_competitions,
@@ -26,26 +46,35 @@ def competition_list(request):
 
 @login_required
 def competition_detail(request, competition_id):
-    competition = get_object_or_404(Competition, id=competition_id)
+    competition = get_object_or_404(
+        Competition.objects.select_related('created_by'),
+        id=competition_id
+    )
     
     # Check if user can view (public or participant)
-    if not competition.is_public and request.user not in competition.participants.all():
-        if not request.user.userprofile.is_manager:
-            messages.error(request, 'This competition is private')
+    if not competition.is_public:
+        is_participant = CompetitionParticipant.objects.filter(
+            user=request.user,
+            competition=competition
+        ).exists()
+        if not is_participant and not request.user.userprofile.is_manager:
+            messages.error(request, 'Bu musobaqa shaxsiy.')
             return redirect('competitions:list')
     
     participant = CompetitionParticipant.objects.filter(
         user=request.user,
         competition=competition
-    ).first()
+    ).select_related('user').first()
     
-    # Get all participants with results
+    # Get all participants with results - optimized
     participants = CompetitionParticipant.objects.filter(
         competition=competition
-    ).order_by('-result_wpm')
+    ).select_related('user').order_by('-result_wpm')
     
-    # Get stages
-    stages = CompetitionStage.objects.filter(competition=competition).order_by('stage_number')
+    # Get stages with related objects
+    stages = CompetitionStage.objects.filter(
+        competition=competition
+    ).select_related('text', 'code_snippet').order_by('stage_number')
     
     is_owner = competition.created_by == request.user
     can_join = request.user.userprofile.is_manager or participant is not None or competition.is_public
@@ -89,27 +118,51 @@ def competition_create(request):
             status='pending'
         )
         
-        # Create 3 stages with random texts/codes
-        if mode == 'text':
-            texts = list(Text.objects.filter(difficulty=difficulty).order_by('?'))
-            if len(texts) >= 3:
-                selected_texts = random.sample(texts, 3)
-                for i, text in enumerate(selected_texts, 1):
-                    CompetitionStage.objects.create(
-                        competition=competition,
-                        stage_number=i,
-                        text=text
-                    )
-        elif mode == 'code':
-            codes = list(CodeSnippet.objects.filter(difficulty=difficulty).order_by('?'))
-            if len(codes) >= 3:
-                selected_codes = random.sample(codes, 3)
-                for i, code in enumerate(selected_codes, 1):
-                    CompetitionStage.objects.create(
-                        competition=competition,
-                        stage_number=i,
-                        code_snippet=code
-                    )
+        # Create 3 stages with random texts/codes (optimized)
+        with transaction.atomic():
+            if mode == 'text':
+                # Use optimized random selection
+                selected_texts = []
+                for _ in range(3):
+                    text = get_random_text(difficulty)
+                    if text and text not in selected_texts:
+                        selected_texts.append(text)
+                    if len(selected_texts) >= 3:
+                        break
+                
+                if len(selected_texts) >= 3:
+                    for i, text in enumerate(selected_texts, 1):
+                        CompetitionStage.objects.create(
+                            competition=competition,
+                            stage_number=i,
+                            text=text
+                        )
+                else:
+                    messages.error(request, 'Yetarli matnlar topilmadi (kamida 3 ta kerak).')
+                    competition.delete()
+                    return redirect('competitions:list')
+                    
+            elif mode == 'code':
+                # Use optimized random selection
+                selected_codes = []
+                for _ in range(3):
+                    code = get_random_code('python', difficulty)  # Default to python, can be extended
+                    if code and code not in selected_codes:
+                        selected_codes.append(code)
+                    if len(selected_codes) >= 3:
+                        break
+                
+                if len(selected_codes) >= 3:
+                    for i, code in enumerate(selected_codes, 1):
+                        CompetitionStage.objects.create(
+                            competition=competition,
+                            stage_number=i,
+                            code_snippet=code
+                        )
+                else:
+                    messages.error(request, 'Yetarli kodlar topilmadi (kamida 3 ta kerak).')
+                    competition.delete()
+                    return redirect('competitions:list')
         
         # Add participants
         if user_ids:
@@ -187,22 +240,35 @@ def competition_finish(request, competition_id):
 
 @login_required
 def competition_play(request, competition_id, stage_number=1):
-    competition = get_object_or_404(Competition, id=competition_id)
+    competition = get_object_or_404(
+        Competition.objects.select_related('created_by'),
+        id=competition_id
+    )
+    
     participant = CompetitionParticipant.objects.filter(
         user=request.user,
         competition=competition
-    ).first()
+    ).select_related('user').first()
     
     if not participant:
-        messages.error(request, 'You are not a participant in this competition')
+        messages.error(request, 'Siz bu musobaqada qatnashmadingiz')
         return redirect('competitions:detail', competition_id=competition.id)
     
     if competition.status != 'active':
-        messages.error(request, 'Competition is not active')
+        messages.error(request, 'Musobaqa faol emas')
         return redirect('competitions:detail', competition_id=competition.id)
     
-    # Get current stage
-    stage = get_object_or_404(CompetitionStage, competition=competition, stage_number=stage_number)
+    # Validate stage number
+    if stage_number < 1 or stage_number > 3:
+        messages.error(request, 'Noto\'g\'ri bosqich raqami')
+        return redirect('competitions:detail', competition_id=competition.id)
+    
+    # Get current stage with related objects
+    stage = get_object_or_404(
+        CompetitionStage.objects.select_related('text', 'code_snippet'),
+        competition=competition,
+        stage_number=stage_number
+    )
     
     # Get or create participant stage
     participant_stage, created = CompetitionParticipantStage.objects.get_or_create(
@@ -216,7 +282,9 @@ def competition_play(request, competition_id, stage_number=1):
         participant.save()
     
     # Get all stages for navigation
-    all_stages = CompetitionStage.objects.filter(competition=competition).order_by('stage_number')
+    all_stages = CompetitionStage.objects.filter(
+        competition=competition
+    ).select_related('text', 'code_snippet').order_by('stage_number')
     
     return render(request, 'competitions/play.html', {
         'competition': competition,
@@ -229,94 +297,120 @@ def competition_play(request, competition_id, stage_number=1):
 
 
 @login_required
-@csrf_exempt
+@require_http_methods(["POST"])
 def competition_save_result(request, competition_id, stage_number):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+    """Save competition stage result with validation"""
     try:
         competition = get_object_or_404(Competition, id=competition_id)
-        participant = CompetitionParticipant.objects.get(
+        
+        # Validate competition is active
+        if competition.status != 'active':
+            return JsonResponse({'error': 'Musobaqa faol emas'}, status=400)
+        
+        participant = CompetitionParticipant.objects.select_related('user').get(
             user=request.user,
             competition=competition
         )
+        
+        # Validate stage number
+        if stage_number < 1 or stage_number > 3:
+            return JsonResponse({'error': 'Noto\'g\'ri bosqich raqami'}, status=400)
+        
         stage = get_object_or_404(CompetitionStage, competition=competition, stage_number=stage_number)
         
-        data = json.loads(request.body)
-        wpm = float(data.get('wpm', 0))
-        accuracy = float(data.get('accuracy', 0))
-        mistakes = int(data.get('mistakes', 0))
+        # Parse and validate data
+        try:
+            data = json.loads(request.body)
+            from typing_practice.utils import validate_wpm, validate_accuracy
+            wpm = validate_wpm(data.get('wpm', 0))
+            accuracy = validate_accuracy(data.get('accuracy', 0))
+            mistakes = max(0, int(data.get('mistakes', 0)))
+        except (ValueError, TypeError, json.JSONDecodeError) as e:
+            logger.warning(f"Invalid data in competition_save_result: {e}")
+            return JsonResponse({'error': 'Noto\'g\'ri ma\'lumot formati'}, status=400)
         
-        # Save stage result
-        participant_stage, created = CompetitionParticipantStage.objects.get_or_create(
-            participant=participant,
-            stage=stage
-        )
-        participant_stage.wpm = wpm
-        participant_stage.accuracy = accuracy
-        participant_stage.mistakes = mistakes
-        participant_stage.is_finished = True
-        participant_stage.finished_at = timezone.now()
-        participant_stage.save()
+        # Save stage result with transaction
+        with transaction.atomic():
+            participant_stage, created = CompetitionParticipantStage.objects.get_or_create(
+                participant=participant,
+                stage=stage
+            )
+            participant_stage.wpm = wpm
+            participant_stage.accuracy = accuracy
+            participant_stage.mistakes = mistakes
+            participant_stage.is_finished = True
+            participant_stage.finished_at = timezone.now()
+            participant_stage.save()
+            
+            # Update participant current stage
+            if stage_number < 3:
+                participant.current_stage = stage_number + 1
+            else:
+                participant.current_stage = 4  # All stages completed
+                participant.is_finished = True
+                participant.finished_at = timezone.now()
+            
+            # Calculate average results using model method
+            participant.calculate_average_results()
         
-        # Update participant current stage
-        if stage_number < 3:
-            participant.current_stage = stage_number + 1
-        else:
-            participant.current_stage = 4  # All stages completed
-            participant.is_finished = True
-            participant.finished_at = timezone.now()
+        # Clear competition cache
+        cache.delete(f'competition_{competition_id}_participants')
+        cache.delete('competitions_all_public')
+        cache.delete(f'competitions_user_{request.user.id}')
         
-        # Calculate average results
-        stage_results = CompetitionParticipantStage.objects.filter(
-            participant=participant,
-            is_finished=True
-        )
-        if stage_results.exists():
-            participant.result_wpm = stage_results.aggregate(avg=Avg('wpm'))['avg']
-            participant.accuracy = stage_results.aggregate(avg=Avg('accuracy'))['avg']
-            participant.mistakes = sum(sr.mistakes for sr in stage_results)
-        
-        participant.save()
+        logger.info(f"Competition result saved: user={request.user.username}, competition={competition_id}, stage={stage_number}, wpm={wpm}")
         
         return JsonResponse({
             'success': True,
             'next_stage': stage_number + 1 if stage_number < 3 else None,
             'finished': stage_number >= 3
         })
+    
+    except CompetitionParticipant.DoesNotExist:
+        logger.warning(f"Participant not found: user={request.user.username}, competition={competition_id}")
+        return JsonResponse({'error': 'Siz bu musobaqada qatnashmadingiz'}, status=403)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        logger.error(f"Error saving competition result: {e}", exc_info=True)
+        return JsonResponse({'error': 'Server xatosi yuz berdi'}, status=500)
 
 
 @login_required
 def competition_results(request, competition_id):
-    competition = get_object_or_404(Competition, id=competition_id)
+    competition = get_object_or_404(
+        Competition.objects.select_related('created_by'),
+        id=competition_id
+    )
     
     # Check if user can view (public or participant)
-    if not competition.is_public and request.user not in competition.participants.all():
-        if not request.user.userprofile.is_manager:
-            messages.error(request, 'This competition is private')
+    if not competition.is_public:
+        is_participant = CompetitionParticipant.objects.filter(
+            user=request.user,
+            competition=competition
+        ).exists()
+        if not is_participant and not request.user.userprofile.is_manager:
+            messages.error(request, 'Bu musobaqa shaxsiy.')
             return redirect('competitions:list')
     
-    # Get all participants with stage results
+    # Get all participants with optimized query
     participants = CompetitionParticipant.objects.filter(
         competition=competition
+    ).select_related('user').prefetch_related(
+        'stage_results__stage'
     ).order_by('-result_wpm')
     
     # Get stages
-    stages = CompetitionStage.objects.filter(competition=competition).order_by('stage_number')
+    stages = CompetitionStage.objects.filter(
+        competition=competition
+    ).select_related('text', 'code_snippet').order_by('stage_number')
     
-    # Get stage results for each participant
+    # Get stage results for each participant (already prefetched)
     participant_results = {}
     for participant in participants:
-        stage_results = CompetitionParticipantStage.objects.filter(
-            participant=participant
-        ).select_related('stage').order_by('stage__stage_number')
         participant_results[participant.id] = {
             'participant': participant,
             'stages': {}
         }
-        for stage_result in stage_results:
+        for stage_result in participant.stage_results.all():
             participant_results[participant.id]['stages'][stage_result.stage.stage_number] = stage_result
     
     return render(request, 'competitions/results.html', {

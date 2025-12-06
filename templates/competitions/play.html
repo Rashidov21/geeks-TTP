@@ -34,13 +34,13 @@
                 {% for s in all_stages %}
                 <div class="flex items-center">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold
-                        {% if s.stage_number < stage_number %}bg-green-500 text-white
-                        {% elif s.stage_number == stage_number %}bg-blue-500 text-white
+                        {% if s.stage_number < stage_number %}gradient-secondary text-primary
+                        {% elif s.stage_number == stage_number %}bg-primary text-white
                         {% else %}bg-gray-200 text-gray-600{% endif %}">
                         {{ s.stage_number }}
                     </div>
                     {% if not forloop.last %}
-                    <div class="w-8 h-1 mx-1 {% if s.stage_number < stage_number %}bg-green-500{% else %}bg-gray-200{% endif %}"></div>
+                    <div class="w-8 h-1 mx-1 {% if s.stage_number < stage_number %}gradient-secondary{% else %}bg-gray-200{% endif %}"></div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -99,7 +99,7 @@
         ></textarea>
         
         <div class="mt-4 flex space-x-4">
-            <button id="finish-btn" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <button id="finish-btn" class="flex items-center space-x-2 gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -130,9 +130,9 @@
         </div>
         <div class="text-center">
             {% if stage_number < 3 %}
-            <a href="{% url 'competitions:play' competition.id stage_number|add:1 %}" id="next-stage-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Bosqich {{ stage_number|add:1 }}ga o'tish</a>
+            <a href="{% url 'competitions:play' competition.id stage_number|add:1 %}" id="next-stage-btn" class="hidden gradient-secondary text-primary px-8 py-3 rounded-lg font-semibold text-lg inline-block transition-all duration-300 hover:scale-105 shadow-lg">Bosqich {{ stage_number|add:1 }}ga o'tish</a>
             {% else %}
-            <a href="{% url 'competitions:results' competition.id %}" id="view-results-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Yakuniy natijalarni ko'rish</a>
+            <a href="{% url 'competitions:results' competition.id %}" id="view-results-btn" class="hidden gradient-secondary text-primary px-8 py-3 rounded-lg font-semibold text-lg inline-block transition-all duration-300 hover:scale-105 shadow-lg">Yakuniy natijalarni ko'rish</a>
             {% endif %}
         </div>
     </div>
@@ -153,6 +153,9 @@ const typingInput = document.getElementById('typing-input');
 const finishBtn = document.getElementById('finish-btn');
 const resultsDiv = document.getElementById('results');
 
+let lastTypedLength = 0;
+let expectedNextChar = null;
+
 if (isCode) {
     hljs.highlightAll();
 }
@@ -166,7 +169,97 @@ function initDisplay() {
             `<span class="word" data-index="${i}">${word}</span>`
         ).join(' ');
     }
+    lastTypedLength = 0;
+    expectedNextChar = originalText.trim()[0] || null;
 }
+
+// Prevent copy-paste
+typingInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+typingInput.addEventListener('copy', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+typingInput.addEventListener('cut', (e) => {
+    e.preventDefault();
+    return false;
+});
+
+// Track each character input
+typingInput.addEventListener('keydown', (e) => {
+    // Allow backspace, delete, tab, escape, enter
+    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(e.key)) {
+        return;
+    }
+    
+    // Allow Ctrl/Cmd combinations for shortcuts
+    if (e.ctrlKey || e.metaKey) {
+        return;
+    }
+    
+    const currentValue = typingInput.value;
+    const currentLength = currentValue.length;
+    const originalLength = originalText.trim().length;
+    
+    // Prevent typing beyond the original text
+    if (currentLength >= originalLength) {
+        e.preventDefault();
+        return false;
+    }
+    
+    expectedNextChar = originalText.trim()[currentLength + 1] || null;
+});
+
+typingInput.addEventListener('input', (e) => {
+    const currentValue = typingInput.value;
+    const currentLength = currentValue.length;
+    const previousLength = lastTypedLength;
+    
+    // Detect if multiple characters were added at once (paste or drag-drop)
+    if (currentLength - previousLength > 1) {
+        // Reset to previous valid state
+        typingInput.value = currentValue.substring(0, previousLength);
+        return;
+    }
+    
+    // Check if character matches expected (for text mode)
+    if (!isCode && currentLength > 0 && previousLength < currentLength) {
+        const expectedChar = originalText.trim()[previousLength];
+        const typedChar = currentValue[previousLength];
+        
+        // If character doesn't match, remove it
+        if (expectedChar !== typedChar && typedChar !== undefined) {
+            // Allow if it's a space and we're at word boundary
+            if (typedChar === ' ' && expectedChar === ' ') {
+                // Valid space
+            } else if (typedChar !== ' ' || expectedChar !== ' ') {
+                // Invalid character, remove it
+                typingInput.value = currentValue.substring(0, previousLength);
+                return;
+            }
+        }
+    }
+    
+    // For code mode, check character by character
+    if (isCode && currentLength > 0 && previousLength < currentLength) {
+        const expectedChar = originalText[previousLength];
+        const typedChar = currentValue[previousLength];
+        
+        if (expectedChar !== typedChar && typedChar !== undefined) {
+            // Invalid character, remove it
+            typingInput.value = currentValue.substring(0, previousLength);
+            return;
+        }
+    }
+    
+    lastTypedLength = typingInput.value.length;
+    startTyping();
+    updateDisplay();
+});
 
 function updateDisplay() {
     const typed = typingInput.value;
@@ -318,10 +411,7 @@ function finishTyping(wpm, accuracy, mistakes) {
     });
 }
 
-typingInput.addEventListener('input', () => {
-    startTyping();
-    updateDisplay();
-});
+// Input event is already handled above with paste prevention
 
 finishBtn.addEventListener('click', () => {
     const typed = typingInput.value;

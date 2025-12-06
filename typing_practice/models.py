@@ -13,6 +13,11 @@ class Text(models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['difficulty']),
+        ]
+
     def __str__(self):
         return f"{self.title} ({self.difficulty})"
 
@@ -36,6 +41,11 @@ class CodeSnippet(models.Model):
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES)
     code_body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['language', 'difficulty']),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.language})"
@@ -61,6 +71,12 @@ class UserResult(models.Model):
 
     class Meta:
         ordering = ['-time']
+        indexes = [
+            models.Index(fields=['user', '-time']),
+            models.Index(fields=['session_type', '-time']),
+            models.Index(fields=['-wpm']),
+            models.Index(fields=['-time']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.wpm} WPM - {self.accuracy}%"
