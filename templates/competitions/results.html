@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load competition_filters %}
+
+{% block title %}{{ competition.name }} - Results - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-3xl font-bold mb-2">{{ competition.name }} - Final Results</h1>
+        <div class="flex items-center space-x-4 text-sm text-gray-600">
+            <span>{{ competition.mode|upper }}</span>
+            <span>•</span>
+            <span>{% if competition.difficulty == 'easy' %}🌱 Easy{% else %}🔥 Hard{% endif %}</span>
+            <span>•</span>
+            <span>{{ participants.count }} Participants</span>
+        </div>
+    </div>
+
+    <!-- Overall Leaderboard -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4">🏆 Overall Leaderboard</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Rank</th>
+                        <th class="px-6 py-3 text-left">User</th>
+                        <th class="px-6 py-3 text-left">Avg WPM</th>
+                        <th class="px-6 py-3 text-left">Avg Accuracy</th>
+                        <th class="px-6 py-3 text-left">Total Mistakes</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for participant in participants %}
+                    <tr class="{% if participant.user == user %}bg-blue-50 border-l-4 border-blue-500{% endif %} hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            {% if forloop.counter == 1 %}
+                            <span class="text-2xl">🥇</span>
+                            {% elif forloop.counter == 2 %}
+                            <span class="text-2xl">🥈</span>
+                            {% elif forloop.counter == 3 %}
+                            <span class="text-2xl">🥉</span>
+                            {% else %}
+                            <span class="font-bold">#{{ forloop.counter }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-lg">{{ participant.user.username }}</td>
+                        <td class="px-6 py-4">
+                            <span class="text-2xl font-bold text-blue-600">{{ participant.result_wpm|default:"-"|floatformat:1 }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xl font-bold text-green-600">{{ participant.accuracy|default:"-"|floatformat:1 }}%</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-lg font-medium">{{ participant.mistakes|default:"-" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stage-by-Stage Results -->
+    <div class="space-y-6">
+        {% for stage in stages %}
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center">
+                <span class="text-3xl mr-3">🎯</span>
+                Stage {{ stage.stage_number }}
+                {% if stage.text %}
+                <span class="ml-4 text-sm font-normal text-gray-600">- {{ stage.text.title }}</span>
+                {% elif stage.code_snippet %}
+                <span class="ml-4 text-sm font-normal text-gray-600">- {{ stage.code_snippet.title }}</span>
+                {% endif %}
+            </h3>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Rank</th>
+                            <th class="px-4 py-2 text-left">User</th>
+                            <th class="px-4 py-2 text-left">WPM</th>
+                            <th class="px-4 py-2 text-left">Accuracy</th>
+                            <th class="px-4 py-2 text-left">Mistakes</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for participant in participants %}
+                        {% with pr=participant_results|get_item:participant.id %}
+                        {% with stage_result=pr.stages|get_item:stage.stage_number %}
+                        <tr class="{% if participant.user == user %}bg-blue-50{% endif %} hover:bg-gray-50">
+                            <td class="px-4 py-2">
+                                {% if forloop.counter == 1 %}
+                                <span class="text-xl">🥇</span>
+                                {% elif forloop.counter == 2 %}
+                                <span class="text-xl">🥈</span>
+                                {% elif forloop.counter == 3 %}
+                                <span class="text-xl">🥉</span>
+                                {% else %}
+                                <span class="font-bold">#{{ forloop.counter }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2 font-medium">{{ participant.user.username }}</td>
+                            <td class="px-4 py-2">
+                                {% if stage_result %}
+                                <span class="font-bold text-blue-600">{{ stage_result.wpm|floatformat:1 }}</span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2">
+                                {% if stage_result %}
+                                <span class="font-bold text-green-600">{{ stage_result.accuracy|floatformat:1 }}%</span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2">
+                                {% if stage_result %}
+                                <span>{{ stage_result.mistakes }}</span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2">
+                                {% if stage_result and stage_result.is_finished %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">Completed</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Not Started</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-6 text-center">
+        <a href="{% url 'competitions:list' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">Back to Competitions</a>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Leaderboard - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center">🏆 Leaderboard</h1>
+    
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="flex flex-wrap gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Period</label>
+                <select id="period-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="month" {% if period == 'month' %}selected{% endif %}>Last Month</option>
+                    <option value="week" {% if period == 'week' %}selected{% endif %}>Last Week</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select id="type-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="wpm" {% if leaderboard_type == 'wpm' %}selected{% endif %}>Overall WPM</option>
+                    <option value="code_wpm" {% if leaderboard_type == 'code_wpm' %}selected{% endif %}>Code WPM</option>
+                    <option value="accuracy" {% if leaderboard_type == 'accuracy' %}selected{% endif %}>Accuracy</option>
+                </select>
+            </div>
+        </div>
+        
+        {% if user_rank %}
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+            <p class="text-blue-800 font-semibold">Your rank: <span class="text-2xl font-bold">#{{ user_rank }}</span></p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Rank</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">User</th>
+                        {% if leaderboard_type == 'accuracy' %}
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Accuracy</th>
+                        {% else %}
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Best WPM</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Avg WPM</th>
+                        {% endif %}
+                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Sessions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for entry in leaderboard_data %}
+                    <tr class="{% if entry.username == user.username %}bg-blue-50 border-l-4 border-blue-500{% endif %} hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if entry.rank == 1 %}
+                                <span class="text-2xl mr-2">🥇</span>
+                                <span class="text-xl font-bold text-yellow-600">#{{ entry.rank }}</span>
+                                {% elif entry.rank == 2 %}
+                                <span class="text-2xl mr-2">🥈</span>
+                                <span class="text-xl font-bold text-gray-400">#{{ entry.rank }}</span>
+                                {% elif entry.rank == 3 %}
+                                <span class="text-2xl mr-2">🥉</span>
+                                <span class="text-xl font-bold text-orange-600">#{{ entry.rank }}</span>
+                                {% else %}
+                                <span class="text-lg font-bold text-gray-600">#{{ entry.rank }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-semibold text-lg">{{ entry.username }}</span>
+                                {% if entry.username == user.username %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">You</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% if leaderboard_type == 'accuracy' %}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl font-bold text-green-600">{{ entry.accuracy }}%</span>
+                                {% if entry.accuracy >= 95 %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Perfect</span>
+                                {% elif entry.accuracy >= 90 %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">Great</span>
+                                {% elif entry.accuracy >= 80 %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">Good</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% else %}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl font-bold text-blue-600">{{ entry.wpm }}</span>
+                                {% if entry.wpm >= 100 %}
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full">Elite</span>
+                                {% elif entry.wpm >= 80 %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">Expert</span>
+                                {% elif entry.wpm >= 60 %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Advanced</span>
+                                {% elif entry.wpm >= 40 %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">Intermediate</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full">Beginner</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-gray-600 font-medium">{{ entry.avg_wpm }}</span>
+                        </td>
+                        {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">{{ entry.sessions }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            <div class="text-4xl mb-2">📊</div>
+                            <p>No data available yet. Start practicing!</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('period-select').addEventListener('change', function() {
+    const period = this.value;
+    const type = document.getElementById('type-select').value;
+    window.location.href = `?period=${period}&type=${type}`;
+});
+
+document.getElementById('type-select').addEventListener('change', function() {
+    const type = this.value;
+    const period = document.getElementById('period-select').value;
+    window.location.href = `?period=${period}&type=${type}`;
+});
+</script>
+{% endblock %}

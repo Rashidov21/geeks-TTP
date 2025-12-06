@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Typing Trainer Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    {% if user.is_authenticated %}
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-6">
+                    <a href="{% url 'dashboard' %}" class="text-xl font-bold">Typing Trainer</a>
+                    <a href="{% url 'dashboard' %}" class="hover:bg-blue-700 px-3 py-2 rounded">Dashboard</a>
+                    <a href="{% url 'typing_practice:index' %}" class="hover:bg-blue-700 px-3 py-2 rounded">Practice</a>
+                    <a href="{% url 'competitions:list' %}" class="hover:bg-blue-700 px-3 py-2 rounded">Competitions</a>
+                    <a href="{% url 'leaderboard:index' %}" class="hover:bg-blue-700 px-3 py-2 rounded">Leaderboard</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">Hello, {{ user.username }}</span>
+                    {% if user.userprofile.is_manager %}
+                    <a href="{% url 'competitions:create' %}" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded">Create Competition</a>
+                    {% endif %}
+                    <a href="{% url 'accounts:logout' %}" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% else %}
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div>
+                    <a href="{% url 'home' %}" class="text-xl font-bold">Typing Trainer</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'accounts:login' %}" class="hover:bg-blue-700 px-4 py-2 rounded">Login</a>
+                    <a href="{% url 'accounts:register' %}" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded">Register</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    {% if messages %}
+    <div class="container mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-green-100 border-green-400 text-green-700{% endif %} border px-4 py-3 rounded relative mb-2" role="alert">
+            <span class="block sm:inline">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

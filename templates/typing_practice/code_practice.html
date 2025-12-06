@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Code Practice - Typing Trainer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+    .word { margin-right: 0.5rem; }
+    .correct { color: #10b981; }
+    .incorrect { background-color: #fee2e2; color: #dc2626; }
+    .current { background-color: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; padding-left: 2px; }
+    .typed { color: #6b7280; }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stats-card.wpm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stats-card.accuracy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stats-card.time { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    #code-display {
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .code-line {
+        padding: 2px 0;
+        min-height: 1.6em;
+    }
+    .code-line.hljs {
+        background: transparent !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Language Icon and Title -->
+    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center space-x-4">
+            <div class="text-4xl">
+                {% if code.language == 'python' %}🐍
+                {% elif code.language == 'javascript' %}🟨
+                {% elif code.language == 'cpp' %}⚙️
+                {% elif code.language == 'java' %}☕
+                {% else %}💻{% endif %}
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold">{{ code.title }}</h2>
+                <span class="inline-block px-3 py-1 rounded-full text-sm font-medium 
+                    {% if code.difficulty == 'easy' %}bg-green-100 text-green-800
+                    {% elif code.difficulty == 'medium' %}bg-yellow-100 text-yellow-800
+                    {% else %}bg-red-100 text-red-800{% endif %}">
+                    {{ code.language|upper }} • {{ code.difficulty|title }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="stats-card wpm">
+            <p class="text-sm opacity-90 mb-1">Code WPM</p>
+            <p class="text-4xl font-bold" id="wpm">0</p>
+        </div>
+        <div class="stats-card accuracy">
+            <p class="text-sm opacity-90 mb-1">Accuracy</p>
+            <p class="text-4xl font-bold" id="accuracy">100%</p>
+        </div>
+        <div class="stats-card time">
+            <p class="text-sm opacity-90 mb-1">Time</p>
+            <p class="text-4xl font-bold" id="timer">0s</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+        <div id="code-display" class="p-6 bg-gray-900 text-gray-100 rounded-lg border-2 border-gray-700 min-h-[400px] mb-4 overflow-auto">
+            <pre><code class="language-{{ code.language }}">{{ code.code_body }}</code></pre>
+        </div>
+        
+        <textarea 
+            id="typing-input" 
+            class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm font-mono"
+            rows="10"
+            placeholder="Start typing the code here..."
+            autofocus
+            spellcheck="false"
+        ></textarea>
+        
+        <div class="mt-4 flex space-x-4">
+            <button id="reset-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition">Reset</button>
+            <button id="finish-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Finish</button>
+        </div>
+    </div>
+    
+    <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-2xl font-bold mb-6 text-center">Results</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Code WPM</p>
+                <p class="text-3xl font-bold text-blue-600" id="result-wpm">0</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Accuracy</p>
+                <p class="text-3xl font-bold text-purple-600" id="result-accuracy">0%</p>
+            </div>
+            <div class="text-center p-4 bg-red-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Mistakes</p>
+                <p class="text-3xl font-bold text-red-600" id="result-mistakes">0</p>
+            </div>
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Time</p>
+                <p class="text-3xl font-bold text-green-600" id="result-time">0s</p>
+            </div>
+        </div>
+        <div id="mistakes-list" class="mb-4"></div>
+        <div class="text-center">
+            <a href="{% url 'typing_practice:index' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Back to Practice</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const codeId = {{ code.id }};
+const originalCode = `{{ code.code_body|escapejs }}`;
+let startTime = null;
+let timerInterval = null;
+let isFinished = false;
+let mistakesList = [];
+
+const codeDisplay = document.getElementById('code-display');
+const typingInput = document.getElementById('typing-input');
+const resetBtn = document.getElementById('reset-btn');
+const finishBtn = document.getElementById('finish-btn');
+const resultsDiv = document.getElementById('results');
+
+// Initialize syntax highlighting
+hljs.highlightAll();
+
+function initCodeDisplay() {
+    // Keep syntax highlighting but prepare for typing overlay
+    const pre = codeDisplay.querySelector('pre');
+    const code = pre.querySelector('code');
+    const highlighted = hljs.highlight(code.textContent, { language: '{{ code.language }}' });
+    code.innerHTML = highlighted.value;
+}
+
+function updateDisplay() {
+    const typed = typingInput.value;
+    const originalLines = originalCode.split('\n');
+    const typedLines = typed.split('\n');
+    
+    let html = '';
+    let mistakes = 0;
+    mistakesList = [];
+    
+    originalLines.forEach((line, lineIdx) => {
+        const typedLine = typedLines[lineIdx] || '';
+        let lineHtml = '<div class="code-line" data-line="' + lineIdx + '">';
+        
+        if (lineIdx < typedLines.length - 1) {
+            // Completed line
+            if (line === typedLine) {
+                lineHtml += '<span class="correct typed">' + escapeHtml(line) + '</span>';
+            } else {
+                lineHtml += '<span class="incorrect typed">' + escapeHtml(line) + '</span>';
+                mistakes++;
+                mistakesList.push({ line: lineIdx + 1, original: line, typed: typedLine });
+            }
+        } else if (lineIdx === typedLines.length - 1) {
+            // Current line - character by character
+            for (let i = 0; i < line.length; i++) {
+                const typedChar = typedLine[i] || '';
+                const originalChar = line[i];
+                
+                if (i < typedLine.length) {
+                    if (originalChar === typedChar) {
+                        lineHtml += '<span class="correct typed">' + escapeHtml(originalChar) + '</span>';
+                    } else {
+                        lineHtml += '<span class="incorrect">' + escapeHtml(originalChar) + '</span>';
+                        mistakes++;
+                    }
+                } else if (i === typedLine.length) {
+                    lineHtml += '<span class="current">' + escapeHtml(originalChar) + '</span>';
+                } else {
+                    lineHtml += '<span>' + escapeHtml(originalChar) + '</span>';
+                }
+            }
+        } else {
+            // Future line - show with syntax highlighting
+            const highlighted = hljs.highlight(line, { language: '{{ code.language }}' });
+            lineHtml += highlighted.value;
+        }
+        
+        lineHtml += '</div>';
+        html += lineHtml;
+    });
+    
+    codeDisplay.querySelector('pre code').innerHTML = html;
+    
+    // Re-highlight future lines
+    hljs.highlightAll();
+    
+    // Calculate stats
+    if (startTime) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const typedChars = typed.length;
+        const correctChars = typedChars - mistakes;
+        const wpm = (typedChars / 5 / elapsed) * 60;
+        const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+        
+        document.getElementById('wpm').textContent = Math.round(wpm);
+        document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
+        document.getElementById('timer').textContent = Math.round(elapsed) + 's';
+        
+        // Check if finished
+        if (typed.trim() === originalCode.trim()) {
+            finishTyping(wpm, accuracy, mistakes);
+        }
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function startTyping() {
+    if (!startTime) {
+        startTime = Date.now();
+        timerInterval = setInterval(updateDisplay, 100);
+        finishBtn.disabled = false;
+    }
+}
+
+function finishTyping(wpm, accuracy, mistakes) {
+    if (isFinished) return;
+    isFinished = true;
+    
+    clearInterval(timerInterval);
+    typingInput.disabled = true;
+    finishBtn.disabled = true;
+    
+    const duration = (Date.now() - startTime) / 1000;
+    
+    document.getElementById('result-wpm').textContent = Math.round(wpm);
+    document.getElementById('result-accuracy').textContent = Math.round(accuracy) + '%';
+    document.getElementById('result-mistakes').textContent = mistakes;
+    document.getElementById('result-time').textContent = Math.round(duration) + 's';
+    
+    // Show mistakes list
+    if (mistakesList.length > 0) {
+        const mistakesDiv = document.getElementById('mistakes-list');
+        mistakesDiv.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-4"><h4 class="font-bold mb-2 text-red-800">Mistakes:</h4><ul class="list-disc list-inside space-y-1">';
+        mistakesList.forEach(mistake => {
+            mistakesDiv.innerHTML += `<li class="text-sm text-red-700">Line ${mistake.line}: Expected "${escapeHtml(mistake.original)}", got "${escapeHtml(mistake.typed)}"</li>`;
+        });
+        mistakesDiv.innerHTML += '</ul></div>';
+    }
+    
+    resultsDiv.classList.remove('hidden');
+    
+    // Save result
+    fetch('{% url "typing_practice:save_result" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            code_id: codeId,
+            wpm: wpm,
+            accuracy: accuracy,
+            mistakes: mistakes,
+            mistakes_list: mistakesList,
+            duration_seconds: Math.round(duration)
+        })
+    });
+}
+
+function reset() {
+    typingInput.value = '';
+    typingInput.disabled = false;
+    startTime = null;
+    isFinished = false;
+    mistakesList = [];
+    clearInterval(timerInterval);
+    timerInterval = null;
+    finishBtn.disabled = true;
+    resultsDiv.classList.add('hidden');
+    initCodeDisplay();
+    document.getElementById('wpm').textContent = '0';
+    document.getElementById('accuracy').textContent = '100%';
+    document.getElementById('timer').textContent = '0s';
+    typingInput.focus();
+}
+
+typingInput.addEventListener('input', () => {
+    startTyping();
+    updateDisplay();
+});
+
+finishBtn.addEventListener('click', () => {
+    const typed = typingInput.value;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const typedChars = typed.length;
+    const mistakes = mistakesList.length;
+    const correctChars = typedChars - mistakes;
+    const wpm = (typedChars / 5 / elapsed) * 60;
+    const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+    finishTyping(wpm, accuracy, mistakes);
+});
+
+resetBtn.addEventListener('click', reset);
+
+initCodeDisplay();
+</script>
+{% endblock %}
+

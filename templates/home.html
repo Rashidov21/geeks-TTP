@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Typing Trainer Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto text-center py-16">
+    <h1 class="text-5xl font-bold mb-6 text-blue-600">Typing Trainer Platform</h1>
+    <p class="text-xl text-gray-600 mb-8">Geeks Andijan o'quvchilari uchun typing tezligi va code typing malakasini oshirish platformasi</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold mb-2">Text Practice</h3>
+            <p class="text-gray-600">Oddiy va murakkab matnlar bilan mashq qiling</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold mb-2">Code Practice</h3>
+            <p class="text-gray-600">Python, JavaScript, C++, Java kodlarini yozing</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold mb-2">Competitions</h3>
+            <p class="text-gray-600">1v1 va guruh musobaqalarida qatnashing</p>
+        </div>
+    </div>
+    
+    <div class="space-x-4">
+        <a href="{% url 'accounts:login' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold inline-block">Login</a>
+        <a href="{% url 'accounts:register' %}" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-semibold inline-block">Register</a>
+    </div>
+</div>
+{% endblock %}
+

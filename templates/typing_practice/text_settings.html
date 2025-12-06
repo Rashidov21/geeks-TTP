@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Text Practice Settings - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center">Text Practice Settings</h1>
+    
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <form method="get" action="{% url 'typing_practice:text_practice' 'easy' %}" id="practice-form">
+            <div class="space-y-6">
+                <!-- Difficulty Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Difficulty</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative">
+                            <input type="radio" name="difficulty" value="easy" class="peer hidden" checked>
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-green-300 transition">
+                                <div class="text-2xl mb-2">🌱</div>
+                                <div class="font-semibold">Easy</div>
+                                <div class="text-sm text-gray-600">Simple texts</div>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" name="difficulty" value="hard" class="peer hidden">
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-red-500 peer-checked:bg-red-50 hover:border-red-300 transition">
+                                <div class="text-2xl mb-2">🔥</div>
+                                <div class="font-semibold">Hard</div>
+                                <div class="text-sm text-gray-600">Complex texts</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Mode Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Practice Mode</label>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                            <input type="radio" name="mode" value="words" class="mr-3" checked>
+                            <div>
+                                <div class="font-semibold">Words Count</div>
+                                <div class="text-sm text-gray-600">Practice with specific number of words</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                            <input type="radio" name="mode" value="time" class="mr-3">
+                            <div>
+                                <div class="font-semibold">Time Limit</div>
+                                <div class="text-sm text-gray-600">Practice for a specific duration</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
+                            <input type="radio" name="mode" value="full" class="mr-3">
+                            <div>
+                                <div class="font-semibold">Full Text</div>
+                                <div class="text-sm text-gray-600">Type the complete text</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Words Count (shown when mode is words) -->
+                <div id="words-option" class="mode-option">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Number of Words</label>
+                    <select name="words_count" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="10">10 words</option>
+                        <option value="25" selected>25 words</option>
+                        <option value="50">50 words</option>
+                        <option value="100">100 words</option>
+                        <option value="200">200 words</option>
+                    </select>
+                </div>
+
+                <!-- Time Limit (shown when mode is time) -->
+                <div id="time-option" class="mode-option hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+                    <select name="time_limit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="30">30 seconds</option>
+                        <option value="60" selected>1 minute</option>
+                        <option value="120">2 minutes</option>
+                        <option value="300">5 minutes</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-lg transition">
+                    Start Practice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('input[name="mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.mode-option').forEach(opt => opt.classList.add('hidden'));
+        if (this.value === 'words') {
+            document.getElementById('words-option').classList.remove('hidden');
+        } else if (this.value === 'time') {
+            document.getElementById('time-option').classList.remove('hidden');
+        }
+    });
+});
+
+document.getElementById('practice-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const params = new URLSearchParams();
+    params.append('difficulty', difficulty);
+    params.append('mode', mode);
+    
+    if (mode === 'words') {
+        params.append('words_count', document.querySelector('select[name="words_count"]').value);
+    } else if (mode === 'time') {
+        params.append('time_limit', document.querySelector('select[name="time_limit"]').value);
+    }
+    
+    window.location.href = `{% url 'typing_practice:text_practice' 'easy' %}?${params.toString()}`;
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-gray-600 text-sm font-medium mb-2">Average WPM</h3>
+        <p class="text-3xl font-bold text-blue-600">{{ avg_wpm }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-gray-600 text-sm font-medium mb-2">Best WPM</h3>
+        <p class="text-3xl font-bold text-green-600">{{ max_wpm }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-gray-600 text-sm font-medium mb-2">Average Accuracy</h3>
+        <p class="text-3xl font-bold text-purple-600">{{ avg_accuracy }}%</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-gray-600 text-sm font-medium mb-2">Total Sessions</h3>
+        <p class="text-3xl font-bold text-orange-600">{{ total_sessions }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Recent Results</h2>
+        {% if recent_results %}
+        <div class="space-y-3">
+            {% for result in recent_results %}
+            <div class="border-b pb-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">{{ result.session_type|title }} Practice</p>
+                        <p class="text-sm text-gray-500">{{ result.time|date:"M d, Y H:i" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-blue-600">{{ result.wpm }} WPM</p>
+                        <p class="text-sm text-gray-600">{{ result.accuracy }}% accuracy</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500">No results yet. Start practicing!</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Competition Invitations</h2>
+        {% if pending_competitions %}
+        <div class="space-y-3">
+            {% for comp in pending_competitions %}
+            <div class="border rounded p-4">
+                <h3 class="font-bold">{{ comp.name }}</h3>
+                <p class="text-sm text-gray-600">Mode: {{ comp.mode|upper }}</p>
+                <p class="text-sm text-gray-600">Starts: {{ comp.start_time|date:"M d, Y H:i" }}</p>
+                <a href="{% url 'competitions:detail' comp.id %}" class="mt-2 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Join Competition</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500">No pending competitions</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

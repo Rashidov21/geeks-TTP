@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Practice - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center">Typing Practice</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4">Text Practice</h2>
+            <p class="text-gray-600 mb-4">Practice typing with regular text passages</p>
+            <div class="space-y-3">
+                <a href="{% url 'typing_practice:text_settings' %}" class="block bg-blue-600 hover:bg-blue-700 text-white text-center py-3 px-4 rounded-lg font-medium">Configure & Start</a>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4">Code Practice</h2>
+            <p class="text-gray-600 mb-4">Practice typing code in different languages</p>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="{% url 'typing_practice:code_practice' 'python' %}" class="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white text-center py-3 px-4 rounded-lg transition">
+                    <span class="text-2xl">🐍</span>
+                    <span class="font-medium">Python</span>
+                </a>
+                <a href="{% url 'typing_practice:code_practice' 'javascript' %}" class="flex items-center justify-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white text-center py-3 px-4 rounded-lg transition">
+                    <span class="text-2xl">🟨</span>
+                    <span class="font-medium">JavaScript</span>
+                </a>
+                <a href="{% url 'typing_practice:code_practice' 'cpp' %}" class="flex items-center justify-center space-x-2 bg-purple-500 hover:bg-purple-600 text-white text-center py-3 px-4 rounded-lg transition">
+                    <span class="text-2xl">⚙️</span>
+                    <span class="font-medium">C++</span>
+                </a>
+                <a href="{% url 'typing_practice:code_practice' 'java' %}" class="flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white text-center py-3 px-4 rounded-lg transition">
+                    <span class="text-2xl">☕</span>
+                    <span class="font-medium">Java</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

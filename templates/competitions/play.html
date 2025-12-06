@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block title %}Play Competition - Stage {{ stage_number }} - Typing Trainer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+    .word { margin-right: 0.5rem; }
+    .correct { color: #10b981; }
+    .incorrect { background-color: #fee2e2; color: #dc2626; }
+    .current { background-color: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; padding-left: 2px; }
+    .typed { color: #6b7280; }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stats-card.wpm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stats-card.accuracy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stats-card.time { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Stage Progress -->
+    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <div class="flex items-center justify-between mb-2">
+            <h1 class="text-2xl font-bold">{{ competition.name }}</h1>
+            <div class="flex items-center space-x-2">
+                {% for s in all_stages %}
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold
+                        {% if s.stage_number < stage_number %}bg-green-500 text-white
+                        {% elif s.stage_number == stage_number %}bg-blue-500 text-white
+                        {% else %}bg-gray-200 text-gray-600{% endif %}">
+                        {{ s.stage_number }}
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="w-8 h-1 mx-1 {% if s.stage_number < stage_number %}bg-green-500{% else %}bg-gray-200{% endif %}"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="text-center">
+            <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                Stage {{ stage_number }} of 3
+            </span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="stats-card wpm">
+            <p class="text-sm opacity-90 mb-1">WPM</p>
+            <p class="text-4xl font-bold" id="wpm">0</p>
+        </div>
+        <div class="stats-card accuracy">
+            <p class="text-sm opacity-90 mb-1">Accuracy</p>
+            <p class="text-4xl font-bold" id="accuracy">100%</p>
+        </div>
+        <div class="stats-card time">
+            <p class="text-sm opacity-90 mb-1">Time</p>
+            <p class="text-4xl font-bold" id="timer">0s</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+        {% if stage.text %}
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2">{{ stage.text.title }}</h3>
+            <div id="text-display" class="text-xl leading-relaxed p-6 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[250px] mb-4 font-mono">
+            </div>
+        </div>
+        {% elif stage.code_snippet %}
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2">{{ stage.code_snippet.title }}</h3>
+            <div id="code-display" class="p-6 bg-gray-900 text-gray-100 rounded-lg border-2 border-gray-700 min-h-[400px] mb-4 overflow-auto">
+                <pre><code class="language-{{ stage.code_snippet.language }}">{{ stage.code_snippet.code_body }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+        
+        <textarea 
+            id="typing-input" 
+            class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg font-mono"
+            rows="6"
+            placeholder="Start typing here..."
+            autofocus
+            spellcheck="false"
+        ></textarea>
+        
+        <div class="mt-4 flex space-x-4">
+            <button id="finish-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Finish Stage</button>
+        </div>
+    </div>
+    
+    <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-2xl font-bold mb-4 text-center">Stage {{ stage_number }} Results</h3>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">WPM</p>
+                <p class="text-3xl font-bold text-blue-600" id="result-wpm">0</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Accuracy</p>
+                <p class="text-3xl font-bold text-purple-600" id="result-accuracy">0%</p>
+            </div>
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Time</p>
+                <p class="text-3xl font-bold text-green-600" id="result-time">0s</p>
+            </div>
+        </div>
+        <div class="text-center">
+            {% if stage_number < 3 %}
+            <a href="{% url 'competitions:play' competition.id stage_number|add:1 %}" id="next-stage-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">Continue to Stage {{ stage_number|add:1 }}</a>
+            {% else %}
+            <a href="{% url 'competitions:results' competition.id %}" id="view-results-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg inline-block">View Final Results</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const competitionId = {{ competition.id }};
+const stageNumber = {{ stage_number }};
+const isCode = {% if stage.code_snippet %}true{% else %}false{% endif %};
+const originalText = `{% if stage.text %}{{ stage.text.body|escapejs }}{% elif stage.code_snippet %}{{ stage.code_snippet.code_body|escapejs }}{% endif %}`;
+let startTime = null;
+let timerInterval = null;
+let isFinished = false;
+let mistakesList = [];
+
+const display = document.getElementById(isCode ? 'code-display' : 'text-display');
+const typingInput = document.getElementById('typing-input');
+const finishBtn = document.getElementById('finish-btn');
+const resultsDiv = document.getElementById('results');
+
+if (isCode) {
+    hljs.highlightAll();
+}
+
+function initDisplay() {
+    if (isCode) {
+        // Code display already initialized
+    } else {
+        const words = originalText.trim().split(/\s+/);
+        display.innerHTML = words.map((word, i) => 
+            `<span class="word" data-index="${i}">${word}</span>`
+        ).join(' ');
+    }
+}
+
+function updateDisplay() {
+    const typed = typingInput.value;
+    let mistakes = 0;
+    mistakesList = [];
+    
+    if (isCode) {
+        const originalLines = originalText.split('\n');
+        const typedLines = typed.split('\n');
+        let html = '';
+        
+        originalLines.forEach((line, lineIdx) => {
+            const typedLine = typedLines[lineIdx] || '';
+            let lineHtml = '<div class="code-line" data-line="' + lineIdx + '">';
+            
+            if (lineIdx < typedLines.length - 1) {
+                if (line === typedLine) {
+                    lineHtml += '<span class="correct typed">' + escapeHtml(line) + '</span>';
+                } else {
+                    lineHtml += '<span class="incorrect typed">' + escapeHtml(line) + '</span>';
+                    mistakes++;
+                }
+            } else if (lineIdx === typedLines.length - 1) {
+                for (let i = 0; i < line.length; i++) {
+                    const typedChar = typedLine[i] || '';
+                    const originalChar = line[i];
+                    
+                    if (i < typedLine.length) {
+                        if (originalChar === typedChar) {
+                            lineHtml += '<span class="correct typed">' + escapeHtml(originalChar) + '</span>';
+                        } else {
+                            lineHtml += '<span class="incorrect">' + escapeHtml(originalChar) + '</span>';
+                            mistakes++;
+                        }
+                    } else if (i === typedLine.length) {
+                        lineHtml += '<span class="current">' + escapeHtml(originalChar) + '</span>';
+                    } else {
+                        lineHtml += '<span>' + escapeHtml(originalChar) + '</span>';
+                    }
+                }
+            } else {
+                lineHtml += '<span>' + escapeHtml(line) + '</span>';
+            }
+            
+            lineHtml += '</div>';
+            html += lineHtml;
+        });
+        
+        display.querySelector('pre code').innerHTML = html;
+    } else {
+        const words = originalText.trim().split(/\s+/);
+        const typedWords = typed.trim().split(/\s+/);
+        let html = '';
+        
+        words.forEach((word, i) => {
+            const typedWord = typedWords[i] || '';
+            let classes = 'word';
+            
+            if (i < typedWords.length - 1) {
+                if (word === typedWord) {
+                    classes += ' correct typed';
+                } else {
+                    classes += ' incorrect typed';
+                    mistakes++;
+                }
+            } else if (i === typedWords.length - 1) {
+                classes += ' current';
+                if (typedWord.length > 0 && !word.startsWith(typedWord)) {
+                    classes += ' incorrect';
+                    mistakes++;
+                }
+            }
+            
+            html += `<span class="${classes}" data-index="${i}">${word}</span> `;
+        });
+        
+        display.innerHTML = html;
+    }
+    
+    if (startTime) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const typedChars = typed.length;
+        const correctChars = typedChars - mistakes;
+        const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
+        const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+        
+        document.getElementById('wpm').textContent = Math.round(wpm);
+        document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
+        document.getElementById('timer').textContent = Math.round(elapsed) + 's';
+        
+        if (typed.trim() === originalText.trim()) {
+            finishTyping(wpm, accuracy, mistakes);
+        }
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function startTyping() {
+    if (!startTime) {
+        startTime = Date.now();
+        timerInterval = setInterval(updateDisplay, 100);
+        finishBtn.disabled = false;
+    }
+}
+
+function finishTyping(wpm, accuracy, mistakes) {
+    if (isFinished) return;
+    isFinished = true;
+    
+    clearInterval(timerInterval);
+    typingInput.disabled = true;
+    finishBtn.disabled = true;
+    
+    const duration = (Date.now() - startTime) / 1000;
+    
+    document.getElementById('result-wpm').textContent = Math.round(wpm);
+    document.getElementById('result-accuracy').textContent = Math.round(accuracy) + '%';
+    document.getElementById('result-time').textContent = Math.round(duration) + 's';
+    resultsDiv.classList.remove('hidden');
+    
+    // Save result
+    fetch('{% url "competitions:save_result" competition.id stage_number %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            wpm: wpm,
+            accuracy: accuracy,
+            mistakes: mistakes
+        })
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.next_stage) {
+                document.getElementById('next-stage-btn').classList.remove('hidden');
+            } else if (data.finished) {
+                document.getElementById('view-results-btn').classList.remove('hidden');
+            }
+        }
+    });
+}
+
+typingInput.addEventListener('input', () => {
+    startTyping();
+    updateDisplay();
+});
+
+finishBtn.addEventListener('click', () => {
+    const typed = typingInput.value;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const typedChars = typed.length;
+    const mistakes = mistakesList.length || 0;
+    const correctChars = typedChars - mistakes;
+    const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
+    const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+    finishTyping(wpm, accuracy, mistakes);
+});
+
+initDisplay();
+</script>
+{% endblock %}
