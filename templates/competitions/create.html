@@ -12,12 +12,12 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Musobaqa nomi</label>
-                <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="name" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Rejim</label>
-                <select name="mode" id="mode-select" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="mode" id="mode-select" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
                     <option value="text">Matn</option>
                     <option value="code">Kod</option>
                 </select>
@@ -28,7 +28,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <label class="relative">
                         <input type="radio" name="difficulty" value="easy" class="peer hidden" checked>
-                        <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-green-300 transition">
+                        <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-primary peer-checked:bg-gray-200 hover:border-gray-400 transition">
                             <div class="text-2xl mb-2">🌱</div>
                             <div class="font-semibold">Oson</div>
                         </div>
@@ -46,12 +46,12 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Boshlanish vaqti</label>
-                <input type="datetime-local" name="start_time" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="datetime-local" name="start_time" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Ishtirokchilar (Bir nechtasini tanlash uchun Ctrl/Cmd ni bosing)</label>
-                <select name="participants" multiple size="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="participants" multiple size="10" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
                     {% for u in users %}
                     <option value="{{ u.id }}">{{ u.username }}</option>
                     {% endfor %}
@@ -60,14 +60,14 @@
             
             <div>
                 <label class="flex items-center space-x-2">
-                    <input type="checkbox" name="is_public" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <input type="checkbox" name="is_public" checked class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
                     <span class="text-sm font-medium text-gray-700">Musobaqani ochiq qilish (hammaga ko'rinadi)</span>
                 </label>
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Kirish kodi (ixtiyoriy, bo'sh qoldirilsa avtomatik yaratiladi)</label>
-                <input type="text" name="access_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="access_code" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
             <button type="submit" class="w-full flex items-center justify-center space-x-2 gradient-secondary text-primary px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-300 hover:scale-105 shadow-lg">

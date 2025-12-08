@@ -2,46 +2,88 @@
 
 {% block title %}Register - Typing Trainer{% endblock %}
 
+{% block extra_css %}
+<style>
+    .form-container {
+        animation: fadeIn 0.6s ease-out;
+    }
+    .input-error {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+    }
+    .input-error:focus {
+        border-color: #ef4444 !important;
+        ring-color: #ef4444 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8 mt-16">
-    <h2 class="text-2xl font-bold text-center mb-6 flex items-center justify-center space-x-2">
-        <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-xl p-8 mt-16 form-container hover-lift">
+    <h2 class="text-3xl font-bold text-center mb-8 flex items-center justify-center space-x-2 text-primary">
+        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
         </svg>
         <span>Ro'yxatdan o'tish</span>
     </h2>
-    <form method="post" class="space-y-4">
+    <form method="post" class="space-y-5">
         {% csrf_token %}
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Foydalanuvchi nomi</label>
+            <label class="block text-sm font-semibold text-primary mb-2">Foydalanuvchi nomi</label>
             {{ form.username }}
             {% if form.username.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.username.errors }}</p>
+            <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>{{ form.username.errors.0 }}</span>
+            </p>
             {% endif %}
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Parol</label>
+            <label class="block text-sm font-semibold text-primary mb-2">Parol</label>
             {{ form.password1 }}
             {% if form.password1.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.password1.errors }}</p>
+            <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>{{ form.password1.errors.0 }}</span>
+            </p>
+            {% endif %}
+            {% if form.password1.help_text %}
+            <p class="text-xs text-gray-500 mt-1">{{ form.password1.help_text }}</p>
             {% endif %}
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Parolni tasdiqlash</label>
+            <label class="block text-sm font-semibold text-primary mb-2">Parolni tasdiqlash</label>
             {{ form.password2 }}
             {% if form.password2.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.password2.errors }}</p>
+            <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>{{ form.password2.errors.0 }}</span>
+            </p>
             {% endif %}
         </div>
-        <button type="submit" class="w-full flex items-center justify-center space-x-2 gradient-secondary text-primary py-2 px-4 rounded transition-all duration-300 hover:scale-105 shadow-lg font-semibold">
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <span>{{ form.non_field_errors.0 }}</span>
+        </div>
+        {% endif %}
+        <button type="submit" class="w-full flex items-center justify-center space-x-2 gradient-secondary text-primary py-3 px-6 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-xl font-semibold text-base mt-6">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
             </svg>
             <span>Ro'yxatdan o'tish</span>
         </button>
     </form>
-    <p class="mt-4 text-center text-sm text-gray-600">
-        Allaqachon hisobingiz bormi? <a href="{% url 'accounts:login' %}" class="text-blue-600 hover:underline">Kirish</a>
+    <p class="mt-6 text-center text-sm text-gray-600">
+        Allaqachon hisobingiz bormi? <a href="{% url 'accounts:login' %}" class="text-primary font-semibold hover:text-primary-dark hover:underline transition-colors duration-300">Kirish</a>
     </p>
 </div>
 {% endblock %}

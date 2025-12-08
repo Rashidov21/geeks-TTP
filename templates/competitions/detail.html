@@ -21,9 +21,9 @@
                 <p class="text-sm text-gray-600">Holat</p>
                 <p class="font-bold text-lg">
                     {% if competition.status == 'pending' %}
-                    <span class="text-yellow-600">Kutilmoqda</span>
+                    <span class="text-primary">Kutilmoqda</span>
                     {% elif competition.status == 'active' %}
-                    <span class="text-green-600">Faol</span>
+                    <span class="text-primary">Faol</span>
                     {% else %}
                     <span class="text-gray-600">Tugallangan</span>
                     {% endif %}
@@ -41,17 +41,17 @@
         
         <!-- Stages Info -->
         {% if stages %}
-        <div class="mb-4 p-4 bg-blue-50 rounded-lg">
-            <h3 class="font-semibold mb-2">Musobaqa bosqichlari (3 bosqich)</h3>
+        <div class="mb-4 p-4 bg-gray-800 rounded-lg border-2 border-gray-700">
+            <h3 class="font-semibold mb-2 text-white">Musobaqa bosqichlari (3 bosqich)</h3>
             <div class="grid grid-cols-3 gap-2">
                 {% for stage in stages %}
-                <div class="text-center p-2 bg-white rounded">
+                <div class="text-center p-2 bg-gray-700 rounded border border-gray-600">
                     <div class="text-2xl mb-1">🎯</div>
-                    <div class="font-bold">Bosqich {{ stage.stage_number }}</div>
+                    <div class="font-bold text-white">Bosqich {{ stage.stage_number }}</div>
                     {% if stage.text %}
-                    <div class="text-xs text-gray-600">{{ stage.text.title|truncatewords:5 }}</div>
+                    <div class="text-xs text-gray-300">{{ stage.text.title|truncatewords:5 }}</div>
                     {% elif stage.code_snippet %}
-                    <div class="text-xs text-gray-600">{{ stage.code_snippet.title|truncatewords:5 }}</div>
+                    <div class="text-xs text-gray-300">{{ stage.code_snippet.title|truncatewords:5 }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -60,7 +60,7 @@
         {% endif %}
         
         {% if competition.access_code %}
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+        <div class="bg-gray-50 border-2 border-gray-300 text-primary px-4 py-3 rounded mb-4">
             <p class="font-semibold">Kirish kodi: {{ competition.access_code }}</p>
         </div>
         {% endif %}
@@ -108,7 +108,7 @@
                 {% csrf_token %}
                 {% if competition.access_code %}
                 <div class="mb-2">
-                    <input type="text" name="access_code" placeholder="Kirish kodini kiriting" class="px-4 py-2 border rounded-lg" required>
+                    <input type="text" name="access_code" placeholder="Kirish kodini kiriting" class="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary" required>
                 </div>
                 {% endif %}
                 <button type="submit" class="flex items-center space-x-2 gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
@@ -144,7 +144,7 @@
         {% if participants %}
         <div class="overflow-x-auto">
             <table class="min-w-full">
-                <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <thead class="gradient-primary text-white">
                     <tr>
                         <th class="px-4 py-3 text-left">O'rin</th>
                         <th class="px-4 py-3 text-left">Foydalanuvchi</th>
@@ -156,7 +156,7 @@
                 </thead>
                 <tbody>
                     {% for p in participants %}
-                    <tr class="border-b {% if p.user == user %}bg-blue-50{% endif %} hover:bg-gray-50">
+                    <tr class="border-b {% if p.user == user %}bg-gray-100 border-l-4 border-primary{% endif %} hover:bg-gray-50">
                         <td class="px-4 py-3">
                             {% if forloop.counter == 1 %}🥇
                             {% elif forloop.counter == 2 %}🥈
@@ -164,21 +164,21 @@
                             {% else %}#{{ forloop.counter }}{% endif %}
                         </td>
                         <td class="px-4 py-3 font-medium">{{ p.user.username }}</td>
-                        <td class="px-4 py-3 font-bold text-blue-600">{{ p.result_wpm|default:"-"|floatformat:1 }}</td>
+                        <td class="px-4 py-3 font-bold text-primary">{{ p.result_wpm|default:"-"|floatformat:1 }}</td>
                         <td class="px-4 py-3">{{ p.accuracy|default:"-"|floatformat:1 }}%</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center space-x-2">
                                 <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="gradient-secondary h-2 rounded-full" style="width: {% widthratio p.current_stage 3 100 %}%"></div>
+                                    <div class="bg-primary h-2 rounded-full" style="width: {% widthratio p.current_stage 3 100 %}%"></div>
                                 </div>
                                 <span class="text-sm">{{ p.current_stage }}/3</span>
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             {% if p.is_finished %}
-                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">Tugallangan</span>
+                            <span class="px-2 py-1 bg-gray-800 text-white rounded-full text-xs font-bold">Tugallangan</span>
                             {% else %}
-                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">Jarayonda</span>
+                            <span class="px-2 py-1 bg-gray-600 text-white rounded-full text-xs font-bold">Jarayonda</span>
                             {% endif %}
                         </td>
                     </tr>

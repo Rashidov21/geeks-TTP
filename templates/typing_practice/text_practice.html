@@ -5,14 +5,14 @@
 {% block extra_css %}
 <style>
     .word { margin-right: 0.5rem; }
-    .correct { color: #7FE680; }
+    .correct { color: #292929; }
     .incorrect { background-color: #fee2e2; color: #dc2626; }
-    .current { background-color: rgba(127, 230, 128, 0.2); border-left: 3px solid #7FE680; padding-left: 2px; }
+    .current { background-color: rgba(41, 41, 41, 0.1); border-left: 3px solid #292929; padding-left: 2px; }
     .typed { color: #6b7280; }
     .stats-card {
         background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%);
-        border-radius: 8px;
-        padding: 0.75rem;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
         color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
@@ -22,52 +22,53 @@
         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     }
     .stats-card.wpm { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
-    .stats-card.accuracy { background: linear-gradient(135deg, #7FE680 0%, #9fffa0 100%); color: #292929; }
+    .stats-card.accuracy { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
     .stats-card.time { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
-    .stats-card.cpm { background: linear-gradient(135deg, #7FE680 0%, #9fffa0 100%); color: #292929; }
+    .stats-card.cpm { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    <!-- Compact Stats Cards at top -->
-    <div class="grid grid-cols-4 gap-2 mb-4">
+    <!-- Stats Cards at top -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="stats-card wpm">
-            <p class="text-xs opacity-90 mb-0.5">WPM</p>
-            <p class="text-xl font-bold" id="wpm">0</p>
+            <p class="text-sm font-medium opacity-90 mb-1">WPM</p>
+            <p class="text-3xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
-            <p class="text-xs opacity-90 mb-0.5">Aniqlik</p>
-            <p class="text-xl font-bold" id="accuracy">100%</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Aniqlik</p>
+            <p class="text-3xl font-bold" id="accuracy">100%</p>
         </div>
         <div class="stats-card time">
-            <p class="text-xs opacity-90 mb-0.5">Vaqt</p>
-            <p class="text-xl font-bold" id="timer">0s</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Vaqt</p>
+            <p class="text-3xl font-bold" id="timer">0s</p>
         </div>
         <div class="stats-card cpm">
-            <p class="text-xs opacity-90 mb-0.5">CPM</p>
-            <p class="text-xl font-bold" id="cpm">0</p>
+            <p class="text-sm font-medium opacity-90 mb-1">CPM</p>
+            <p class="text-3xl font-bold" id="cpm">0</p>
         </div>
     </div>
 
     <!-- Main Content - Text and Typing Area -->
     <div class="bg-white rounded-lg shadow-lg p-6">
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-                <h2 class="text-lg font-semibold text-gray-700">{{ text.title }}</h2>
-                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium {% if difficulty == 'easy' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                    {{ difficulty|title }}
+                <h2 class="text-xl font-bold text-primary mb-1">{{ text.title }}</h2>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {% if difficulty == 'easy' %}bg-gray-200 text-primary{% else %}bg-gray-700 text-white{% endif %}">
+                    {% if difficulty == 'easy' %}🌱{% else %}🔥{% endif %}
+                    <span class="ml-1">{{ difficulty|title }}</span>
                 </span>
             </div>
             <div class="flex space-x-2">
-                <button id="reset-btn" class="flex items-center space-x-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-1.5 rounded text-sm font-medium transition-all duration-300 hover:scale-105">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="reset-btn" class="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                     <span>Qayta</span>
                 </button>
-                <button id="finish-btn" class="flex items-center space-x-1 gradient-secondary text-primary px-4 py-1.5 rounded text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="finish-btn" class="flex items-center space-x-2 gradient-secondary text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Tugatish</span>
@@ -76,14 +77,14 @@
         </div>
         
         <!-- Text Display - Larger and more prominent -->
-        <div id="text-display" class="text-2xl leading-relaxed p-8 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[300px] mb-4 font-mono">
+        <div id="text-display" class="text-2xl leading-relaxed p-8 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[300px] mb-6 font-mono text-primary">
             <!-- Text will be loaded here -->
         </div>
         
         <!-- Typing Input - Larger and more prominent -->
         <textarea 
             id="typing-input" 
-            class="w-full p-6 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-xl font-mono"
+            class="w-full p-6 bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary text-xl font-mono text-primary placeholder-gray-400 transition-all duration-300"
             rows="5"
             placeholder="Bu yerga yozishni boshlang..."
             autofocus
@@ -91,38 +92,38 @@
         ></textarea>
     </div>
     
-    <!-- Compact Results -->
-    <div id="results" class="hidden mt-4 bg-white rounded-lg shadow p-4">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-semibold flex items-center space-x-2">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Results -->
+    <div id="results" class="hidden mt-6 bg-white rounded-lg shadow-lg p-6 animate-fadeIn">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-2xl font-bold text-primary flex items-center space-x-2">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
                 <span>Natijalar</span>
             </h3>
-            <a href="{% url 'typing_practice:index' %}" class="flex items-center space-x-1 text-sm text-blue-600 hover:underline">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{% url 'typing_practice:index' %}" class="flex items-center space-x-2 text-primary hover:text-primary-dark font-semibold transition-colors duration-300 hover:underline">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 <span>Mashq qilishga qaytish</span>
             </a>
         </div>
-        <div class="grid grid-cols-4 gap-3">
-            <div class="text-center p-2 bg-gray-100 rounded hover-lift">
-                <p class="text-xs text-gray-600 mb-0.5">WPM</p>
-                <p class="text-xl font-bold text-primary" id="result-wpm">0</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
+                <p class="text-sm font-semibold text-gray-700 mb-1">WPM</p>
+                <p class="text-3xl font-bold text-primary" id="result-wpm">0</p>
             </div>
-            <div class="text-center p-2 bg-secondary rounded hover-lift" style="background-color: rgba(127, 230, 128, 0.2);">
-                <p class="text-xs text-gray-600 mb-0.5">CPM</p>
-                <p class="text-xl font-bold text-secondary" id="result-cpm">0</p>
+            <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
+                <p class="text-sm font-semibold text-gray-700 mb-1">CPM</p>
+                <p class="text-3xl font-bold text-primary" id="result-cpm">0</p>
             </div>
-            <div class="text-center p-2 bg-secondary rounded hover-lift" style="background-color: rgba(127, 230, 128, 0.2);">
-                <p class="text-xs text-gray-600 mb-0.5">Aniqlik</p>
-                <p class="text-xl font-bold text-secondary" id="result-accuracy">0%</p>
+            <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
+                <p class="text-sm font-semibold text-gray-700 mb-1">Aniqlik</p>
+                <p class="text-3xl font-bold text-primary" id="result-accuracy">0%</p>
             </div>
-            <div class="text-center p-2 bg-gray-100 rounded hover-lift">
-                <p class="text-xs text-gray-600 mb-0.5">Xatolar</p>
-                <p class="text-xl font-bold text-red-600" id="result-mistakes">0</p>
+            <div class="text-center p-4 bg-red-50 rounded-lg hover-lift border-2 border-red-200">
+                <p class="text-sm font-semibold text-red-700 mb-1">Xatolar</p>
+                <p class="text-3xl font-bold text-red-600" id="result-mistakes">0</p>
             </div>
         </div>
     </div>

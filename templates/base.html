@@ -11,11 +11,11 @@
                 extend: {
                     colors: {
                         primary: '#292929',
-                        secondary: '#7FE680',
+                        secondary: '#FAF9CF',
                         'primary-light': '#3a3a3a',
                         'primary-dark': '#1a1a1a',
-                        'secondary-light': '#9fffa0',
-                        'secondary-dark': '#5fcc60',
+                        'secondary-light': '#FDFCE5',
+                        'secondary-dark': '#F5F3B8',
                     }
                 }
             }
@@ -34,8 +34,8 @@
             to { transform: translateX(0); opacity: 1; }
         }
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(127, 230, 128, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(127, 230, 128, 0.8); }
+            0%, 100% { box-shadow: 0 0 5px rgba(250, 249, 207, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(250, 249, 207, 0.8); }
         }
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
@@ -55,10 +55,10 @@
             background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%);
         }
         .gradient-secondary {
-            background: linear-gradient(135deg, #7FE680 0%, #9fffa0 100%);
+            background: linear-gradient(135deg, #FAF9CF 0%, #FDFCE5 100%);
         }
         .gradient-mixed {
-            background: linear-gradient(135deg, #292929 0%, #7FE680 100%);
+            background: linear-gradient(135deg, #292929 0%, #FAF9CF 100%);
         }
         .shimmer-effect {
             background: linear-gradient(90deg, #292929 0%, #3a3a3a 50%, #292929 100%);
@@ -164,7 +164,7 @@
     {% if messages %}
     <div class="container mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-secondary border-secondary-dark text-primary{% endif %} border px-4 py-3 rounded relative mb-2 animate-fadeIn shadow-md" role="alert">
+        <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-gray-800 border-gray-700 text-white{% endif %} border px-4 py-3 rounded relative mb-2 animate-fadeIn shadow-md" role="alert">
             <span class="block sm:inline">{{ message }}</span>
         </div>
         {% endfor %}

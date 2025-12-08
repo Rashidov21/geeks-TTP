@@ -47,3 +47,4 @@ python manage.py runserver 8001
 
 Production'da HTTPS kerak bo'lganda, `settings.py` da `DEBUG = False` qiling va security settings'lar avtomatik faollashadi.
 
+
