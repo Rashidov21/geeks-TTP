@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Sertifikat - {{ competition.name }} - Typing Trainer{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .certificate-container, .certificate-container * {
+            visibility: visible;
+        }
+        .certificate-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none;
+        }
+    }
+    .certificate {
+        background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+        border: 8px solid #292929;
+        border-radius: 20px;
+        padding: 60px;
+        max-width: 900px;
+        margin: 0 auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .certificate-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .certificate-logo {
+        max-width: 150px;
+        max-height: 150px;
+        margin: 0 auto 20px;
+    }
+    .certificate-title {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #292929;
+        margin-bottom: 10px;
+    }
+    .certificate-subtitle {
+        font-size: 1.5rem;
+        color: #6b7280;
+        margin-bottom: 30px;
+    }
+    .certificate-body {
+        text-align: center;
+        margin: 40px 0;
+    }
+    .certificate-name {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #292929;
+        margin: 20px 0;
+        padding: 20px;
+        border-bottom: 3px solid #292929;
+        border-top: 3px solid #292929;
+    }
+    .certificate-text {
+        font-size: 1.3rem;
+        color: #374151;
+        line-height: 1.8;
+        margin: 20px 0;
+    }
+    .certificate-details {
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    .certificate-detail-item {
+        text-align: center;
+        margin: 15px;
+    }
+    .certificate-detail-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 5px;
+    }
+    .certificate-detail-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #292929;
+    }
+    .certificate-footer {
+        margin-top: 50px;
+        text-align: center;
+        border-top: 2px solid #e5e7eb;
+        padding-top: 30px;
+    }
+    .certificate-signatures {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 40px;
+        flex-wrap: wrap;
+    }
+    .certificate-signature {
+        text-align: center;
+        margin: 20px;
+        min-width: 200px;
+    }
+    .signature-line {
+        border-top: 2px solid #292929;
+        margin-top: 60px;
+        padding-top: 10px;
+    }
+    .rank-badge {
+        display: inline-block;
+        font-size: 4rem;
+        margin: 20px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8">
+    <div class="no-print mb-6 text-center">
+        <a href="{% url 'competitions:results' competition.id %}" class="inline-flex items-center space-x-2 text-primary hover:text-primary-dark font-semibold transition-colors duration-300 hover:underline mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Natijalarga qaytish</span>
+        </a>
+        <button onclick="window.print()" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Chop etish
+        </button>
+    </div>
+
+    <div class="certificate-container">
+        <div class="certificate">
+            <div class="certificate-header">
+                {% if certificate.logo %}
+                <img src="{{ certificate.logo.url }}" alt="Logo" class="certificate-logo">
+                {% endif %}
+                <h1 class="certificate-title">{{ certificate.organization_name|default:"GEEKS ANDIJAN" }}</h1>
+                <p class="certificate-subtitle">{{ certificate.certificate_subtitle|default:"Typing Competition Certificate" }}</p>
+            </div>
+
+            <div class="certificate-body">
+                <p class="certificate-text">Bu sertifikat bilan tasdiqlanadi</p>
+                
+                <div class="rank-badge">
+                    {% if rank == 1 %}🥇
+                    {% elif rank == 2 %}🥈
+                    {% elif rank == 3 %}🥉
+                    {% endif %}
+                </div>
+                
+                <div class="certificate-name">{{ winner.user.get_full_name|default:winner.user.username }}</div>
+                
+                <p class="certificate-text">
+                    <strong>{{ competition.name }}</strong> musobaqasida
+                    {% if rank == 1 %}
+                    <strong>1-o'rin</strong>ni qo'lga kiritgani uchun
+                    {% elif rank == 2 %}
+                    <strong>2-o'rin</strong>ni qo'lga kiritgani uchun
+                    {% elif rank == 3 %}
+                    <strong>3-o'rin</strong>ni qo'lga kiritgani uchun
+                    {% endif %}
+                    taqdirlandi.
+                </p>
+
+                <div class="certificate-details">
+                    <div class="certificate-detail-item">
+                        <div class="certificate-detail-label">O'rtacha WPM</div>
+                        <div class="certificate-detail-value">{{ winner.result_wpm|floatformat:1 }}</div>
+                    </div>
+                    <div class="certificate-detail-item">
+                        <div class="certificate-detail-label">O'rtacha Aniqlik</div>
+                        <div class="certificate-detail-value">{{ winner.accuracy|floatformat:1 }}%</div>
+                    </div>
+                    <div class="certificate-detail-item">
+                        <div class="certificate-detail-label">Musobaqa sanasi</div>
+                        <div class="certificate-detail-value">{{ competition.start_time|date:"d.m.Y" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if certificate.get_additional_names_list %}
+            <div class="certificate-footer">
+                <p class="text-sm text-gray-600 mb-4">Qo'shimcha nomlar:</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    {% for name in certificate.get_additional_names_list %}
+                    <span class="text-primary font-semibold">{{ name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="certificate-footer">
+                <div class="certificate-signatures">
+                    <div class="certificate-signature">
+                        <div class="signature-line">
+                            <p class="text-sm text-gray-600">{{ certificate.signature_name|default:"Geeks Andijan" }}</p>
+                        </div>
+                    </div>
+                    <div class="certificate-signature">
+                        <div class="signature-line">
+                            <p class="text-sm text-gray-600">Sana: {{ competition.finished_at|date:"d.m.Y"|default:competition.start_time|date:"d.m.Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

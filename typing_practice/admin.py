@@ -4,9 +4,19 @@ from .models import Text, CodeSnippet, UserResult
 
 @admin.register(Text)
 class TextAdmin(admin.ModelAdmin):
-    list_display = ['title', 'difficulty', 'created_at']
-    list_filter = ['difficulty', 'created_at']
+    list_display = ['title', 'difficulty', 'word_count', 'created_at']
+    list_filter = ['difficulty', 'word_count', 'created_at']
     search_fields = ['title', 'body']
+    fields = ['title', 'difficulty', 'word_count', 'body']
+    readonly_fields = ['created_at']
+    
+    def save_model(self, request, obj, form, change):
+        # Validate word count matches actual body word count
+        actual_word_count = len(obj.body.split())
+        if abs(actual_word_count - obj.word_count) > 2:  # Allow 2 words difference
+            from django.contrib import messages
+            messages.warning(request, f'Eslatma: Matndagi haqiqiy so\'zlar soni ({actual_word_count}) belgilangan so\'zlar sonidan ({obj.word_count}) farq qiladi.')
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(CodeSnippet)

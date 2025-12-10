@@ -7,7 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
 from django.db.models import Avg
 from django.db import transaction
-from .models import Competition, CompetitionParticipant, CompetitionStage, CompetitionParticipantStage
+from .models import Competition, CompetitionParticipant, CompetitionStage, CompetitionParticipantStage, Certificate
 from typing_practice.models import Text, CodeSnippet
 from typing_practice.utils import get_random_text, get_random_code
 import json
@@ -103,6 +103,7 @@ def competition_create(request):
         user_ids = request.POST.getlist('participants')
         access_code = request.POST.get('access_code', '').strip()
         is_public = request.POST.get('is_public') == 'on'
+        enable_certificates = request.POST.get('enable_certificates') == 'on'
         
         if not access_code:
             access_code = secrets.token_urlsafe(8)
@@ -115,32 +116,37 @@ def competition_create(request):
             created_by=request.user,
             access_code=access_code,
             is_public=is_public,
+            enable_certificates=enable_certificates,
             status='pending'
         )
+        
+        # Create certificate if enabled
+        if enable_certificates:
+            Certificate.objects.get_or_create(competition=competition)
         
         # Create 3 stages with random texts/codes (optimized)
         with transaction.atomic():
             if mode == 'text':
-                # Use optimized random selection
-                selected_texts = []
-                for _ in range(3):
-                    text = get_random_text(difficulty)
-                    if text and text not in selected_texts:
-                        selected_texts.append(text)
-                    if len(selected_texts) >= 3:
-                        break
+                # Get all available texts for this difficulty
+                from typing_practice.models import Text
+                available_texts = list(Text.objects.filter(difficulty=difficulty).values_list('id', flat=True))
                 
-                if len(selected_texts) >= 3:
-                    for i, text in enumerate(selected_texts, 1):
-                        CompetitionStage.objects.create(
-                            competition=competition,
-                            stage_number=i,
-                            text=text
-                        )
-                else:
-                    messages.error(request, 'Yetarli matnlar topilmadi (kamida 3 ta kerak).')
+                if len(available_texts) < 3:
+                    messages.error(request, f'Yetarli matnlar topilmadi (kamida 3 ta kerak, hozir {len(available_texts)} ta mavjud).')
                     competition.delete()
                     return redirect('competitions:list')
+                
+                # Select 3 random unique texts
+                import random
+                selected_text_ids = random.sample(available_texts, min(3, len(available_texts)))
+                selected_texts = Text.objects.filter(id__in=selected_text_ids)
+                
+                for i, text in enumerate(selected_texts, 1):
+                    CompetitionStage.objects.create(
+                        competition=competition,
+                        stage_number=i,
+                        text=text
+                    )
                     
             elif mode == 'code':
                 # Use optimized random selection
@@ -234,6 +240,10 @@ def competition_finish(request, competition_id):
     competition.status = 'finished'
     competition.save()
     
+    # Create certificate if enabled and not already created
+    if competition.enable_certificates:
+        Certificate.objects.get_or_create(competition=competition)
+    
     messages.success(request, 'Competition finished!')
     return redirect('competitions:results', competition_id=competition.id)
 
@@ -263,6 +273,45 @@ def competition_play(request, competition_id, stage_number=1):
         messages.error(request, 'Noto\'g\'ri bosqich raqami')
         return redirect('competitions:detail', competition_id=competition.id)
     
+    # Check if stages exist, if not create them
+    stages_count = CompetitionStage.objects.filter(competition=competition).count()
+    if stages_count == 0:
+        # Create stages for old competitions
+        from typing_practice.models import Text, CodeSnippet
+        import random
+        
+        if competition.mode == 'text':
+            available_texts = list(Text.objects.filter(difficulty=competition.difficulty).values_list('id', flat=True))
+            if len(available_texts) >= 3:
+                selected_text_ids = random.sample(available_texts, min(3, len(available_texts)))
+                selected_texts = Text.objects.filter(id__in=selected_text_ids)
+                for i, text in enumerate(selected_texts, 1):
+                    CompetitionStage.objects.get_or_create(
+                        competition=competition,
+                        stage_number=i,
+                        defaults={'text': text}
+                    )
+            else:
+                messages.error(request, 'Musobaqa uchun matnlar topilmadi. Iltimos, admin bilan bog\'laning.')
+                return redirect('competitions:detail', competition_id=competition.id)
+        elif competition.mode == 'code':
+            available_codes = list(CodeSnippet.objects.filter(
+                language='python',
+                difficulty=competition.difficulty
+            ).values_list('id', flat=True))
+            if len(available_codes) >= 3:
+                selected_code_ids = random.sample(available_codes, min(3, len(available_codes)))
+                selected_codes = CodeSnippet.objects.filter(id__in=selected_code_ids)
+                for i, code in enumerate(selected_codes, 1):
+                    CompetitionStage.objects.get_or_create(
+                        competition=competition,
+                        stage_number=i,
+                        defaults={'code_snippet': code}
+                    )
+            else:
+                messages.error(request, 'Musobaqa uchun kodlar topilmadi. Iltimos, admin bilan bog\'laning.')
+                return redirect('competitions:detail', competition_id=competition.id)
+    
     # Get current stage with related objects
     stage = get_object_or_404(
         CompetitionStage.objects.select_related('text', 'code_snippet'),
@@ -276,10 +325,19 @@ def competition_play(request, competition_id, stage_number=1):
         stage=stage
     )
     
+    # Check attempts limit
+    if not participant_stage.can_attempt():
+        messages.error(request, f'Siz bu bosqich uchun maksimal urinishlar soniga ({competition.max_attempts_per_stage}) yetdingiz')
+        return redirect('competitions:detail', competition_id=competition.id)
+    
     if created and stage_number == 1:
         participant.started_at = timezone.now()
         participant.current_stage = 1
         participant.save()
+    
+    if not participant_stage.started_at:
+        participant_stage.started_at = timezone.now()
+        participant_stage.save()
     
     # Get all stages for navigation
     all_stages = CompetitionStage.objects.filter(
@@ -335,11 +393,22 @@ def competition_save_result(request, competition_id, stage_number):
                 participant=participant,
                 stage=stage
             )
-            participant_stage.wpm = wpm
-            participant_stage.accuracy = accuracy
-            participant_stage.mistakes = mistakes
-            participant_stage.is_finished = True
-            participant_stage.finished_at = timezone.now()
+            
+            # Check attempts limit
+            if not participant_stage.can_attempt():
+                return JsonResponse({'error': f'Siz bu bosqich uchun maksimal urinishlar soniga ({competition.max_attempts_per_stage}) yetdingiz'}, status=400)
+            
+            # Increment attempts
+            participant_stage.attempts += 1
+            
+            # Only update results if this attempt is better or first attempt
+            if not participant_stage.is_finished or (wpm > (participant_stage.wpm or 0)):
+                participant_stage.wpm = wpm
+                participant_stage.accuracy = accuracy
+                participant_stage.mistakes = mistakes
+                participant_stage.is_finished = True
+                participant_stage.finished_at = timezone.now()
+            
             participant_stage.save()
             
             # Update participant current stage
@@ -413,9 +482,92 @@ def competition_results(request, competition_id):
         for stage_result in participant.stage_results.all():
             participant_results[participant.id]['stages'][stage_result.stage.stage_number] = stage_result
     
+    # Find user's rank for certificate link
+    user_rank = None
+    user_participant = None
+    for idx, participant in enumerate(participants, 1):
+        if participant.user == request.user:
+            user_rank = idx
+            user_participant = participant
+            break
+    
     return render(request, 'competitions/results.html', {
         'competition': competition,
         'participants': participants,
         'stages': stages,
         'participant_results': participant_results,
+        'user_rank': user_rank,
+        'user_participant': user_participant,
+    })
+
+
+@login_required
+def competition_certificate(request, competition_id, rank=None):
+    """Display certificate for top 3 winners or user's own certificate"""
+    competition = get_object_or_404(
+        Competition.objects.select_related('created_by'),
+        id=competition_id
+    )
+    
+    # Only show certificates for finished competitions
+    if competition.status != 'finished':
+        messages.error(request, 'Musobaqa hali tugallanmagan')
+        return redirect('competitions:detail', competition_id=competition.id)
+    
+    # Get participant at this rank
+    participants = CompetitionParticipant.objects.filter(
+        competition=competition,
+        is_finished=True
+    ).select_related('user').order_by('-result_wpm')
+    
+    # If rank is not provided, show user's own certificate if they are in top 3
+    if rank is None:
+        # Find user's rank
+        user_participant = participants.filter(user=request.user).first()
+        if not user_participant:
+            messages.error(request, 'Siz bu musobaqada ishtirok etmadingiz')
+            return redirect('competitions:results', competition_id=competition.id)
+        
+        # Find user's rank
+        user_rank = None
+        for idx, participant in enumerate(participants, 1):
+            if participant.user == request.user:
+                user_rank = idx
+                break
+        
+        if user_rank and user_rank <= 3:
+            rank = user_rank
+            winner = user_participant
+        else:
+            messages.error(request, 'Siz top 3 talikda emassiz, sertifikat faqat 1, 2, 3 o\'rinlar uchun')
+            return redirect('competitions:results', competition_id=competition.id)
+    else:
+        # Only allow ranks 1, 2, 3
+        if rank not in [1, 2, 3]:
+            messages.error(request, 'Noto\'g\'ri o\'rin raqami')
+            return redirect('competitions:results', competition_id=competition.id)
+        
+        if participants.count() < rank:
+            messages.error(request, 'Bu o\'rin uchun sertifikat mavjud emas')
+            return redirect('competitions:results', competition_id=competition.id)
+        
+        winner = participants[rank - 1]
+        
+        # Check if user is the winner or admin
+        if winner.user != request.user and not (hasattr(request.user, 'userprofile') and request.user.userprofile.is_manager):
+            messages.error(request, 'Siz bu sertifikatni ko\'ra olmaysiz')
+            return redirect('competitions:results', competition_id=competition.id)
+    
+    # Get or create certificate (should already exist if enable_certificates is True)
+    certificate, created = Certificate.objects.get_or_create(competition=competition)
+    
+    # Get all winners for display
+    top_three = list(participants[:3])
+    
+    return render(request, 'competitions/certificate.html', {
+        'competition': competition,
+        'winner': winner,
+        'rank': rank,
+        'certificate': certificate,
+        'top_three': top_three,
     })

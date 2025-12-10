@@ -38,13 +38,18 @@ def validate_accuracy(accuracy):
     return max(0, min(100, float(accuracy)))
 
 
-def get_random_text(difficulty='easy'):
-    """Get random text efficiently"""
+def get_random_text(difficulty='easy', word_count=None):
+    """Get random text efficiently based on difficulty and word count"""
     from .models import Text
     import random
     
+    # Filter by difficulty and word_count if provided
+    query = Text.objects.filter(difficulty=difficulty)
+    if word_count:
+        query = query.filter(word_count=word_count)
+    
     # Get all IDs first (more efficient)
-    text_ids = list(Text.objects.filter(difficulty=difficulty).values_list('id', flat=True))
+    text_ids = list(query.values_list('id', flat=True))
     if not text_ids:
         return None
     

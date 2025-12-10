@@ -43,15 +43,15 @@
             <table class="min-w-full">
                 <thead class="gradient-primary text-white">
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">O'rin</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Foydalanuvchi</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">O'rin</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Foydalanuvchi</th>
                         {% if leaderboard_type == 'accuracy' %}
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Aniqlik</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Aniqlik</th>
                         {% else %}
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Eng yaxshi WPM</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">O'rtacha WPM</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Eng yaxshi WPM</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">O'rtacha WPM</th>
                         {% endif %}
-                        <th class="px-6 py-4 text-left text-sm font-semibold uppercase">Mashqlar</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Mashqlar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -64,7 +64,7 @@
                                 <span class="text-xl font-bold text-primary">#{{ entry.rank }}</span>
                                 {% elif entry.rank == 2 %}
                                 <span class="text-2xl mr-2">🥈</span>
-                                <span class="text-xl font-bold text-gray-400">#{{ entry.rank }}</span>
+                                <span class="text-xl font-bold text-gray-600">#{{ entry.rank }}</span>
                                 {% elif entry.rank == 3 %}
                                 <span class="text-2xl mr-2">🥉</span>
                                 <span class="text-xl font-bold text-orange-600">#{{ entry.rank }}</span>
@@ -77,7 +77,7 @@
                             <div class="flex items-center space-x-2">
                                 <span class="font-semibold text-lg">{{ entry.username }}</span>
                                 {% if entry.username == user.username %}
-                                <span class="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded-full">Siz</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Siz</span>
                                 {% endif %}
                             </div>
                         </td>
@@ -86,11 +86,11 @@
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl font-bold text-primary">{{ entry.accuracy }}%</span>
                                 {% if entry.accuracy >= 95 %}
-                                <span class="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded-full">Mukammal</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Mukammal</span>
                                 {% elif entry.accuracy >= 90 %}
-                                <span class="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded-full">A'lo</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">A'lo</span>
                                 {% elif entry.accuracy >= 80 %}
-                                <span class="px-2 py-1 bg-gray-500 text-white text-xs font-bold rounded-full">Yaxshi</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Yaxshi</span>
                                 {% endif %}
                             </div>
                         </td>
@@ -99,13 +99,13 @@
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl font-bold text-primary">{{ entry.wpm }}</span>
                                 {% if entry.wpm >= 100 %}
-                                <span class="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded-full">Elite</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Elite</span>
                                 {% elif entry.wpm >= 80 %}
-                                <span class="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded-full">Expert</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Expert</span>
                                 {% elif entry.wpm >= 60 %}
-                                <span class="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded-full">Advanced</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Advanced</span>
                                 {% elif entry.wpm >= 40 %}
-                                <span class="px-2 py-1 bg-gray-500 text-white text-xs font-bold rounded-full">Intermediate</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Intermediate</span>
                                 {% else %}
                                 <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full">Beginner</span>
                                 {% endif %}
@@ -121,7 +121,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-600">
                             <div class="text-4xl mb-2">📊</div>
                             <p>Hali ma'lumotlar yo'q. Mashq qilishni boshlang!</p>
                         </td>

@@ -17,10 +17,10 @@
         color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .stats-card.wpm { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
-    .stats-card.accuracy { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
-    .stats-card.time { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
-    .stats-card.cpm { background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%); }
+    .stats-card.wpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.accuracy { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.time { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.cpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
 </style>
 {% endblock %}
 
@@ -36,7 +36,7 @@
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold
                         {% if s.stage_number < stage_number %}bg-primary text-white
                         {% elif s.stage_number == stage_number %}bg-primary text-white
-                        {% else %}bg-gray-200 text-gray-600{% endif %}">
+                        {% else %}bg-gray-200 text-primary{% endif %}">
                         {{ s.stage_number }}
                     </div>
                     {% if not forloop.last %}
@@ -47,7 +47,7 @@
             </div>
         </div>
         <div class="text-center">
-            <span class="px-4 py-2 bg-gray-800 text-white rounded-full font-semibold">
+            <span class="px-4 py-2 bg-gray-200 text-primary rounded-full font-semibold">
                 Bosqich {{ stage_number }} / 3
             </span>
         </div>
@@ -56,20 +56,20 @@
     <!-- Stats Cards - All statistics at top -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stats-card wpm">
-            <p class="text-sm opacity-90 mb-1">WPM</p>
-            <p class="text-4xl font-bold" id="wpm">0</p>
+            <p class="text-sm text-primary opacity-90 mb-1">WPM</p>
+            <p class="text-4xl font-bold text-primary" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
-            <p class="text-sm opacity-90 mb-1">Aniqlik</p>
-            <p class="text-4xl font-bold" id="accuracy">100%</p>
+            <p class="text-sm text-primary opacity-90 mb-1">Aniqlik</p>
+            <p class="text-4xl font-bold text-primary" id="accuracy">100%</p>
         </div>
         <div class="stats-card time">
-            <p class="text-sm opacity-90 mb-1">Vaqt</p>
-            <p class="text-4xl font-bold" id="timer">0s</p>
+            <p class="text-sm text-primary opacity-90 mb-1">Vaqt</p>
+            <p class="text-4xl font-bold text-primary" id="timer">0s</p>
         </div>
         <div class="stats-card cpm">
-            <p class="text-sm opacity-90 mb-1">Xatolar</p>
-            <p class="text-4xl font-bold" id="mistakes-count">0</p>
+            <p class="text-sm text-primary opacity-90 mb-1">Xatolar</p>
+            <p class="text-4xl font-bold text-primary" id="mistakes-count">0</p>
         </div>
     </div>
 
@@ -83,7 +83,7 @@
         {% elif stage.code_snippet %}
         <div class="mb-4">
             <h3 class="text-lg font-semibold mb-2">{{ stage.code_snippet.title }}</h3>
-            <div id="code-display" class="p-6 bg-gray-900 text-gray-100 rounded-lg border-2 border-gray-700 min-h-[400px] mb-4 overflow-auto">
+            <div id="code-display" class="p-6 bg-gray-50 text-primary rounded-lg border-2 border-gray-300 min-h-[400px] mb-4 overflow-auto">
                 <pre><code class="language-{{ stage.code_snippet.language }}">{{ stage.code_snippet.code_body }}</code></pre>
             </div>
         </div>
@@ -119,13 +119,13 @@
                 <p class="text-sm font-semibold text-gray-700 mb-1">Aniqlik</p>
                 <p class="text-3xl font-bold text-primary" id="result-accuracy">0%</p>
             </div>
-            <div class="text-center p-4 bg-gray-800 rounded-lg border-2 border-gray-700">
-                <p class="text-sm font-semibold text-white mb-1">Vaqt</p>
-                <p class="text-3xl font-bold text-white" id="result-time">0s</p>
+            <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                <p class="text-sm font-semibold text-gray-700 mb-1">Vaqt</p>
+                <p class="text-3xl font-bold text-primary" id="result-time">0s</p>
             </div>
-            <div class="text-center p-4 bg-gray-800 rounded-lg border-2 border-gray-700">
-                <p class="text-sm font-semibold text-white mb-1">Xatolar</p>
-                <p class="text-3xl font-bold text-white" id="result-mistakes">0</p>
+            <div class="text-center p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                <p class="text-sm font-semibold text-red-700 mb-1">Xatolar</p>
+                <p class="text-3xl font-bold text-red-600" id="result-mistakes">0</p>
             </div>
         </div>
         <div class="text-center">

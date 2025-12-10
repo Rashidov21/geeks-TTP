@@ -30,18 +30,49 @@ def text_settings(request):
 def text_practice(request, difficulty='easy'):
     # Get settings from query params
     mode = request.GET.get('mode', 'full')
+    action = request.GET.get('action', 'random')  # 'random' or 'next'
+    current_text_id = request.GET.get('text_id', None)
+    
     try:
         words_count = max(0, int(request.GET.get('words_count', 0)))
         time_limit = max(0, int(request.GET.get('time_limit', 0)))
+        text_length = int(request.GET.get('text_length', 25))  # Default 25 words
+        # Validate text_length is one of allowed values
+        if text_length not in [10, 25, 60, 100]:
+            text_length = 25
     except (ValueError, TypeError):
         words_count = 0
         time_limit = 0
+        text_length = 25
     
-    # Use optimized random text selection
-    text = get_random_text(difficulty)
+    # Select text based on action
+    if action == 'next' and current_text_id:
+        # Get next text (ordered by ID)
+        try:
+            current_text = Text.objects.get(id=current_text_id, difficulty=difficulty, word_count=text_length)
+            next_text = Text.objects.filter(
+                difficulty=difficulty,
+                word_count=text_length,
+                id__gt=current_text.id
+            ).order_by('id').first()
+            
+            if not next_text:
+                # If no next, get first text (wrap around)
+                next_text = Text.objects.filter(
+                    difficulty=difficulty,
+                    word_count=text_length
+                ).order_by('id').first()
+            
+            text = next_text
+        except Text.DoesNotExist:
+            text = get_random_text(difficulty=difficulty, word_count=text_length)
+    else:
+        # Random text selection
+        text = get_random_text(difficulty=difficulty, word_count=text_length)
+    
     if not text:
         from django.contrib import messages
-        messages.error(request, 'Bu qiyinchilikda matnlar topilmadi.')
+        messages.error(request, f'Bu qiyinchilikda {text_length} so\'zli matnlar topilmadi.')
         return redirect('typing_practice:index')
     
     # Process text based on mode
@@ -59,6 +90,7 @@ def text_practice(request, difficulty='easy'):
         'mode': mode,
         'words_count': words_count,
         'time_limit': time_limit,
+        'text_length': text_length,
     })
 
 
@@ -71,8 +103,35 @@ def code_practice(request, language='python'):
         messages.error(request, 'Noto\'g\'ri dasturlash tili.')
         return redirect('typing_practice:index')
     
-    # Use optimized random code selection
-    code = get_random_code(language, difficulty='easy')
+    action = request.GET.get('action', 'random')  # 'random' or 'next'
+    current_code_id = request.GET.get('code_id', None)
+    difficulty = request.GET.get('difficulty', 'easy')
+    
+    # Select code based on action
+    if action == 'next' and current_code_id:
+        # Get next code (ordered by ID)
+        try:
+            current_code = CodeSnippet.objects.get(id=current_code_id, language=language, difficulty=difficulty)
+            next_code = CodeSnippet.objects.filter(
+                language=language,
+                difficulty=difficulty,
+                id__gt=current_code.id
+            ).order_by('id').first()
+            
+            if not next_code:
+                # If no next, get first code (wrap around)
+                next_code = CodeSnippet.objects.filter(
+                    language=language,
+                    difficulty=difficulty
+                ).order_by('id').first()
+            
+            code = next_code
+        except CodeSnippet.DoesNotExist:
+            code = get_random_code(language, difficulty=difficulty)
+    else:
+        # Random code selection
+        code = get_random_code(language, difficulty=difficulty)
+    
     if not code:
         from django.contrib import messages
         messages.error(request, f'{language} uchun kod topilmadi.')
@@ -80,7 +139,8 @@ def code_practice(request, language='python'):
     
     return render(request, 'typing_practice/code_practice.html', {
         'code': code,
-        'language': language
+        'language': language,
+        'difficulty': difficulty,
     })
 
 
@@ -138,6 +198,15 @@ def save_result(request):
                 duration_seconds=duration_seconds,
                 session_type=session_type
             )
+            
+            # Keep only last 10 results per user, delete older ones
+            user_results = UserResult.objects.filter(user=request.user).order_by('-time')
+            if user_results.count() > 10:
+                # Get IDs of results to delete (all except first 10)
+                results_to_delete = user_results[10:].values_list('id', flat=True)
+                if results_to_delete:
+                    UserResult.objects.filter(id__in=list(results_to_delete)).delete()
+                    logger.info(f"Deleted {len(results_to_delete)} old results for user {request.user.username}")
         
         # Clear user stats cache
         cache.delete(f'user_stats_{request.user.id}')

@@ -8,18 +8,31 @@ class Text(models.Model):
         ('hard', 'Hard'),
     ]
     
-    title = models.CharField(max_length=200)
+    WORD_COUNT_CHOICES = [
+        (10, '10 so\'z'),
+        (25, '25 so\'z'),
+        (60, '60 so\'z'),
+        (100, '100 so\'z'),
+    ]
+    
+    title = models.CharField(max_length=200, help_text="Qisqa sarlavha")
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES)
-    body = models.TextField()
+    word_count = models.IntegerField(choices=WORD_COUNT_CHOICES, default=25, help_text="Matndagi so'zlar soni")
+    body = models.TextField(help_text="To'liq matn")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
+            models.Index(fields=['difficulty', 'word_count']),
             models.Index(fields=['difficulty']),
         ]
 
     def __str__(self):
-        return f"{self.title} ({self.difficulty})"
+        return f"{self.title} ({self.difficulty}, {self.word_count} so'z)"
+    
+    def get_word_count(self):
+        """Calculate actual word count from body"""
+        return len(self.body.split())
 
 
 class CodeSnippet(models.Model):

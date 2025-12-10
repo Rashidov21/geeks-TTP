@@ -13,5 +13,7 @@ urlpatterns = [
     path('<int:competition_id>/finish/', views.competition_finish, name='finish'),
     path('<int:competition_id>/play/<int:stage_number>/', views.competition_play, name='play'),
     path('<int:competition_id>/save-result/<int:stage_number>/', views.competition_save_result, name='save_result'),
+    path('<int:competition_id>/certificate/', views.competition_certificate, name='certificate'),
+    path('<int:competition_id>/certificate/<int:rank>/', views.competition_certificate, name='certificate_rank'),
 ]
 

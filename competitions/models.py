@@ -32,6 +32,8 @@ class Competition(models.Model):
     participants = models.ManyToManyField(User, through='CompetitionParticipant', related_name='competitions')
     access_code = models.CharField(max_length=20, unique=True, null=True, blank=True)
     is_public = models.BooleanField(default=True)
+    max_attempts_per_stage = models.IntegerField(default=3, help_text="Har bir bosqich uchun maksimal urinishlar soni")
+    enable_certificates = models.BooleanField(default=False, help_text="Musobaqa tugatilganda sertifikatlar beriladimi?")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -95,6 +97,7 @@ class CompetitionParticipantStage(models.Model):
     wpm = models.FloatField(null=True, blank=True)
     accuracy = models.FloatField(null=True, blank=True)
     mistakes = models.IntegerField(default=0)
+    attempts = models.IntegerField(default=0, help_text="Bu bosqich uchun urinishlar soni")
     finished_at = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     is_finished = models.BooleanField(default=False)
@@ -109,3 +112,28 @@ class CompetitionParticipantStage(models.Model):
 
     def __str__(self):
         return f"{self.participant.user.username} - {self.stage.competition.name} - Stage {self.stage.stage_number}"
+    
+    def can_attempt(self):
+        """Check if participant can make another attempt"""
+        return self.attempts < self.stage.competition.max_attempts_per_stage
+
+
+class Certificate(models.Model):
+    """Certificate configuration for competitions"""
+    competition = models.OneToOneField(Competition, on_delete=models.CASCADE, related_name='certificate')
+    logo = models.ImageField(upload_to='certificates/logos/', null=True, blank=True, help_text="Sertifikat logosi (yuqorida ko'rinadi)")
+    organization_name = models.CharField(max_length=200, default="GEEKS ANDIJAN", help_text="Tashkilot nomi (sarlavha)")
+    certificate_subtitle = models.CharField(max_length=200, default="Typing Competition Certificate", help_text="Sertifikat pastki sarlavhasi")
+    additional_names = models.TextField(blank=True, help_text="Qo'shimcha nomlar (har bir qator alohida, footer'da ko'rinadi)")
+    signature_name = models.CharField(max_length=200, blank=True, help_text="Imzo nomi (masalan: Geeks Andijan)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Certificate for {self.competition.name}"
+    
+    def get_additional_names_list(self):
+        """Return additional names as a list"""
+        if not self.additional_names:
+            return []
+        return [name.strip() for name in self.additional_names.split('\n') if name.strip()]

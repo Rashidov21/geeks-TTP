@@ -31,13 +31,13 @@
         </h2>
         <div class="overflow-x-auto">
             <table class="min-w-full">
-                <thead class="gradient-primary text-white">
+                <thead class="gradient-primary text-primary">
                     <tr>
-                        <th class="px-6 py-3 text-left">O'rin</th>
-                        <th class="px-6 py-3 text-left">Foydalanuvchi</th>
-                        <th class="px-6 py-3 text-left">O'rtacha WPM</th>
-                        <th class="px-6 py-3 text-left">O'rtacha aniqlik</th>
-                        <th class="px-6 py-3 text-left">Jami xatolar</th>
+                        <th class="px-6 py-3 text-left text-white">O'rin</th>
+                        <th class="px-6 py-3 text-left text-white">Foydalanuvchi</th>
+                        <th class="px-6 py-3 text-left text-white">O'rtacha WPM</th>
+                        <th class="px-6 py-3 text-left text-white">O'rtacha aniqlik</th>
+                        <th class="px-6 py-3 text-left text-white">Jami xatolar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -54,7 +54,18 @@
                             <span class="font-bold">#{{ forloop.counter }}</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 font-semibold text-lg">{{ participant.user.username }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-semibold text-lg">{{ participant.user.username }}</span>
+                                {% if forloop.counter <= 3 and competition.status == 'finished' and competition.enable_certificates %}
+                                <a href="{% url 'competitions:certificate_rank' competition.id forloop.counter %}" class="text-primary hover:text-primary-dark" title="Sertifikatni ko'rish">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             <span class="text-2xl font-bold text-primary">{{ participant.result_wpm|default:"-"|floatformat:1 }}</span>
                         </td>
@@ -118,28 +129,28 @@
                                 {% if stage_result %}
                                 <span class="font-bold text-primary">{{ stage_result.wpm|floatformat:1 }}</span>
                                 {% else %}
-                                <span class="text-gray-400">-</span>
+                                <span class="text-gray-600">-</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-2">
                                 {% if stage_result %}
                                 <span class="font-bold text-primary">{{ stage_result.accuracy|floatformat:1 }}%</span>
                                 {% else %}
-                                <span class="text-gray-400">-</span>
+                                <span class="text-gray-600">-</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-2">
                                 {% if stage_result %}
                                 <span>{{ stage_result.mistakes }}</span>
                                 {% else %}
-                                <span class="text-gray-400">-</span>
+                                <span class="text-gray-600">-</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-2">
                                 {% if stage_result and stage_result.is_finished %}
-                                <span class="px-2 py-1 bg-gray-800 text-white rounded-full text-xs font-bold">Tugallangan</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary rounded-full text-xs font-bold">Tugallangan</span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Boshlanmagan</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary rounded-full text-xs font-bold">Boshlanmagan</span>
                                 {% endif %}
                             </td>
                         </tr>

@@ -41,17 +41,17 @@
         
         <!-- Stages Info -->
         {% if stages %}
-        <div class="mb-4 p-4 bg-gray-800 rounded-lg border-2 border-gray-700">
-            <h3 class="font-semibold mb-2 text-white">Musobaqa bosqichlari (3 bosqich)</h3>
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <h3 class="font-semibold mb-2 text-primary">Musobaqa bosqichlari (3 bosqich)</h3>
             <div class="grid grid-cols-3 gap-2">
                 {% for stage in stages %}
-                <div class="text-center p-2 bg-gray-700 rounded border border-gray-600">
+                <div class="text-center p-2 bg-white rounded border border-gray-300">
                     <div class="text-2xl mb-1">🎯</div>
-                    <div class="font-bold text-white">Bosqich {{ stage.stage_number }}</div>
+                    <div class="font-bold text-primary">Bosqich {{ stage.stage_number }}</div>
                     {% if stage.text %}
-                    <div class="text-xs text-gray-300">{{ stage.text.title|truncatewords:5 }}</div>
+                    <div class="text-xs text-gray-600">{{ stage.text.title|truncatewords:5 }}</div>
                     {% elif stage.code_snippet %}
-                    <div class="text-xs text-gray-300">{{ stage.code_snippet.title|truncatewords:5 }}</div>
+                    <div class="text-xs text-gray-600">{{ stage.code_snippet.title|truncatewords:5 }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -144,14 +144,14 @@
         {% if participants %}
         <div class="overflow-x-auto">
             <table class="min-w-full">
-                <thead class="gradient-primary text-white">
+                <thead class="gradient-primary text-primary">
                     <tr>
-                        <th class="px-4 py-3 text-left">O'rin</th>
-                        <th class="px-4 py-3 text-left">Foydalanuvchi</th>
-                        <th class="px-4 py-3 text-left">O'rtacha WPM</th>
-                        <th class="px-4 py-3 text-left">Aniqlik</th>
-                        <th class="px-4 py-3 text-left">Jarayon</th>
-                        <th class="px-4 py-3 text-left">Holat</th>
+                        <th class="px-4 py-3 text-left text-white">O'rin</th>
+                        <th class="px-4 py-3 text-left text-white">Foydalanuvchi</th>
+                        <th class="px-4 py-3 text-left text-white">O'rtacha WPM</th>
+                        <th class="px-4 py-3 text-left text-white">Aniqlik</th>
+                        <th class="px-4 py-3 text-left text-white">Jarayon</th>
+                        <th class="px-4 py-3 text-left text-white">Holat</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -169,16 +169,28 @@
                         <td class="px-4 py-3">
                             <div class="flex items-center space-x-2">
                                 <div class="w-24 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-primary h-2 rounded-full" style="width: {% widthratio p.current_stage 3 100 %}%"></div>
+                                    {% with stage_progress=p.current_stage|default:1 %}
+                                    {% if stage_progress >= 3 %}
+                                    <div class="bg-primary h-2 rounded-full" style="width: 100%"></div>
+                                    {% elif stage_progress == 2 %}
+                                    <div class="bg-primary h-2 rounded-full" style="width: 66.67%"></div>
+                                    {% elif stage_progress == 1 %}
+                                    <div class="bg-primary h-2 rounded-full" style="width: 33.33%"></div>
+                                    {% else %}
+                                    <div class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                                    {% endif %}
+                                    {% endwith %}
                                 </div>
-                                <span class="text-sm">{{ p.current_stage }}/3</span>
+                                <span class="text-sm">
+                                    {% if p.current_stage > 3 %}3/3{% else %}{{ p.current_stage|default:0 }}/3{% endif %}
+                                </span>
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             {% if p.is_finished %}
-                            <span class="px-2 py-1 bg-gray-800 text-white rounded-full text-xs font-bold">Tugallangan</span>
+                            <span class="px-2 py-1 bg-gray-200 text-primary rounded-full text-xs font-bold">Tugallangan</span>
                             {% else %}
-                            <span class="px-2 py-1 bg-gray-600 text-white rounded-full text-xs font-bold">Jarayonda</span>
+                            <span class="px-2 py-1 bg-gray-200 text-primary rounded-full text-xs font-bold">Jarayonda</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -187,7 +199,7 @@
             </table>
         </div>
         {% else %}
-        <p class="text-gray-500">Hali ishtirokchilar yo'q.</p>
+        <p class="text-gray-600">Hali ishtirokchilar yo'q.</p>
         {% endif %}
     </div>
 </div>

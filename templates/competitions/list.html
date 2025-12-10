@@ -50,7 +50,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <p class="text-gray-500">Hali hech qanday musobaqada qatnashmadingiz.</p>
+            <p class="text-gray-600">Hali hech qanday musobaqada qatnashmadingiz.</p>
             {% endif %}
         </div>
         
@@ -69,7 +69,7 @@
                         <div class="flex-1">
                             <h3 class="font-bold text-lg mb-1">{{ comp.name }}</h3>
                             <div class="flex items-center space-x-3 text-sm text-gray-600 mb-2">
-                                <span class="px-2 py-1 bg-gray-800 text-white rounded-full font-medium">{{ comp.mode|upper }}</span>
+                                <span class="px-2 py-1 bg-gray-200 text-primary rounded-full font-medium">{{ comp.mode|upper }}</span>
                                 <span>{% if comp.difficulty == 'easy' %}🌱 Oson{% else %}🔥 Qiyin{% endif %}</span>
                                 <span>•</span>
                                 <span>{{ comp.start_time|date:"d.m.Y H:i" }}</span>
@@ -107,7 +107,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <p class="text-gray-500 text-center py-8">Hozircha ochiq musobaqalar yo'q.</p>
+            <p class="text-gray-600 text-center py-8">Hozircha ochiq musobaqalar yo'q.</p>
             {% endif %}
         </div>
     </div>

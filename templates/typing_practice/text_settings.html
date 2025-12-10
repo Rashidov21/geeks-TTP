@@ -60,17 +60,42 @@
                     </div>
                 </div>
 
-                <!-- Words Count (shown when mode is words) -->
-                <div id="words-option" class="mode-option">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">So'zlar soni</label>
-                    <select name="words_count" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
-                        <option value="10">10 so'z</option>
-                        <option value="25" selected>25 so'z</option>
-                        <option value="50">50 so'z</option>
-                        <option value="100">100 so'z</option>
-                        <option value="200">200 so'z</option>
-                    </select>
+                <!-- Text Length Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Matn uzunligi</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative">
+                            <input type="radio" name="text_length" value="10" class="peer hidden">
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-primary peer-checked:bg-gray-200 hover:border-gray-400 transition">
+                                <div class="font-semibold text-lg">10 so'z</div>
+                                <div class="text-xs text-gray-600 mt-1">Qisqa matn</div>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" name="text_length" value="25" class="peer hidden" checked>
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-primary peer-checked:bg-gray-200 hover:border-gray-400 transition">
+                                <div class="font-semibold text-lg">25 so'z</div>
+                                <div class="text-xs text-gray-600 mt-1">O'rta matn</div>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" name="text_length" value="60" class="peer hidden">
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-primary peer-checked:bg-gray-200 hover:border-gray-400 transition">
+                                <div class="font-semibold text-lg">60 so'z</div>
+                                <div class="text-xs text-gray-600 mt-1">Uzun matn</div>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" name="text_length" value="100" class="peer hidden">
+                            <div class="cursor-pointer rounded-lg border-2 border-gray-200 p-4 text-center peer-checked:border-primary peer-checked:bg-gray-200 hover:border-gray-400 transition">
+                                <div class="font-semibold text-lg">100 so'z</div>
+                                <div class="text-xs text-gray-600 mt-1">Juda uzun matn</div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
+
+
 
                 <!-- Time Limit (shown when mode is time) -->
                 <div id="time-option" class="mode-option hidden">
@@ -111,9 +136,11 @@ document.getElementById('practice-form').addEventListener('submit', function(e) 
     e.preventDefault();
     const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
     const mode = document.querySelector('input[name="mode"]:checked').value;
+    const text_length = document.querySelector('input[name="text_length"]:checked').value;
     const params = new URLSearchParams();
     params.append('difficulty', difficulty);
     params.append('mode', mode);
+    params.append('text_length', text_length);
     
     if (mode === 'words') {
         params.append('words_count', document.querySelector('select[name="words_count"]').value);
