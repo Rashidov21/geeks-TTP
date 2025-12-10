@@ -14,3 +14,6 @@ urlpatterns = [
     path('competitions/', include('competitions.urls')),
     path('leaderboard/', include('leaderboard.urls')),
 ]
+
+# Custom error handlers
+handler404 = 'typing_platform.views.custom_404'
