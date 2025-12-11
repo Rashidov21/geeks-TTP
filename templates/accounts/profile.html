@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }} - Profil - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Profile Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+            <div class="flex-shrink-0">
+                {% if profile.image %}
+                <img src="{{ profile.image.url }}" alt="{{ profile_user.username }}" class="w-32 h-32 rounded-full object-cover border-4 border-primary shadow-lg" style="width: 128px; height: 128px; object-fit: cover;">
+                {% else %}
+                <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold shadow-lg" style="width: 128px; height: 128px;">
+                    {{ profile_user.username|first|upper }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-3xl font-bold text-primary mb-2">
+                    {% if profile_user.get_full_name %}
+                        {{ profile_user.get_full_name }}
+                    {% else %}
+                        {{ profile_user.username }}
+                    {% endif %}
+                </h1>
+                <p class="text-lg text-gray-600 mb-2">@{{ profile_user.username }}</p>
+                {% if profile_user.first_name or profile_user.last_name %}
+                <p class="text-sm text-primary mb-2">
+                    {% if profile_user.first_name %}{{ profile_user.first_name }}{% endif %}
+                    {% if profile_user.last_name %} {{ profile_user.last_name }}{% endif %}
+                </p>
+                {% endif %}
+                {% if profile.bio %}
+                <p class="text-primary mb-4">{{ profile.bio }}</p>
+                {% endif %}
+                <div class="flex flex-wrap gap-4 justify-center md:justify-start text-sm text-primary">
+                    {% if profile.address %}
+                    <div class="flex items-center space-x-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>{{ profile.address }}</span>
+                    </div>
+                    {% endif %}
+                    {% if profile.phone %}
+                    <div class="flex items-center space-x-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                        </svg>
+                        <span>{{ profile.phone }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if is_own_profile %}
+                <div class="mt-4">
+                    <a href="{% url 'accounts:profile_edit' %}" class="inline-flex items-center space-x-2 gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        <span>Profilni tahrirlash</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-primary">Jami mashqlar</h3>
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-primary">{{ total_sessions }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-primary">O'rtacha WPM</h3>
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-primary">{{ avg_wpm }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-primary">Eng yaxshi WPM</h3>
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-primary">{{ max_wpm }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-primary">O'rtacha aniqlik</h3>
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-primary">{{ avg_accuracy }}%</p>
+        </div>
+    </div>
+
+    <!-- Detailed Analytics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-primary">Matn vs Kod</h2>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-primary">Matn mashqlari</span>
+                        <span class="text-sm font-bold text-primary">{{ text_avg_wpm }} WPM</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-primary">Kod mashqlari</span>
+                        <span class="text-sm font-bold text-primary">{{ code_avg_wpm }} WPM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-primary">Oxirgi 30 kun</h2>
+            <p class="text-3xl font-bold text-primary">{{ recent_sessions }}</p>
+            <p class="text-sm text-gray-600 mt-2">mashq qilingan</p>
+        </div>
+    </div>
+
+    <!-- Certificates -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+        <h2 class="text-xl font-bold mb-4 text-primary flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <span>Sertifikatlar</span>
+        </h2>
+        {% if certificate_awards %}
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for award in certificate_awards %}
+            <div class="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="text-2xl">
+                        {% if award.rank == 1 %}🥇{% elif award.rank == 2 %}🥈{% else %}🥉{% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-primary truncate">{{ award.competition.name }}</p>
+                        <p class="text-xs text-gray-600 truncate">WPM: {{ award.result_wpm|default:"-"|floatformat:1 }} • Acc: {{ award.accuracy|default:"-"|floatformat:1 }}%</p>
+                    </div>
+                </div>
+                <a href="{% url 'competitions:certificate_rank' award.competition.id award.rank %}" class="inline-flex items-center space-x-2 gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Sertifikat</span>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600 text-center py-4">Hozircha sertifikatlar yo'q.</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Results -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-4 text-primary">Oxirgi natijalar</h2>
+        {% if recent_10 %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-primary">Turi</th>
+                        <th class="px-4 py-2 text-left text-primary">WPM</th>
+                        <th class="px-4 py-2 text-left text-primary">Aniqlik</th>
+                        <th class="px-4 py-2 text-left text-primary">Vaqt</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for result in recent_10 %}
+                    <tr>
+                        <td class="px-4 py-2">
+                            {% if result.session_type == 'text' %}
+                            <span class="px-2 py-1 bg-gray-200 text-primary rounded text-sm">Matn</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-200 text-primary rounded text-sm">Kod</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 font-bold text-primary">{{ result.wpm|floatformat:1 }}</td>
+                        <td class="px-4 py-2 text-primary">{{ result.accuracy|floatformat:1 }}%</td>
+                        <td class="px-4 py-2 text-gray-600">{{ result.time|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-600 text-center py-8">Hali natijalar yo'q.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

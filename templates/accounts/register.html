@@ -41,8 +41,19 @@
             {% endif %}
         </div>
         <div>
-            <label class="block text-sm font-semibold text-primary mb-2">Parol</label>
-            {{ form.password1 }}
+            <label class="block text-sm font-semibold text-primary mb-2">
+                Parol
+                <span class="text-xs font-normal text-gray-600">(kamida 6 belgi)</span>
+            </label>
+            <div class="relative">
+                {{ form.password1 }}
+                <button type="button" onclick="togglePassword('id_password1', 'eye-icon-1')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-primary transition-colors duration-200" title="Parolni ko'rsatish/yashirish">
+                    <svg id="eye-icon-1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                </button>
+            </div>
             {% if form.password1.errors %}
             <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -51,13 +62,37 @@
                 <span>{{ form.password1.errors.0 }}</span>
             </p>
             {% endif %}
-            {% if form.password1.help_text %}
-            <p class="text-xs text-gray-600 mt-1">{{ form.password1.help_text }}</p>
-            {% endif %}
+            
+            <!-- Real-time parol kuchi -->
+            <div id="password-strength" class="mt-2 hidden">
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                        <div id="strength-bar" class="h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <span id="strength-text" class="text-xs font-semibold"></span>
+                </div>
+            </div>
+            
+            <!-- Parol generator -->
+            <button type="button" onclick="generatePassword()" class="text-xs text-primary hover:underline mt-1 flex items-center space-x-1 transition-colors duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span>Avtomatik parol yaratish</span>
+            </button>
         </div>
         <div>
             <label class="block text-sm font-semibold text-primary mb-2">Parolni tasdiqlash</label>
-            {{ form.password2 }}
+            <div class="relative">
+                {{ form.password2 }}
+                <button type="button" onclick="togglePassword('id_password2', 'eye-icon-2')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-primary transition-colors duration-200" title="Parolni ko'rsatish/yashirish">
+                    <svg id="eye-icon-2" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                </button>
+            </div>
             {% if form.password2.errors %}
             <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -66,6 +101,11 @@
                 <span>{{ form.password2.errors.0 }}</span>
             </p>
             {% endif %}
+            
+            <!-- Real-time parol mosligi -->
+            <div id="password-match" class="mt-1 hidden">
+                <p id="match-text" class="text-xs flex items-center space-x-1"></p>
+            </div>
         </div>
         {% if form.non_field_errors %}
         <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg flex items-center space-x-2">
@@ -86,5 +126,126 @@
         Allaqachon hisobingiz bormi? <a href="{% url 'accounts:login' %}" class="text-primary font-semibold hover:text-primary-dark hover:underline transition-colors duration-300">Kirish</a>
     </p>
 </div>
+
+<script>
+function togglePassword(fieldId, iconId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(iconId);
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0L3 3m3.59 3.59L3 3m3.59 3.59l3.59 3.59m0 0L3 3m3.59 3.59l3.59 3.59"></path>';
+    } else {
+        field.type = 'password';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+    }
+}
+
+function generatePassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    
+    const password1Field = document.getElementById('id_password1');
+    const password2Field = document.getElementById('id_password2');
+    
+    password1Field.value = password;
+    password2Field.value = password;
+    
+    // Parolni ko'rsatish
+    password1Field.type = 'text';
+    password2Field.type = 'text';
+    
+    // Iconlarni yangilash
+    document.getElementById('eye-icon-1').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0L3 3m3.59 3.59L3 3m3.59 3.59l3.59 3.59m0 0L3 3m3.59 3.59l3.59 3.59"></path>';
+    document.getElementById('eye-icon-2').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0L3 3m3.59 3.59L3 3m3.59 3.59l3.59 3.59m0 0L3 3m3.59 3.59l3.59 3.59"></path>';
+    
+    // Trigger events
+    password1Field.dispatchEvent(new Event('input'));
+    password2Field.dispatchEvent(new Event('input'));
+    
+    // 3 soniyadan keyin yashirish
+    setTimeout(() => {
+        password1Field.type = 'password';
+        password2Field.type = 'password';
+        document.getElementById('eye-icon-1').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+        document.getElementById('eye-icon-2').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+    }, 3000);
+}
+
+// Real-time parol kuchi
+document.addEventListener('DOMContentLoaded', function() {
+    const password1Field = document.getElementById('id_password1');
+    const password2Field = document.getElementById('id_password2');
+    const strengthDiv = document.getElementById('password-strength');
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    const matchDiv = document.getElementById('password-match');
+    const matchText = document.getElementById('match-text');
+    
+    if (password1Field) {
+        password1Field.addEventListener('input', function(e) {
+            const password = e.target.value;
+            
+            if (password.length === 0) {
+                strengthDiv.classList.add('hidden');
+                return;
+            }
+            
+            strengthDiv.classList.remove('hidden');
+            
+            let strength = 0;
+            if (password.length >= 6) strength += 33;
+            if (password.length >= 8) strength += 33;
+            if (password.length >= 12) strength += 34;
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength < 33) {
+                strengthBar.className = 'h-2 rounded-full bg-red-500 transition-all duration-300';
+                strengthText.textContent = 'Zaif';
+                strengthText.className = 'text-xs font-semibold text-red-600';
+            } else if (strength < 66) {
+                strengthBar.className = 'h-2 rounded-full bg-yellow-500 transition-all duration-300';
+                strengthText.textContent = 'O\'rtacha';
+                strengthText.className = 'text-xs font-semibold text-yellow-600';
+            } else {
+                strengthBar.className = 'h-2 rounded-full bg-green-500 transition-all duration-300';
+                strengthText.textContent = 'Kuchli';
+                strengthText.className = 'text-xs font-semibold text-green-600';
+            }
+        });
+    }
+    
+    // Real-time parol mosligini tekshirish
+    if (password2Field) {
+        password2Field.addEventListener('input', function(e) {
+            const password1 = password1Field ? password1Field.value : '';
+            const password2 = e.target.value;
+            
+            if (password2.length === 0) {
+                matchDiv.classList.add('hidden');
+                password2Field.classList.remove('border-green-300', 'border-red-300');
+                return;
+            }
+            
+            matchDiv.classList.remove('hidden');
+            
+            if (password1 === password2) {
+                password2Field.classList.remove('border-red-300');
+                password2Field.classList.add('border-green-300');
+                matchText.innerHTML = '<svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg><span class="text-green-600">Parollar mos keladi</span>';
+            } else {
+                password2Field.classList.remove('border-green-300');
+                password2Field.classList.add('border-red-300');
+                matchText.innerHTML = '<svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg><span class="text-red-600">Parollar mos kelmaydi</span>';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
 

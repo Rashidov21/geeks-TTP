@@ -104,6 +104,11 @@ def competition_create(request):
         access_code = request.POST.get('access_code', '').strip()
         is_public = request.POST.get('is_public') == 'on'
         enable_certificates = request.POST.get('enable_certificates') == 'on'
+        organization_name = request.POST.get('organization_name', '').strip()
+        certificate_subtitle = request.POST.get('certificate_subtitle', '').strip()
+        signature_name = request.POST.get('signature_name', '').strip()
+        additional_names = request.POST.get('additional_names', '').strip()
+        logo = request.FILES.get('logo')
         
         if not access_code:
             access_code = secrets.token_urlsafe(8)
@@ -122,7 +127,19 @@ def competition_create(request):
         
         # Create certificate if enabled
         if enable_certificates:
-            Certificate.objects.get_or_create(competition=competition)
+            cert, _ = Certificate.objects.get_or_create(competition=competition)
+            # Update certificate fields from form
+            if organization_name:
+                cert.organization_name = organization_name
+            if certificate_subtitle:
+                cert.certificate_subtitle = certificate_subtitle
+            if signature_name:
+                cert.signature_name = signature_name
+            if additional_names:
+                cert.additional_names = additional_names
+            if logo:
+                cert.logo = logo
+            cert.save()
         
         # Create 3 stages with random texts/codes (optimized)
         with transaction.atomic():
@@ -466,6 +483,21 @@ def competition_results(request, competition_id):
     ).select_related('user').prefetch_related(
         'stage_results__stage'
     ).order_by('-result_wpm')
+
+    # Top 3 participants (for certificates preview)
+    top_three = list(participants[:3])
+    
+    # Ensure all participants have calculated results (including mistakes)
+    for participant in participants:
+        if not participant.mistakes or participant.mistakes == 0:
+            participant.calculate_average_results()
+    
+    # Re-fetch participants to get updated mistakes
+    participants = CompetitionParticipant.objects.filter(
+        competition=competition
+    ).select_related('user').prefetch_related(
+        'stage_results__stage'
+    ).order_by('-result_wpm')
     
     # Get stages
     stages = CompetitionStage.objects.filter(
@@ -498,6 +530,7 @@ def competition_results(request, competition_id):
         'participant_results': participant_results,
         'user_rank': user_rank,
         'user_participant': user_participant,
+        'top_three': top_three,
     })
 
 

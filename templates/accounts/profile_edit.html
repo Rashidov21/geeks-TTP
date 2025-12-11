@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Profilni tahrirlash - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Profilni tahrirlash</h1>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-primary mb-2">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-primary mb-2">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-primary mb-2">{{ form.image.label }}</label>
+                {% if form.instance.image %}
+                <div class="mb-4">
+                    <img src="{{ form.instance.image.url }}" alt="Current" class="w-32 h-32 rounded-full object-cover border-4 border-primary shadow-lg" style="width: 128px; height: 128px; object-fit: cover;">
+                </div>
+                {% endif %}
+                {{ form.image }}
+                {% if form.image.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-primary mb-2">{{ form.bio.label }}</label>
+                {{ form.bio }}
+                {% if form.bio.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.bio.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-primary mb-2">{{ form.address.label }}</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-primary mb-2">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex space-x-4">
+                <button type="submit" class="flex-1 flex items-center justify-center space-x-2 gradient-secondary text-primary px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Saqlash</span>
+                </button>
+                <a href="{% url 'accounts:profile' %}" class="flex-1 flex items-center justify-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Bekor qilish</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

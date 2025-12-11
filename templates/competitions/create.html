@@ -7,16 +7,16 @@
     <h1 class="text-3xl font-bold mb-6 text-center">Musobaqa yaratish</h1>
     
     <div class="bg-white rounded-lg shadow-lg p-8">
-        <form method="post" class="space-y-6">
+        <form method="post" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Musobaqa nomi</label>
+                <label class="block text-sm font-medium text-primary mb-2">Musobaqa nomi</label>
                 <input type="text" name="name" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Rejim</label>
+                <label class="block text-sm font-medium text-primary mb-2">Rejim</label>
                 <select name="mode" id="mode-select" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
                     <option value="text">Matn</option>
                     <option value="code">Kod</option>
@@ -24,7 +24,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Qiyinchilik</label>
+                <label class="block text-sm font-medium text-primary mb-2">Qiyinchilik</label>
                 <div class="grid grid-cols-2 gap-4">
                     <label class="relative">
                         <input type="radio" name="difficulty" value="easy" class="peer hidden" checked>
@@ -45,12 +45,12 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Boshlanish vaqti</label>
+                <label class="block text-sm font-medium text-primary mb-2">Boshlanish vaqti</label>
                 <input type="datetime-local" name="start_time" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Ishtirokchilar (Bir nechtasini tanlash uchun Ctrl/Cmd ni bosing)</label>
+                <label class="block text-sm font-medium text-primary mb-2">Ishtirokchilar (Bir nechtasini tanlash uchun Ctrl/Cmd ni bosing)</label>
                 <select name="participants" multiple size="10" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
                     {% for u in users %}
                     <option value="{{ u.id }}">{{ u.username }}</option>
@@ -61,12 +61,44 @@
             <div>
                 <label class="flex items-center space-x-2">
                     <input type="checkbox" name="is_public" checked class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                    <span class="text-sm font-medium text-gray-700">Musobaqani ochiq qilish (hammaga ko'rinadi)</span>
+                    <span class="text-sm font-medium text-primary">Musobaqani ochiq qilish (hammaga ko'rinadi)</span>
                 </label>
+            </div>
+
+            <!-- Certificate toggle -->
+            <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="enable_certificates" id="enable-certificates" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm font-semibold text-primary">Sertifikat berish</span>
+                </label>
+                <p class="text-xs text-gray-600">Musobaqa tugaganda 1-3 o'rinlar uchun sertifikat chiqariladi.</p>
+
+                <div id="certificate-fields" class="grid grid-cols-1 gap-4 md:grid-cols-2 hidden">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-primary mb-1">Tashkilot nomi (sertifikat sarlavhasi)</label>
+                        <input type="text" name="organization_name" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary" placeholder="Geeks Andijan">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-primary mb-1">Sertifikat taglavhasi</label>
+                        <input type="text" name="certificate_subtitle" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary" placeholder="1-3 o'rin egalari uchun">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-primary mb-1">Imzo egasi (Signature)</label>
+                        <input type="text" name="signature_name" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary" placeholder="Director">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-primary mb-1">Qo'shimcha ismlar (footerdagi matn)</label>
+                        <textarea name="additional_names" rows="3" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary" placeholder="Qo'shimcha ismlar yoki matn"></textarea>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-primary mb-1">Logo (PNG/JPG)</label>
+                        <input type="file" name="logo" accept="image/*" class="w-full">
+                    </div>
+                </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Kirish kodi (ixtiyoriy, bo'sh qoldirilsa avtomatik yaratiladi)</label>
+                <label class="block text-sm font-medium text-primary mb-2">Kirish kodi (ixtiyoriy, bo'sh qoldirilsa avtomatik yaratiladi)</label>
                 <input type="text" name="access_code" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 text-primary">
             </div>
             
@@ -79,4 +111,26 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('enable-certificates');
+    const fields = document.getElementById('certificate-fields');
+
+    function updateVisibility() {
+        if (toggle.checked) {
+            fields.classList.remove('hidden');
+        } else {
+            fields.classList.add('hidden');
+        }
+    }
+
+    if (toggle) {
+        toggle.addEventListener('change', updateVisibility);
+        updateVisibility();
+    }
+});
+</script>
 {% endblock %}

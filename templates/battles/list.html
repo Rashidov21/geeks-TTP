@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Janglar - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold flex items-center space-x-2 text-primary">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <span>1v1 Janglar</span>
+        </h1>
+        <div class="flex space-x-3">
+            <form method="post" action="{% url 'battles:create' %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="text">
+                <button type="submit" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                    Matn jangi yaratish
+                </button>
+            </form>
+            <form method="post" action="{% url 'battles:create' %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="code">
+                <button type="submit" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                    Kod jangi yaratish
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Pending Battles -->
+    {% if pending_battles %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4 text-primary">Raqib kutayotgan janglar</h2>
+        <div class="space-y-4">
+            {% for battle in pending_battles %}
+            <div class="border rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">{{ battle.creator.username }}</h3>
+                        <p class="text-sm text-primary">
+                            {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                        </p>
+                        <p class="text-xs text-gray-600">{{ battle.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    <a href="{% url 'battles:join' battle.id %}" class="gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                        Qo'shilish
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- User's Battles -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold mb-4 text-primary">Mening janglarim</h2>
+        {% if user_battles %}
+        <div class="space-y-4">
+            {% for battle in user_battles %}
+            <div class="border rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">
+                            {{ battle.creator.username }} 
+                            {% if battle.opponent %}vs {{ battle.opponent.username }}{% else %}(Kutilmoqda){% endif %}
+                        </h3>
+                        <p class="text-sm text-primary">
+                            {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                            • 
+                            {% if battle.status == 'pending' %}Kutilmoqda
+                            {% elif battle.status == 'active' %}Faol
+                            {% elif battle.status == 'finished' %}Tugallangan
+                            {% else %}Bekor qilingan{% endif %}
+                        </p>
+                        {% if battle.winner %}
+                        <p class="text-sm font-bold text-primary">🏆 G'olib: {{ battle.winner.username }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-600">{{ battle.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    <a href="{% url 'battles:detail' battle.id %}" class="gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                        Ko'rish
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600 text-center py-8">Hali janglar yo'q.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

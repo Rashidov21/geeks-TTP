@@ -14,7 +14,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div class="flex flex-wrap gap-4 mb-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Davr</label>
+                <label class="block text-sm font-medium text-primary mb-1">Davr</label>
                 <select id="period-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">
                     <option value="all" {% if period == 'all' %}selected{% endif %}>Barcha vaqt</option>
                     <option value="month" {% if period == 'month' %}selected{% endif %}>Oxirgi oy</option>
@@ -22,7 +22,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Turi</label>
+                <label class="block text-sm font-medium text-primary mb-1">Turi</label>
                 <select id="type-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300">
                     <option value="wpm" {% if leaderboard_type == 'wpm' %}selected{% endif %}>Umumiy WPM</option>
                     <option value="code_wpm" {% if leaderboard_type == 'code_wpm' %}selected{% endif %}>Kod WPM</option>
@@ -74,11 +74,35 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center space-x-2">
-                                <span class="font-semibold text-lg">{{ entry.username }}</span>
-                                {% if entry.username == user.username %}
-                                <span class="px-2 py-1 bg-gray-200 text-primary text-xs font-bold rounded-full">Siz</span>
-                                {% endif %}
+                            <div class="flex items-center space-x-3">
+                                <!-- User Image -->
+                                <div class="flex-shrink-0">
+                                    {% if entry.image %}
+                                    <a href="{% url 'accounts:profile_view' entry.user_id %}">
+                                        <img src="{{ entry.image }}" alt="{{ entry.username }}" class="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-md hover:shadow-lg transition-shadow duration-300">
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'accounts:profile_view' entry.user_id %}">
+                                        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            {{ entry.username|first|upper }}
+                                        </div>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <!-- User Name -->
+                                <div class="flex-1 min-w-0">
+                                    <a href="{% url 'accounts:profile_view' entry.user_id %}" class="block hover:text-primary-dark transition-colors duration-200">
+                                        {% if entry.full_name %}
+                                        <span class="font-semibold text-lg text-primary block truncate">{{ entry.full_name }}</span>
+                                        <span class="text-sm text-gray-600 block truncate">@{{ entry.username }}</span>
+                                        {% else %}
+                                        <span class="font-semibold text-lg text-primary block truncate">{{ entry.username }}</span>
+                                        {% endif %}
+                                    </a>
+                                    {% if entry.username == user.username %}
+                                    <span class="inline-block mt-1 px-2 py-0.5 bg-gray-200 text-primary text-xs font-bold rounded-full">Siz</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </td>
                         {% if leaderboard_type == 'accuracy' %}
@@ -116,7 +140,7 @@
                         </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">{{ entry.sessions }}</span>
+                            <span class="px-3 py-1 bg-gray-100 text-primary rounded-full text-sm font-medium">{{ entry.sessions }}</span>
                         </td>
                     </tr>
                     {% empty %}
@@ -130,6 +154,38 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex items-center justify-center space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?period={{ period }}&type={{ leaderboard_type }}&page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-primary hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="px-4 py-2 bg-primary text-white rounded-lg font-semibold">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?period={{ period }}&type={{ leaderboard_type }}&page={{ num }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-primary hover:bg-gray-50 transition-colors">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <a href="?period={{ period }}&type={{ leaderboard_type }}&page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-primary hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
+            {% endif %}
+        </div>
+        <div class="mt-4 text-center text-sm text-primary">
+            Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} (Jami {{ page_obj.paginator.count }} foydalanuvchi)
+        </div>
+        {% endif %}
     </div>
 </div>
 

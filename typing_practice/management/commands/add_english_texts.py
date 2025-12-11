@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from typing_practice.models import Text
 import random
+import string
 
 
 class Command(BaseCommand):
@@ -61,6 +62,64 @@ class Command(BaseCommand):
         created_count = 0
         total_needed = 50
         text_counter = 0  # Counter to ensure unique texts
+
+        def generate_unique_text(word_count, difficulty, seed):
+            """Generate a unique, word-count-accurate text using varied words to avoid duplicates."""
+            rnd = random.Random(seed)
+            topics = [
+                "technology", "learning", "health", "travel", "productivity",
+                "creativity", "communication", "leadership", "research", "community",
+                "education", "science", "nature", "innovation", "design",
+            ]
+            verbs = [
+                "builds", "inspires", "connects", "improves", "guides",
+                "supports", "drives", "transforms", "shapes", "enables",
+                "elevates", "refines", "develops", "encourages", "strengthens",
+            ]
+            adjectives = [
+                "reliable", "practical", "innovative", "balanced", "focused",
+                "collaborative", "thoughtful", "curious", "ambitious", "resilient",
+                "efficient", "supportive", "creative", "patient", "consistent",
+            ]
+            nouns = [
+                "skills", "ideas", "teams", "results", "habits",
+                "projects", "solutions", "systems", "processes", "outcomes",
+                "methods", "strategies", "insights", "goals", "challenges",
+            ]
+            closers = [
+                "Keep practicing and refining your approach.",
+                "Stay focused and measure progress frequently.",
+                "Small daily actions compound into big gains.",
+                "Consistency beats intensity over the long run.",
+                "Curiosity and patience make learning sustainable.",
+            ]
+
+            words = []
+            while len(words) < word_count - 8:  # leave room for a closing sentence
+                topic = rnd.choice(topics)
+                verb = rnd.choice(verbs)
+                adj = rnd.choice(adjectives)
+                noun = rnd.choice(nouns)
+                fragment = f"{topic} {verb} {adj} {noun}"
+                words.extend(fragment.split())
+
+            # Add a short closing
+            closing = rnd.choice(closers).split()
+            words.extend(closing)
+
+            # Trim or pad to exact word_count
+            if len(words) > word_count:
+                words = words[:word_count]
+            elif len(words) < word_count:
+                # pad with simple connector words to reach exact length
+                fillers = ["and", "for", "with", "to", "in", "on", "by", "from"]
+                while len(words) < word_count:
+                    words.append(rnd.choice(fillers))
+
+            # Capitalize first word and add period
+            words[0] = words[0].capitalize()
+            text_body = " ".join(words).rstrip(".") + "."
+            return text_body
         
         # Distribute texts across word counts and difficulties
         word_counts = [10, 25, 60, 100]
@@ -93,9 +152,8 @@ class Command(BaseCommand):
                     if i < len(available_texts):
                         text_body = available_texts[i]
                     else:
-                        # Generate a unique text if we run out
-                        text_body = f"Practice text number {text_counter} for {word_count} words with {difficulty} difficulty level. " * (word_count // 15)
-                        text_body = text_body.strip()[:word_count * 6]  # Approximate word count
+                        # Generate a unique text with exact word count to avoid duplicates
+                        text_body = generate_unique_text(word_count, difficulty, seed=text_counter)
                     
                     # Create title (first few words + counter for uniqueness)
                     title_words = text_body.split()[:5]

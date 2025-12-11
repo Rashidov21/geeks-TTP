@@ -21,6 +21,39 @@
         </div>
     </div>
 
+    {% if competition.status == 'finished' and competition.enable_certificates and top_three %}
+    <!-- Certificates for Top 3 -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <span>Top 3 sertifikatlar</span>
+        </h2>
+        <div class="grid md:grid-cols-3 gap-4">
+            {% for winner in top_three %}
+            <div class="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="text-2xl">
+                        {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-primary truncate">{{ winner.user.username }}</p>
+                        <p class="text-sm text-gray-600 truncate">{{ winner.result_wpm|default:"-"|floatformat:1 }} WPM • {{ winner.accuracy|default:"-"|floatformat:1 }}%</p>
+                    </div>
+                </div>
+                <a href="{% url 'competitions:certificate_rank' competition.id forloop.counter %}" class="inline-flex items-center space-x-2 gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Sertifikat</span>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Overall Leaderboard -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2">
@@ -58,10 +91,11 @@
                             <div class="flex items-center space-x-2">
                                 <span class="font-semibold text-lg">{{ participant.user.username }}</span>
                                 {% if forloop.counter <= 3 and competition.status == 'finished' and competition.enable_certificates %}
-                                <a href="{% url 'competitions:certificate_rank' competition.id forloop.counter %}" class="text-primary hover:text-primary-dark" title="Sertifikatni ko'rish">
+                                <a href="{% url 'competitions:certificate_rank' competition.id forloop.counter %}" class="inline-flex items-center space-x-1 text-primary hover:text-primary-dark px-2 py-1 rounded hover:bg-gray-100 transition-colors" title="Sertifikatni ko'rish va yuklab olish">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
+                                    <span class="text-sm font-medium">Sertifikat</span>
                                 </a>
                                 {% endif %}
                             </div>
@@ -73,7 +107,7 @@
                             <span class="text-xl font-bold text-primary">{{ participant.accuracy|default:"-"|floatformat:1 }}%</span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="text-lg font-medium">{{ participant.mistakes|default:"-" }}</span>
+                            <span class="text-lg font-medium text-primary">{{ participant.mistakes|default:0 }}</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -163,6 +197,24 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if competition.status == 'finished' and competition.enable_certificates and user_rank and user_rank <= 3 %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="text-center">
+            <h3 class="text-2xl font-bold mb-4 text-primary">🎉 Tabriklaymiz!</h3>
+            <p class="text-lg text-gray-600 mb-4">
+                Siz <strong>{{ competition.name }}</strong> musobaqasida 
+                {% if user_rank == 1 %}1-o'rin{% elif user_rank == 2 %}2-o'rin{% else %}3-o'rin{% endif %}ni qo'lga kiritdingiz!
+            </p>
+            <a href="{% url 'competitions:certificate' competition.id %}" class="inline-flex items-center space-x-2 gradient-secondary text-primary px-8 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>Mening sertifikatimni ko'rish va yuklab olish</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="mt-6 text-center">
         <a href="{% url 'competitions:list' %}" class="inline-flex items-center space-x-2 gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">

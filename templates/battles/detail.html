@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Jang - {{ battle }} - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-3xl font-bold mb-4 text-primary">1v1 Jang</h1>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-primary mb-1">Yaratuvchi</p>
+                <p class="text-xl font-bold text-primary">{{ battle.creator.username }}</p>
+                {% if creator_result %}
+                <p class="text-lg font-bold text-primary mt-2">{{ creator_result.wpm|floatformat:1 }} WPM</p>
+                <p class="text-sm text-primary">{{ creator_result.accuracy|floatformat:1 }}% aniqlik</p>
+                {% endif %}
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-primary mb-1">Raqib</p>
+                {% if battle.opponent %}
+                <p class="text-xl font-bold text-primary">{{ battle.opponent.username }}</p>
+                {% if opponent_result %}
+                <p class="text-lg font-bold text-primary mt-2">{{ opponent_result.wpm|floatformat:1 }} WPM</p>
+                <p class="text-sm text-primary">{{ opponent_result.accuracy|floatformat:1 }}% aniqlik</p>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-600">Kutilmoqda...</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <p class="text-sm text-primary mb-2">
+                {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                • 
+                {% if battle.status == 'pending' %}Kutilmoqda
+                {% elif battle.status == 'active' %}Faol
+                {% elif battle.status == 'finished' %}Tugallangan
+                {% else %}Bekor qilingan{% endif %}
+            </p>
+            {% if battle.winner %}
+            <p class="text-xl font-bold text-primary">🏆 G'olib: {{ battle.winner.username }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="mt-6 flex justify-center space-x-4">
+            {% if can_join %}
+            <a href="{% url 'battles:join' battle.id %}" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                Jangga qo'shilish
+            </a>
+            {% elif can_play %}
+            <a href="{% url 'battles:play' battle.id %}" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                Jangni boshlash
+            </a>
+            {% endif %}
+            <a href="{% url 'battles:list' %}" class="bg-gray-200 hover:bg-gray-300 text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                Orqaga
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

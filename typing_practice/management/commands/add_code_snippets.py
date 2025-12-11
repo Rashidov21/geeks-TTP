@@ -248,3 +248,4 @@ public class Main {
 
         self.stdout.write(self.style.SUCCESS(f"\nDone. Created {created} new code snippets."))
 
+

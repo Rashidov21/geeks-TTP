@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'typing_practice',
     'competitions',
     'leaderboard',
+    'battles',
 ]
 
 MIDDLEWARE = [
