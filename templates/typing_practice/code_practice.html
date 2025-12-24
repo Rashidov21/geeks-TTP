@@ -410,12 +410,56 @@ function finishTyping(wpm, accuracy, mistakes) {
         },
         body: JSON.stringify({
             code_id: codeId,
+            typed_text: typingInput.value,
             wpm: wpm,
             accuracy: accuracy,
             mistakes: mistakes,
             mistakes_list: mistakesList,
             duration_seconds: Math.round(duration)
         })
+    });
+
+    // show saving status in results area
+    let saveStatus = document.getElementById('save-status');
+    if (!saveStatus) {
+        saveStatus = document.createElement('div');
+        saveStatus.id = 'save-status';
+        saveStatus.className = 'mt-3 text-sm text-gray-600';
+        resultsDiv.appendChild(saveStatus);
+    }
+    saveStatus.textContent = 'Saqlanmoqda...';
+
+    fetch('{% url "typing_practice:save_result" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            code_id: codeId,
+            typed_text: typingInput.value,
+            wpm: wpm,
+            accuracy: accuracy,
+            mistakes: mistakes,
+            mistakes_list: mistakesList,
+            duration_seconds: Math.round(duration)
+        })
+    })
+    .then(response => response.json().then(json => ({ status: response.status, body: json })))
+    .then(({ status, body }) => {
+        if (status >= 200 && status < 300 && body && body.success) {
+            saveStatus.textContent = 'Natija saqlandi.';
+            saveStatus.className = 'mt-3 text-sm text-green-600';
+        } else {
+            const msg = (body && body.error) ? body.error : 'Server xatosi';
+            saveStatus.textContent = 'Xato: ' + msg;
+            saveStatus.className = 'mt-3 text-sm text-red-600';
+        }
+    })
+    .catch(err => {
+        saveStatus.textContent = 'Tarmoq xatosi: natija saqlanmadi.';
+        saveStatus.className = 'mt-3 text-sm text-red-600';
+        console.error('Save result error:', err);
     });
 }
 
@@ -441,19 +485,26 @@ function reset() {
 
 // Input event is already handled above with paste prevention
 
-finishBtn.addEventListener('click', () => {
-    const typed = typingInput.value;
-    const elapsed = (Date.now() - startTime) / 1000;
-    const typedChars = typed.length;
-    const mistakes = mistakesList.length;
-    const correctChars = typedChars - mistakes;
-    const wpm = (typedChars / 5 / elapsed) * 60;
-    const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
-    finishTyping(wpm, accuracy, mistakes);
-});
+if (finishBtn) {
+    finishBtn.addEventListener('click', () => {
+        const typed = typingInput.value;
+        const elapsed = (Date.now() - startTime) / 1000;
+        const typedChars = typed.length;
+        const mistakes = mistakesList.length;
+        const correctChars = typedChars - mistakes;
+        const wpm = (typedChars / 5 / elapsed) * 60;
+        const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+        finishTyping(wpm, accuracy, mistakes);
+    });
+}
 
+resetBtn.addEventListener('click', reset);
 resetBtn.addEventListener('click', reset);
 
 initCodeDisplay();
+// Remove the visible finish button — sessions finish automatically when the text/code is complete
+if (finishBtn && finishBtn.parentNode) {
+    finishBtn.parentNode.removeChild(finishBtn);
+}
 </script>
 {% endblock %}

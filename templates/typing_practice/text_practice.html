@@ -315,10 +315,17 @@ function updateDisplay() {
         document.getElementById('timer').textContent = Math.round(elapsed) + 's';
         document.getElementById('cpm').textContent = Math.round(cpm);
         
-        // Check if finished
+        // Determine whether the user is allowed to finish (frontend block)
+        let canFinish = false;
         if (mode === 'time' && timeLimit > 0 && elapsed >= timeLimit) {
-            finishTyping(wpm, cpm, accuracy, mistakes);
+            canFinish = true;
         } else if (typedWords.length >= words.length && typed.trim().length >= originalText.trim().length) {
+            canFinish = true;
+        }
+        finishBtn.disabled = !canFinish;
+
+        // Auto-finish when allowed (time-mode or completed text)
+        if (canFinish && !isFinished) {
             finishTyping(wpm, cpm, accuracy, mistakes);
         }
     }
@@ -328,7 +335,6 @@ function startTyping() {
     if (!startTime) {
         startTime = Date.now();
         timerInterval = setInterval(updateDisplay, 100);
-        finishBtn.disabled = false;
     }
 }
 
@@ -348,6 +354,19 @@ function finishTyping(wpm, cpm, accuracy, mistakes) {
     
     // Save result
     const duration = (Date.now() - startTime) / 1000;
+    // determine if incomplete result is allowed (time mode)
+    const elapsed = duration;
+    const allow_incomplete = (mode === 'time' && timeLimit > 0 && elapsed >= timeLimit);
+    // show saving status
+    let saveStatus = document.getElementById('save-status');
+    if (!saveStatus) {
+        saveStatus = document.createElement('div');
+        saveStatus.id = 'save-status';
+        saveStatus.className = 'mt-3 text-sm text-gray-600';
+        resultsDiv.appendChild(saveStatus);
+    }
+    saveStatus.textContent = 'Saqlanmoqda...';
+
     fetch('{% url "typing_practice:save_result" %}', {
         method: 'POST',
         headers: {
@@ -356,12 +375,30 @@ function finishTyping(wpm, cpm, accuracy, mistakes) {
         },
         body: JSON.stringify({
             text_id: textId,
+            typed_text: typingInput.value,
+            allow_incomplete: allow_incomplete,
             wpm: wpm,
             accuracy: accuracy,
             mistakes: mistakes,
             mistakes_list: mistakesList,
             duration_seconds: Math.round(duration)
         })
+    })
+    .then(response => response.json().then(json => ({ status: response.status, body: json })))
+    .then(({ status, body }) => {
+        if (status >= 200 && status < 300 && body && body.success) {
+            saveStatus.textContent = 'Natija saqlandi.';
+            saveStatus.className = 'mt-3 text-sm text-green-600';
+        } else {
+            const msg = (body && body.error) ? body.error : 'Server xatosi';
+            saveStatus.textContent = 'Xato: ' + msg;
+            saveStatus.className = 'mt-3 text-sm text-red-600';
+        }
+    })
+    .catch(err => {
+        saveStatus.textContent = 'Tarmoq xatosi: natija saqlanmadi.';
+        saveStatus.className = 'mt-3 text-sm text-red-600';
+        console.error('Save result error:', err);
     });
 }
 
@@ -387,22 +424,28 @@ function reset() {
 
 // Input event is already handled above with paste prevention
 
-finishBtn.addEventListener('click', () => {
-    const typed = typingInput.value;
-    const words = originalText.trim().split(/\s+/);
-    const typedWords = typed.trim().split(/\s+/);
-    const elapsed = (Date.now() - startTime) / 1000;
-    const typedChars = typed.length;
-    const mistakes = mistakesList.length;
-    const correctChars = typedChars - mistakes;
-    const wpm = (typedWords.length / elapsed) * 60;
-    const cpm = (typedChars / elapsed) * 60;
-    const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
-    finishTyping(wpm, cpm, accuracy, mistakes);
-});
+if (finishBtn) {
+    finishBtn.addEventListener('click', () => {
+        const typed = typingInput.value;
+        const words = originalText.trim().split(/\s+/);
+        const typedWords = typed.trim().split(/\s+/);
+        const elapsed = (Date.now() - startTime) / 1000;
+        const typedChars = typed.length;
+        const mistakes = mistakesList.length;
+        const correctChars = typedChars - mistakes;
+        const wpm = (typedWords.length / elapsed) * 60;
+        const cpm = (typedChars / elapsed) * 60;
+        const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+        finishTyping(wpm, cpm, accuracy, mistakes);
+    });
+}
 
 resetBtn.addEventListener('click', reset);
 
 initTextDisplay();
+// Remove the visible finish button — sessions finish automatically when complete or time expires
+if (finishBtn && finishBtn.parentNode) {
+    finishBtn.parentNode.removeChild(finishBtn);
+}
 </script>
 {% endblock %}

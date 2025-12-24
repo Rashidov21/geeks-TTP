@@ -176,12 +176,25 @@ def save_result(request):
                 text = Text.objects.get(id=text_id)
             except Text.DoesNotExist:
                 return JsonResponse({'error': 'Text not found'}, status=404)
+            # Ensure user typed the full text unless allowed (e.g., time-limited session)
+            typed_text = data.get('typed_text', '')
+            allow_incomplete = bool(data.get('allow_incomplete', False))
+            if not allow_incomplete:
+                # strict check: trimmed typed_text must equal stored text body trimmed
+                if not isinstance(typed_text, str) or text.body.strip() != typed_text.strip():
+                    return JsonResponse({'error': 'Text not fully typed'}, status=400)
         
         if code_id:
             try:
                 code = CodeSnippet.objects.get(id=code_id)
             except CodeSnippet.DoesNotExist:
                 return JsonResponse({'error': 'Code snippet not found'}, status=404)
+            # Ensure user typed the full code unless allowed
+            typed_text = data.get('typed_text', '')
+            allow_incomplete = bool(data.get('allow_incomplete', False))
+            if not allow_incomplete:
+                if not isinstance(typed_text, str) or code.code_body.strip() != typed_text.strip():
+                    return JsonResponse({'error': 'Code not fully typed'}, status=400)
         
         session_type = 'text' if text_id else 'code'
         
