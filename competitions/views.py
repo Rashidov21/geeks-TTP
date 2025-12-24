@@ -211,11 +211,19 @@ def competition_join(request, competition_id):
     
     if request.method == 'POST':
         access_code = request.POST.get('access_code', '')
-        
-        if competition.access_code and access_code != competition.access_code:
-            messages.error(request, 'Invalid access code')
-            return redirect('competitions:detail', competition_id=competition.id)
-        
+        # If competition has an access_code, require it. Otherwise for private competitions
+        # only allow join if the user was pre-added or is a manager.
+        if competition.access_code:
+            if access_code != competition.access_code:
+                messages.error(request, 'Invalid access code')
+                return redirect('competitions:detail', competition_id=competition.id)
+        else:
+            if not competition.is_public:
+                already_added = CompetitionParticipant.objects.filter(user=request.user, competition=competition).exists()
+                if not already_added and not getattr(request.user, 'userprofile', None) or (getattr(request.user, 'userprofile', None) and not request.user.userprofile.is_manager):
+                    messages.error(request, 'Siz bu musobaqaga qoʻshilish huquqiga ega emassiz')
+                    return redirect('competitions:detail', competition_id=competition.id)
+
         participant, created = CompetitionParticipant.objects.get_or_create(
             user=request.user,
             competition=competition
@@ -279,6 +287,11 @@ def competition_play(request, competition_id, stage_number=1):
     
     if not participant:
         messages.error(request, 'Siz bu musobaqada qatnashmadingiz')
+        return redirect('competitions:detail', competition_id=competition.id)
+
+    # Prevent re-entry if participant already finished the competition
+    if participant.is_finished:
+        messages.error(request, 'Siz bu musobaqani tugatgansiz')
         return redirect('competitions:detail', competition_id=competition.id)
     
     if competition.status != 'active':
@@ -386,6 +399,10 @@ def competition_save_result(request, competition_id, stage_number):
             user=request.user,
             competition=competition
         )
+
+        # Disallow saving if participant already marked finished for the whole competition
+        if getattr(participant, 'is_finished', False):
+            return JsonResponse({'error': 'Siz bu musobaqani tugatgansiz'}, status=400)
         
         # Validate stage number
         if stage_number < 1 or stage_number > 3:

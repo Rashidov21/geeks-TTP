@@ -151,6 +151,12 @@ def battle_play(request, battle_id):
     if battle.status != 'active':
         messages.error(request, 'Jang faol emas.')
         return redirect('battles:detail', battle_id=battle.id)
+
+    # Prevent playing if participant already finished
+    participant = BattleParticipant.objects.filter(battle=battle, user=request.user).first()
+    if participant and participant.is_finished:
+        messages.error(request, 'Siz bu jangni tugatgansiz.')
+        return redirect('battles:detail', battle_id=battle.id)
     
     return render(request, 'battles/play.html', {
         'battle': battle,

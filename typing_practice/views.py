@@ -10,6 +10,7 @@ from .utils import (
     validate_wpm, validate_accuracy,
     get_random_text, get_random_code
 )
+from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
 
@@ -170,31 +171,91 @@ def save_result(request):
             logger.warning(f"Invalid data in save_result: {e}")
             return JsonResponse({'error': 'Invalid data format'}, status=400)
         
-        # Validate text/code exists
+        # Validate text/code exists and perform server-side normalization/validation
+        typed_text = data.get('typed_text', '')
+        allow_incomplete = bool(data.get('allow_incomplete', False))
+        mode = data.get('mode', 'full')
+        try:
+            time_limit_sent = int(data.get('time_limit', 0))
+        except (TypeError, ValueError):
+            time_limit_sent = 0
+
+        def normalize_text(s: str) -> str:
+            if not isinstance(s, str):
+                return ''
+            # Normalize whitespace for plain texts: collapse all whitespace to single spaces
+            return ' '.join(s.replace('\r\n', '\n').split())
+
+        def normalize_code(s: str) -> str:
+            if not isinstance(s, str):
+                return ''
+            # Normalize line endings and strip trailing spaces per line
+            return '\n'.join([line.rstrip() for line in s.replace('\r\n', '\n').split('\n')])
+
         if text_id:
             try:
                 text = Text.objects.get(id=text_id)
             except Text.DoesNotExist:
                 return JsonResponse({'error': 'Text not found'}, status=404)
-            # Ensure user typed the full text unless allowed (e.g., time-limited session)
-            typed_text = data.get('typed_text', '')
-            allow_incomplete = bool(data.get('allow_incomplete', False))
-            if not allow_incomplete:
-                # strict check: trimmed typed_text must equal stored text body trimmed
-                if not isinstance(typed_text, str) or text.body.strip() != typed_text.strip():
+
+            original_norm = normalize_text(text.body)
+            typed_norm = normalize_text(typed_text)
+
+            # If not time-mode allowed, require full match
+            if not (allow_incomplete and mode == 'time' and duration_seconds >= time_limit_sent):
+                if typed_norm != original_norm:
                     return JsonResponse({'error': 'Text not fully typed'}, status=400)
-        
+
+            # compute server-side metrics
+            typed_chars = len(typed_norm)
+            typed_words = len(typed_norm.split()) if typed_norm.strip() else 0
+            mismatches = 0
+            # per-char mismatch counting against original
+            for i, ch in enumerate(typed_norm):
+                if i >= len(original_norm) or ch != original_norm[i]:
+                    mismatches += 1
+            mismatches += max(0, len(original_norm) - len(typed_norm))
+            server_accuracy = round(((typed_chars - mismatches) / typed_chars) * 100, 2) if typed_chars > 0 else 100.0
+            server_wpm = round((typed_words / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+
+            # override client values if they differ significantly
+            if abs(server_wpm - wpm) / (server_wpm + 1e-6) > 0.2:
+                logger.info(f"WPM mismatch for user {request.user.username}: client={wpm}, server={server_wpm}")
+                wpm = server_wpm
+            if abs(server_accuracy - accuracy) > 10:
+                logger.info(f"Accuracy mismatch for user {request.user.username}: client={accuracy}, server={server_accuracy}")
+                accuracy = server_accuracy
+
         if code_id:
             try:
                 code = CodeSnippet.objects.get(id=code_id)
             except CodeSnippet.DoesNotExist:
                 return JsonResponse({'error': 'Code snippet not found'}, status=404)
-            # Ensure user typed the full code unless allowed
-            typed_text = data.get('typed_text', '')
-            allow_incomplete = bool(data.get('allow_incomplete', False))
-            if not allow_incomplete:
-                if not isinstance(typed_text, str) or code.code_body.strip() != typed_text.strip():
+
+            original_norm = normalize_code(code.code_body)
+            typed_norm = normalize_code(typed_text)
+
+            # If not time-mode allowed, require full match
+            if not (allow_incomplete and mode == 'time' and duration_seconds >= time_limit_sent):
+                if typed_norm != original_norm:
                     return JsonResponse({'error': 'Code not fully typed'}, status=400)
+
+            # compute server-side metrics for code (chars based)
+            typed_chars = len(typed_norm)
+            mismatches = 0
+            for i, ch in enumerate(typed_norm):
+                if i >= len(original_norm) or ch != original_norm[i]:
+                    mismatches += 1
+            mismatches += max(0, len(original_norm) - len(typed_norm))
+            server_accuracy = round(((typed_chars - mismatches) / typed_chars) * 100, 2) if typed_chars > 0 else 100.0
+            server_wpm = round(((typed_chars / 5.0) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+
+            if abs(server_wpm - wpm) / (server_wpm + 1e-6) > 0.2:
+                logger.info(f"Code WPM mismatch for user {request.user.username}: client={wpm}, server={server_wpm}")
+                wpm = server_wpm
+            if abs(server_accuracy - accuracy) > 10:
+                logger.info(f"Code accuracy mismatch for user {request.user.username}: client={accuracy}, server={server_accuracy}")
+                accuracy = server_accuracy
         
         session_type = 'text' if text_id else 'code'
         
@@ -211,15 +272,12 @@ def save_result(request):
                 duration_seconds=duration_seconds,
                 session_type=session_type
             )
-            
-            # Keep only last 10 results per user, delete older ones
-            user_results = UserResult.objects.filter(user=request.user).order_by('-time')
-            if user_results.count() > 10:
-                # Get IDs of results to delete (all except first 10)
-                results_to_delete = user_results[10:].values_list('id', flat=True)
-                if results_to_delete:
-                    UserResult.objects.filter(id__in=list(results_to_delete)).delete()
-                    logger.info(f"Deleted {len(results_to_delete)} old results for user {request.user.username}")
+
+            # Keep only last 10 results per user, delete older ones (avoid extra count())
+            ids_to_delete = list(UserResult.objects.filter(user=request.user).order_by('-time').values_list('id', flat=True)[10:])
+            if ids_to_delete:
+                UserResult.objects.filter(id__in=ids_to_delete).delete()
+                logger.info(f"Deleted {len(ids_to_delete)} old results for user {request.user.username}")
         
         # Clear user stats cache
         cache.delete(f'user_stats_{request.user.id}')
@@ -233,3 +291,32 @@ def save_result(request):
     except Exception as e:
         logger.error(f"Error saving result: {e}", exc_info=True)
         return JsonResponse({'error': 'Server error occurred'}, status=500)
+
+
+@login_required
+def achievements(request):
+    """Return a small achievements payload for the user (simple)."""
+    # Minimal achievements: last_wpm, best_wpm, streak placeholder
+    last = UserResult.objects.filter(user=request.user).order_by('-time').first()
+    best = UserResult.objects.filter(user=request.user).order_by('-wpm').first()
+    data = {
+        'last_wpm': last.wpm if last else 0,
+        'best_wpm': best.wpm if best else 0,
+        'streak_days': 0,
+    }
+    return JsonResponse({'success': True, 'achievements': data})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def telemetry(request):
+    """Receive small telemetry events from frontend (non-sensitive)."""
+    try:
+        payload = json.loads(request.body)
+        event = payload.get('event')
+        details = payload.get('details', {})
+        logger.info(f"Telemetry event: {event} details={details}")
+        return JsonResponse({'success': True})
+    except Exception as e:
+        logger.warning(f"Telemetry error: {e}")
+        return JsonResponse({'error': 'Bad telemetry'}, status=400)

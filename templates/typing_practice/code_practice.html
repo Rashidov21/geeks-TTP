@@ -1,50 +1,77 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Code Practice - Typing Trainer{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-<style>
-    .word { margin-right: 0.5rem; }
-    .correct { color: #292929; }
-    .incorrect { background-color: #fee2e2; color: #dc2626; }
-    .current { background-color: rgba(41, 41, 41, 0.1); border-left: 3px solid #292929; padding-left: 2px; }
-    .typed { color: #6b7280; }
-    .stats-card {
-        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        color: #292929;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-    .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-    }
-    .stats-card.wpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.accuracy { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.time { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.cpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    #code-display {
-        font-family: 'Fira Code', 'Courier New', monospace;
-        font-size: 15px;
-        line-height: 1.6;
-    }
-    .code-line {
-        padding: 2px 0;
-        min-height: 1.6em;
-    }
-    .code-line.hljs {
-        background: transparent !important;
-    }
+        (async function(){
+            const payload = {
+                code_id: codeId,
+                typed_text: typingInput.value,
+                mode: 'full',
+                time_limit: 0,
+                wpm: wpm,
+                accuracy: accuracy,
+                mistakes: mistakes,
+                mistakes_list: mistakesList,
+                duration_seconds: Math.round(duration)
+            };
+            const csrf = getCSRFToken();
+            <script src="{% static 'js/practice.js' %}"></script>
+            <script>
+            // Load achievements and render small summary for code practice
+            (async function(){
+                try{
+                    const res = await fetch('{% url "typing_practice:achievements" %}');
+                    const json = await res.json().catch(()=>null);
+                    if(res.ok && json && json.success && json.achievements){
+                        const a = json.achievements;
+                        const panel = document.getElementById('achievements-panel');
+                        if(panel){
+                            panel.innerHTML = `So'nggi WPM: <strong>${Math.round(a.last_wpm)}</strong> • Eng yaxshi: <strong>${Math.round(a.best_wpm)}</strong>`;
+                        }
+                    }
+                }catch(e){ /* ignore */ }
+            })();
+            </script>
+            if (navigator.onLine && window.TP_utils){
+                const res = await window.TP_utils.autoSave('{% url "typing_practice:save_result" %}', payload, csrf);
+                if (res.ok && res.body && res.body.success){
+                    saveStatus.textContent = 'Natija saqlandi.';
+                    saveStatus.className = 'mt-3 text-sm text-green-600';
+                    const wpmEl = document.getElementById('result-wpm');
+                    if(window.TP_utils) window.TP_utils.animateCounter(wpmEl, 0, Math.round(wpm));
+                    if(window.confetti && (accuracy >= 80 || typingInput.value.trim().length >= originalCode.trim().length)){
+                        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+                    }
+                } else {
+                    const msg = (res && res.body && res.body.error) ? res.body.error : (res && res.error) ? String(res.error) : 'Server xatosi';
+                    saveStatus.textContent = 'Xato: ' + msg;
+                    saveStatus.className = 'mt-3 text-sm text-red-600';
+                    if(window.TP_utils) window.TP_utils.enqueueOfflineSave(payload);
+                }
+            } else {
+                if(window.TP_utils) window.TP_utils.enqueueOfflineSave(payload);
+                saveStatus.textContent = 'Siz hozir offline — natija mahalliy navbatga qo‘yildi.';
+                saveStatus.className = 'mt-3 text-sm text-yellow-600';
+            }
+        })();
+    .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
+    #wpm, #accuracy, #timer, #mistakes-count { font-size: 1.5rem; }
+    #code-display { font-size: 0.95rem; padding: 0.75rem; }
+    #typing-input { font-size: 0.95rem; padding: 0.5rem; }
+    .action-buttons > * { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    #results { padding: 0.75rem; }
+    /* Responsive practice layout and helpers */
+    .practice-container { max-width: 1100px; margin: 0 auto; padding: 0 12px; }
+    .practice-header { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    .practice-instructions { background:#f8fafc; border:1px solid #eef2ff; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#374151; margin-bottom:12px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
+<div class="practice-container">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-lg p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div class="bg-white rounded-lg shadow-lg p-4 mb-4 practice-header">
         <div class="flex items-center space-x-3">
             <div class="text-3xl">
                 {% if code.language == 'python' %}🐍
@@ -75,7 +102,7 @@
                 </span>
             </div>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 action-buttons">
             <button id="reset-btn" class="flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -123,21 +150,35 @@
         </div>
     </div>
 
+    <!-- Achievements small panel -->
+    <div id="achievements-panel" class="mb-4 text-sm text-gray-700"></div>
+
     <!-- Main Content - Code Display and Typing Area -->
     <div class="bg-white rounded-lg shadow-lg p-6">
-        <!-- Code Display - Larger and more prominent -->
-        <div id="code-display" class="p-6 bg-gray-50 text-primary rounded-lg border-2 border-gray-300  mb-6 overflow-auto">
+        <!-- Instructions -->
+        <div class="practice-instructions" id="practice-instructions">
+            Kodni aniq va ehtiyotkorlik bilan yozing — uzun kod bo'lsa ichki oynada skroll paydo bo'ladi. <strong>Ctrl+R</strong> — qayta boshlash, <strong>?</strong> — yordam.
+        </div>
+
+        <!-- Code Display - scrolls internally when long -->
+        <div id="code-display" role="region" aria-label="Practice code" class="bg-gray-50 text-primary rounded-lg border-2 border-gray-300 mb-6 overflow-auto" style="padding:0.75rem; max-height:42vh;">
             <pre><code class="language-{{ code.language }}">{{ code.code_body }}</code></pre>
+        </div>
+        <div class="mb-4">
+            <div class="progress-wrap">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
         </div>
         
         <!-- Typing Input - Larger and more prominent -->
         <textarea 
             id="typing-input" 
-            class="w-full p-6 bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary text-base font-mono text-primary placeholder-gray-400 transition-all duration-300"
-            rows="12"
+            class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary font-mono text-primary placeholder-gray-400 transition-all duration-300"
+            rows="8"
             placeholder="Bu yerga kod yozishni boshlang..."
             autofocus
             spellcheck="false"
+            aria-label="Code typing input"
         ></textarea>
     </div>
     
@@ -180,6 +221,19 @@
 </div>
 
 <script>
+// confetti lib
+(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';s.async=true;document.head.appendChild(s);})();
+
+function animateCounter(el, from, to, duration=800){
+    const start = performance.now();
+    function step(now){
+        const t = Math.min(1,(now-start)/duration);
+        const val = from + (to-from)*t;
+        el.textContent = (Math.round(val));
+        if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
 const codeId = {{ code.id }};
 const originalCode = `{{ code.code_body|escapejs }}`;
 let startTime = null;
@@ -209,19 +263,22 @@ function initCodeDisplay() {
     expectedNextChar = originalCode[0] || null;
 }
 
-// Prevent copy-paste
+// Prevent copy-paste and show friendly toast
 typingInput.addEventListener('paste', (e) => {
     e.preventDefault();
+    if(window.TP_utils) TP_utils.showToast('Paste bloklandi. Adolatli o‘yin uchun to‘g‘ri yozing.', 'error', 3500);
     return false;
 });
 
 typingInput.addEventListener('copy', (e) => {
     e.preventDefault();
+    if(window.TP_utils) TP_utils.showToast('Copy bloklandi.', 'info', 2000);
     return false;
 });
 
 typingInput.addEventListener('cut', (e) => {
     e.preventDefault();
+    if(window.TP_utils) TP_utils.showToast('Cut bloklandi.', 'info', 2000);
     return false;
 });
 
@@ -348,10 +405,21 @@ function updateDisplay() {
         const wpm = (typedChars / 5 / elapsed) * 60;
         const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
         
-        document.getElementById('wpm').textContent = Math.round(wpm);
-        document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
-        document.getElementById('timer').textContent = Math.round(elapsed) + 's';
-        document.getElementById('mistakes-count').textContent = mistakes;
+            document.getElementById('wpm').textContent = Math.round(wpm);
+            document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
+            document.getElementById('timer').textContent = Math.round(elapsed) + 's';
+            document.getElementById('mistakes-count').textContent = mistakes;
+
+            // progress bar (by chars)
+            const progressBar = document.getElementById('progress-bar');
+            if(progressBar){
+                if(window.TP_utils) window.TP_utils.updateProgressBar(progressBar, originalCode, typed);
+                else {
+                    const total = originalCode.length || 1;
+                    const pct = Math.min(100, Math.round((typed.length/total)*100));
+                    progressBar.style.width = pct + '%';
+                }
+            }
         
         // Check if finished
         if (typed.trim() === originalCode.trim()) {
@@ -401,24 +469,6 @@ function finishTyping(wpm, accuracy, mistakes) {
     
     resultsDiv.classList.remove('hidden');
     
-    // Save result
-    fetch('{% url "typing_practice:save_result" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-        },
-        body: JSON.stringify({
-            code_id: codeId,
-            typed_text: typingInput.value,
-            wpm: wpm,
-            accuracy: accuracy,
-            mistakes: mistakes,
-            mistakes_list: mistakesList,
-            duration_seconds: Math.round(duration)
-        })
-    });
-
     // show saving status in results area
     let saveStatus = document.getElementById('save-status');
     if (!saveStatus) {
@@ -434,20 +484,46 @@ function finishTyping(wpm, accuracy, mistakes) {
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCSRFToken()
-        },
-        body: JSON.stringify({
-            code_id: codeId,
-            typed_text: typingInput.value,
-            wpm: wpm,
-            accuracy: accuracy,
-            mistakes: mistakes,
-            mistakes_list: mistakesList,
-            duration_seconds: Math.round(duration)
+        fetch('{% url "typing_practice:save_result" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                code_id: codeId,
+                typed_text: typingInput.value,
+                mode: 'full',
+                time_limit: 0,
+                wpm: wpm,
+                accuracy: accuracy,
+                mistakes: mistakes,
+                mistakes_list: mistakesList,
+                duration_seconds: Math.round(duration)
+            })
         })
-    })
-    .then(response => response.json().then(json => ({ status: response.status, body: json })))
-    .then(({ status, body }) => {
-        if (status >= 200 && status < 300 && body && body.success) {
+        .then(response => response.json().then(json => ({ status: response.status, body: json })))
+        .then(({ status, body }) => {
+            if (status >= 200 && status < 300 && body && body.success) {
+                saveStatus.textContent = 'Natija saqlandi.';
+                saveStatus.className = 'mt-3 text-sm text-green-600';
+                // animate and celebrate
+                const wpmEl = document.getElementById('result-wpm');
+                animateCounter(wpmEl, 0, Math.round(wpm));
+                if(window.confetti && (accuracy >= 80 || typed.trim().length >= originalCode.trim().length)){
+                    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+                }
+            } else {
+                const msg = (body && body.error) ? body.error : 'Server xatosi';
+                saveStatus.textContent = 'Xato: ' + msg;
+                saveStatus.className = 'mt-3 text-sm text-red-600';
+            }
+        })
+        .catch(err => {
+            saveStatus.textContent = 'Tarmoq xatosi: natija saqlanmadi.';
+            saveStatus.className = 'mt-3 text-sm text-red-600';
+            console.error('Save result error:', err);
+        });
             saveStatus.textContent = 'Natija saqlandi.';
             saveStatus.className = 'mt-3 text-sm text-green-600';
         } else {
@@ -506,5 +582,26 @@ initCodeDisplay();
 if (finishBtn && finishBtn.parentNode) {
     finishBtn.parentNode.removeChild(finishBtn);
 }
+// Keyboard shortcuts: Ctrl+R to reset, ? to toggle instructions
+document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r'){
+        e.preventDefault();
+        reset();
+    }
+    if (e.key === '?'){
+        const instr = document.getElementById('practice-instructions');
+        if (instr) instr.style.display = (instr.style.display === 'none') ? 'block' : 'none';
+    }
+});
 </script>
+<script>
+// Flush offline queue when connection resumes
+if(window.TP_utils){
+    window.addEventListener('online', ()=>{
+        const csrf = getCSRFToken();
+        window.TP_utils.flushOfflineQueue('{% url "typing_practice:save_result" %}', csrf);
+    });
+}
+</script>
+<script src="{% static 'js/practice.js' %}"></script>
 {% endblock %}
