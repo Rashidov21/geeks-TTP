@@ -1,12 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Avg, Max, Count, Sum
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from datetime import timedelta
-from .models import UserProfile
+import json
+from .models import UserProfile, UserLevel, UserBadge, Notification
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm
 from typing_practice.models import UserResult
 from competitions.models import CompetitionParticipant
@@ -124,32 +127,62 @@ def profile_view(request, user_id=None):
     recent_10 = user_results.order_by('-time')[:10]
 
     # Certificates (top 3 in finished competitions with certificates enabled)
+    # Optimized query to avoid N+1 problem
     certificate_awards = []
     participant_competitions = CompetitionParticipant.objects.filter(
         user=profile_user,
         competition__status='finished',
-        competition__enable_certificates=True
-    ).select_related('competition')
+        competition__enable_certificates=True,
+        is_finished=True
+    ).select_related('competition').order_by('-result_wpm')
     
-    for cp in participant_competitions:
-        winners = CompetitionParticipant.objects.filter(
-            competition=cp.competition,
+    # Get all competition IDs for batch processing
+    competition_ids = [cp.competition_id for cp in participant_competitions]
+    
+    if competition_ids:
+        # Get all winners for these competitions in one query
+        all_winners = CompetitionParticipant.objects.filter(
+            competition_id__in=competition_ids,
             is_finished=True
-        ).select_related('user').order_by('-result_wpm')
+        ).select_related('user', 'competition').order_by('competition_id', '-result_wpm')
         
-        rank = None
-        for idx, winner in enumerate(winners, 1):
-            if winner.user_id == profile_user.id:
-                rank = idx
-                break
+        # Group winners by competition
+        winners_by_competition = {}
+        for winner in all_winners:
+            comp_id = winner.competition_id
+            if comp_id not in winners_by_competition:
+                winners_by_competition[comp_id] = []
+            winners_by_competition[comp_id].append(winner)
         
-        if rank and rank <= 3:
-            certificate_awards.append({
-                'competition': cp.competition,
-                'rank': rank,
-                'result_wpm': cp.result_wpm,
-                'accuracy': cp.accuracy,
-            })
+        # Calculate ranks efficiently
+        for cp in participant_competitions:
+            comp_id = cp.competition_id
+            winners = winners_by_competition.get(comp_id, [])
+            
+            rank = None
+            for idx, winner in enumerate(winners, 1):
+                if winner.user_id == profile_user.id:
+                    rank = idx
+                    break
+            
+            if rank and rank <= 3:
+                certificate_awards.append({
+                    'competition': cp.competition,
+                    'rank': rank,
+                    'result_wpm': cp.result_wpm,
+                    'accuracy': cp.accuracy,
+                })
+    
+    # Gamification data
+    level_info, _ = UserLevel.objects.get_or_create(user=profile_user)
+    earned_badges = UserBadge.objects.filter(user=profile_user).select_related('badge').order_by('-earned_at')
+    all_badges = UserBadge.objects.filter(user=profile_user).select_related('badge')
+    
+    # Progress data for charts (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    progress_results = list(user_results.filter(time__gte=thirty_days_ago).order_by('time')[:30])
+    wpm_progress = [{'date': r.time.strftime('%Y-%m-%d'), 'wpm': float(r.wpm)} for r in progress_results]
+    accuracy_progress = [{'date': r.time.strftime('%Y-%m-%d'), 'accuracy': float(r.accuracy)} for r in progress_results]
     
     context = {
         'profile_user': profile_user,
@@ -165,6 +198,12 @@ def profile_view(request, user_id=None):
         'recent_10': recent_10,
         'is_own_profile': profile_user == request.user,
         'certificate_awards': certificate_awards,
+        # Gamification
+        'level_info': level_info,
+        'earned_badges': earned_badges,
+        'all_badges': all_badges,
+        'wpm_progress': mark_safe(json.dumps(wpm_progress)),
+        'accuracy_progress': mark_safe(json.dumps(accuracy_progress)),
     }
     
     return render(request, 'accounts/profile.html', context)
@@ -191,4 +230,39 @@ def profile_edit(request):
         form = UserProfileForm(instance=profile)
     
     return render(request, 'accounts/profile_edit.html', {'form': form})
+
+
+@login_required
+def notifications_view(request):
+    """View all notifications"""
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:50]
+    unread_count = Notification.get_unread_count(request.user)
+    
+    context = {
+        'notifications': notifications,
+        'unread_count': unread_count,
+    }
+    
+    return render(request, 'accounts/notifications.html', context)
+
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Mark notification as read"""
+    from django.http import JsonResponse
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+
+
+@login_required
+def mark_all_notifications_read(request):
+    """Mark all notifications as read"""
+    from django.http import JsonResponse
+    count = Notification.mark_all_read(request.user)
+    return JsonResponse({'success': True, 'count': count})
 

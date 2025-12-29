@@ -23,6 +23,11 @@ class UserProfile(models.Model):
     bio = models.TextField(max_length=500, blank=True)
     address = models.CharField(max_length=200, blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    # Streak fields
+    current_streak = models.IntegerField(default=0, help_text="Joriy ketma-ketlik (kun)")
+    longest_streak = models.IntegerField(default=0, help_text="Eng uzun ketma-ketlik")
+    last_practice_date = models.DateField(null=True, blank=True, help_text="Oxirgi mashq qilgan sana")
+    total_practice_days = models.IntegerField(default=0, help_text="Jami mashq qilgan kunlar")
 
     def __str__(self):
         return f"{self.user.username} - {'Manager' if self.is_manager else 'User'}"
@@ -103,3 +108,190 @@ class UserProfile(models.Model):
                     logger.error(f"Error processing profile image: {e}", exc_info=True)
         
         super().save(*args, **kwargs)
+
+
+class Badge(models.Model):
+    """Badge/Achievement model"""
+    BADGE_TYPE_CHOICES = [
+        ('speed', 'Tezlik'),
+        ('accuracy', 'Aniqlik'),
+        ('streak', 'Ketma-ketlik'),
+        ('milestone', 'Yutuq'),
+        ('competition', 'Musobaqa'),
+        ('consistency', 'Izchillik'),
+    ]
+    
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
+    icon = models.CharField(max_length=50, default='🏆', help_text="Emoji yoki icon")
+    badge_type = models.CharField(max_length=20, choices=BADGE_TYPE_CHOICES)
+    requirement = models.JSONField(default=dict, help_text="Talablar (masalan: {'wpm': 100, 'sessions': 50})")
+    xp_reward = models.IntegerField(default=50, help_text="XP mukofoti")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['badge_type', 'name']
+        indexes = [
+            models.Index(fields=['badge_type', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class UserBadge(models.Model):
+    """User's earned badges"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='earned_badges')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='user_badges')
+    earned_at = models.DateTimeField(auto_now_add=True)
+    progress = models.IntegerField(default=100, help_text="Progress foizi (0-100)")
+    
+    class Meta:
+        unique_together = ['user', 'badge']
+        ordering = ['-earned_at']
+        indexes = [
+            models.Index(fields=['user', '-earned_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.badge.name}"
+
+
+class UserLevel(models.Model):
+    """User XP and Level system"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='level_info')
+    current_xp = models.IntegerField(default=0)
+    total_xp = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def calculate_level(self):
+        """Calculate level from total XP"""
+        # Level formula: Level N requires sum(100 * 1.5^(i-1)) for i=1 to N-1
+        xp = self.total_xp
+        level = 1
+        required_xp = 0
+        
+        while True:
+            level_xp = int(100 * (1.5 ** (level - 1)))
+            if required_xp + level_xp > xp:
+                break
+            required_xp += level_xp
+            level += 1
+        
+        self.level = level
+        self.current_xp = xp - required_xp
+        return level
+    
+    def get_xp_for_next_level(self):
+        """Get XP required for next level"""
+        return int(100 * (1.5 ** (self.level - 1)))
+    
+    def get_progress_percentage(self):
+        """Get progress percentage to next level"""
+        next_level_xp = self.get_xp_for_next_level()
+        if next_level_xp == 0:
+            return 100
+        return int((self.current_xp / next_level_xp) * 100)
+    
+    def add_xp(self, amount):
+        """Add XP and update level"""
+        self.total_xp += amount
+        old_level = self.level
+        self.calculate_level()
+        level_up = self.level > old_level
+        self.save()
+        return level_up, self.level
+    
+    def __str__(self):
+        return f"{self.user.username} - Level {self.level} ({self.total_xp} XP)"
+
+
+class DailyChallenge(models.Model):
+    """Daily challenge for users"""
+    CHALLENGE_TYPE_CHOICES = [
+        ('speed', 'Tezlik'),
+        ('accuracy', 'Aniqlik'),
+        ('code', 'Kod'),
+        ('text', 'Matn'),
+        ('consistency', 'Izchillik'),
+    ]
+    
+    date = models.DateField(unique=True)
+    challenge_type = models.CharField(max_length=20, choices=CHALLENGE_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    target_wpm = models.IntegerField(null=True, blank=True)
+    target_accuracy = models.FloatField(null=True, blank=True)
+    target_sessions = models.IntegerField(null=True, blank=True, default=1)
+    reward_xp = models.IntegerField(default=50)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.date} - {self.title}"
+
+
+class ChallengeCompletion(models.Model):
+    """User's challenge completions"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='challenge_completions')
+    challenge = models.ForeignKey(DailyChallenge, on_delete=models.CASCADE, related_name='completions')
+    completed_at = models.DateTimeField(auto_now_add=True)
+    result_wpm = models.FloatField(null=True, blank=True)
+    result_accuracy = models.FloatField(null=True, blank=True)
+    xp_earned = models.IntegerField(default=0)
+    
+    class Meta:
+        unique_together = ['user', 'challenge']
+        ordering = ['-completed_at']
+        indexes = [
+            models.Index(fields=['user', '-completed_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.challenge.title}"
+
+
+class Notification(models.Model):
+    """User notifications"""
+    NOTIFICATION_TYPE_CHOICES = [
+        ('badge', 'Badge'),
+        ('level_up', 'Level Up'),
+        ('challenge', 'Challenge'),
+        ('competition', 'Musobaqa'),
+        ('battle', 'Battle'),
+        ('streak', 'Streak'),
+        ('achievement', 'Yutuq'),
+        ('system', 'Tizim'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    icon = models.CharField(max_length=50, default='🔔')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    link = models.CharField(max_length=200, blank=True, help_text="URL to navigate when clicked")
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'is_read']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"
+
+    @classmethod
+    def get_unread_count(cls, user):
+        """Get count of unread notifications for a user"""
+        return cls.objects.filter(user=user, is_read=False).count()

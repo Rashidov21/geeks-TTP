@@ -67,6 +67,39 @@
         </div>
     </div>
 
+    <!-- Level and Streak Info -->
+    <div class="bg-gradient-to-r from-primary to-primary-light text-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="text-center">
+                    <div class="text-5xl font-bold">⭐</div>
+                    <div class="text-2xl font-bold mt-2">Level {{ level_info.level }}</div>
+                    <div class="text-sm opacity-90">{{ level_info.total_xp }} XP</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold">🔥</div>
+                    <div class="text-2xl font-bold mt-2">{{ profile.current_streak }}</div>
+                    <div class="text-sm opacity-90">kun ketma-ket</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold">📅</div>
+                    <div class="text-2xl font-bold mt-2">{{ profile.total_practice_days }}</div>
+                    <div class="text-sm opacity-90">jami kun</div>
+                </div>
+            </div>
+            <div class="flex-1 max-w-md">
+                <div class="flex items-center justify-between text-sm mb-1">
+                    <span>Keyingi level: {{ level_info.get_xp_for_next_level }} XP</span>
+                    <span>{{ level_info.get_progress_percentage }}%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-4">
+                    <div class="bg-secondary h-4 rounded-full transition-all duration-500" style="width: {{ level_info.get_progress_percentage }}%"></div>
+                </div>
+                <p class="text-sm mt-2 opacity-90">Eng uzun ketma-ketlik: {{ profile.longest_streak }} kun</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow-lg p-6">
@@ -133,6 +166,39 @@
             <p class="text-sm text-gray-600 mt-2">mashq qilingan</p>
         </div>
     </div>
+
+    <!-- Badges Collection -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4 text-primary flex items-center space-x-2">
+            <span>🏆</span>
+            <span>Badge kolleksiyasi</span>
+            <span class="text-sm font-normal text-gray-600">({{ all_badges.count }})</span>
+        </h2>
+        {% if all_badges %}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {% for user_badge in all_badges %}
+            <div class="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 border-2 border-transparent hover:border-primary">
+                <div class="text-5xl mb-2">{{ user_badge.badge.icon }}</div>
+                <p class="text-sm font-semibold text-primary mb-1">{{ user_badge.badge.name }}</p>
+                <p class="text-xs text-gray-600 mb-2">{{ user_badge.badge.description|truncatewords:8 }}</p>
+                <p class="text-xs text-gray-500">{{ user_badge.earned_at|date:"d.m.Y" }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600 text-center py-8">Hali badge'lar yo'q. Mashq qilib, badge'lar oling!</p>
+        {% endif %}
+    </div>
+
+    <!-- Progress Chart -->
+    {% if wpm_progress %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4 text-primary">Progress (Oxirgi 30 kun)</h2>
+        <div class="h-80">
+            <canvas id="profileProgressChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Certificates -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
@@ -206,5 +272,69 @@
         {% endif %}
     </div>
 </div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    {% if wpm_progress %}
+    const profileCtx = document.getElementById('profileProgressChart');
+    if (profileCtx) {
+        const wpmProgress = JSON.parse('{{ wpm_progress|safe }}');
+        const accuracyProgress = JSON.parse('{{ accuracy_progress|safe }}');
+        
+        new Chart(profileCtx, {
+            type: 'line',
+            data: {
+                labels: wpmProgress.map(d => d.date),
+                datasets: [{
+                    label: 'WPM',
+                    data: wpmProgress.map(d => d.wpm),
+                    borderColor: '#292929',
+                    backgroundColor: 'rgba(41, 41, 41, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y',
+                }, {
+                    label: 'Aniqlik %',
+                    data: accuracyProgress.map(d => d.accuracy),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'WPM'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Aniqlik %'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+</script>
+{% endblock %}
 {% endblock %}
 

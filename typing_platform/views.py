@@ -3,8 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Max, Count
 from django.core.cache import cache
 from django.core.paginator import Paginator
+from django.utils import timezone
+from django.utils.safestring import mark_safe
+import json
 from typing_practice.models import UserResult
 from competitions.models import Competition, CompetitionParticipant
+from accounts.models import UserProfile, UserLevel, UserBadge, DailyChallenge, ChallengeCompletion, Notification
 import logging
 
 logger = logging.getLogger('typing_platform')
@@ -56,6 +60,26 @@ def dashboard(request):
         status='pending'
     ).select_related('created_by').order_by('start_time')[:5]
     
+    # Gamification data
+    profile = UserProfile.objects.get(user=user)
+    level_info, _ = UserLevel.objects.get_or_create(user=user)
+    earned_badges = UserBadge.objects.filter(user=user).select_related('badge').order_by('-earned_at')[:6]
+    
+    # Daily challenge
+    today = timezone.now().date()
+    today_challenge = DailyChallenge.objects.filter(date=today, is_active=True).first()
+    challenge_completed = False
+    if today_challenge:
+        challenge_completed = ChallengeCompletion.objects.filter(user=user, challenge=today_challenge).exists()
+    
+    # Recent progress data for chart (last 10 results)
+    progress_data = UserResult.objects.filter(user=user).order_by('-time')[:10]
+    wpm_data = [{'date': r.time.strftime('%Y-%m-%d'), 'wpm': r.wpm} for r in reversed(progress_data)]
+    accuracy_data = [{'date': r.time.strftime('%Y-%m-%d'), 'accuracy': r.accuracy} for r in reversed(progress_data)]
+    
+    # Unread notifications count
+    unread_notifications = Notification.get_unread_count(user)
+    
     context = {
         'avg_wpm': round(stats.get('avg_wpm') or 0, 2),
         'max_wpm': round(stats.get('max_wpm') or 0, 2),
@@ -64,6 +88,15 @@ def dashboard(request):
         'recent_results': results,
         'user_competitions': user_competitions,
         'pending_competitions': pending_competitions,
+        # Gamification
+        'profile': profile,
+        'level_info': level_info,
+        'earned_badges': earned_badges,
+        'today_challenge': today_challenge,
+        'challenge_completed': challenge_completed,
+        'wpm_data': mark_safe(json.dumps(wpm_data)),
+        'accuracy_data': mark_safe(json.dumps(accuracy_data)),
+        'unread_notifications': unread_notifications,
     }
     
     return render(request, 'dashboard.html', context)

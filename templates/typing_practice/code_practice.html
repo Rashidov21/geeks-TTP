@@ -36,8 +36,21 @@
             if (navigator.onLine && window.TP_utils){
                 const res = await window.TP_utils.autoSave('{% url "typing_practice:save_result" %}', payload, csrf);
                 if (res.ok && res.body && res.body.success){
-                    saveStatus.textContent = 'Natija saqlandi.';
-                    saveStatus.className = 'mt-3 text-sm text-green-600';
+                    // Show motivational message if available
+                    if (res.body.message) {
+                        saveStatus.textContent = res.body.message;
+                        const msgType = res.body.type || 'success';
+                        if (msgType === 'success') {
+                            saveStatus.className = 'mt-3 text-sm text-green-600 font-semibold';
+                        } else if (msgType === 'warning') {
+                            saveStatus.className = 'mt-3 text-sm text-yellow-600 font-semibold';
+                        } else {
+                            saveStatus.className = 'mt-3 text-sm text-blue-600 font-semibold';
+                        }
+                    } else {
+                        saveStatus.textContent = 'Natija saqlandi.';
+                        saveStatus.className = 'mt-3 text-sm text-green-600';
+                    }
                     const wpmEl = document.getElementById('result-wpm');
                     if(window.TP_utils) window.TP_utils.animateCounter(wpmEl, 0, Math.round(wpm));
                     if(window.confetti && (accuracy >= 80 || typingInput.value.trim().length >= originalCode.trim().length)){
@@ -505,8 +518,21 @@ function finishTyping(wpm, accuracy, mistakes) {
         .then(response => response.json().then(json => ({ status: response.status, body: json })))
         .then(({ status, body }) => {
             if (status >= 200 && status < 300 && body && body.success) {
-                saveStatus.textContent = 'Natija saqlandi.';
-                saveStatus.className = 'mt-3 text-sm text-green-600';
+                // Show motivational message if available
+                if (body.message) {
+                    saveStatus.textContent = body.message;
+                    const msgType = body.type || 'success';
+                    if (msgType === 'success') {
+                        saveStatus.className = 'mt-3 text-sm text-green-600 font-semibold';
+                    } else if (msgType === 'warning') {
+                        saveStatus.className = 'mt-3 text-sm text-yellow-600 font-semibold';
+                    } else {
+                        saveStatus.className = 'mt-3 text-sm text-blue-600 font-semibold';
+                    }
+                } else {
+                    saveStatus.textContent = 'Natija saqlandi.';
+                    saveStatus.className = 'mt-3 text-sm text-green-600';
+                }
                 // animate and celebrate
                 const wpmEl = document.getElementById('result-wpm');
                 animateCounter(wpmEl, 0, Math.round(wpm));

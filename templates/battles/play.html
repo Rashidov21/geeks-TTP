@@ -6,6 +6,8 @@
 {% if battle.mode == 'code' %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 {% endif %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
     .word { margin-right: 0.5rem; }
     .correct { color: #292929; }
@@ -46,24 +48,104 @@
         padding: 1rem;
         margin-bottom: 1rem;
     }
+    .stats-card.wpm { 
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+    }
+    .stats-card.accuracy { 
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        border: 2px solid #22c55e;
+    }
+    .stats-card.time { 
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 2px solid #f59e0b;
+    }
+    .stats-card.mistakes { 
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: 2px solid #ef4444;
+    }
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+    .winner-badge {
+        animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    .progress-bar-animated {
+        transition: width 0.3s ease;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
+    <!-- Countdown Modal -->
+    <div id="countdown-modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div id="countdown-number" class="text-9xl font-bold text-white mb-4">3</div>
+            <p class="text-2xl text-white">Jang boshlanmoqda...</p>
+        </div>
+    </div>
+
     <!-- Battle Info -->
     <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-primary">{{ battle.creator.username }} vs {{ battle.opponent.username }}</h1>
-                <p class="text-sm text-primary">
-                    {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
-                </p>
+                <div class="flex items-center space-x-3 mt-1">
+                    <span class="text-sm text-primary">
+                        {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                    </span>
+                    <span class="text-sm text-gray-600">
+                        {% if battle.battle_type == 'speed' %}⚡ Tezlik
+                        {% elif battle.battle_type == 'accuracy' %}🎯 Aniqlik
+                        {% elif battle.battle_type == 'endurance' %}💪 Chidamlilik
+                        {% else %}⚖️ Muvozanatli{% endif %}
+                    </span>
+                </div>
             </div>
             <div id="opponent-status" class="opponent-info">
                 <p class="text-sm font-semibold text-primary">Raqib holati:</p>
                 <p class="text-lg font-bold text-primary" id="opponent-finished">Kutmoqda...</p>
+                <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="opponent-progress" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1" id="opponent-progress-text">0%</p>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Progress Comparison -->
+    <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+        <h3 class="text-sm font-semibold text-primary mb-2">Jarayon taqqoslash</h3>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <p class="text-xs text-gray-600 mb-1">Siz</p>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div id="my-progress" class="bg-green-500 h-3 rounded-full progress-bar-animated" style="width: 0%"></div>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-gray-600 mb-1">Raqib</p>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div id="opponent-progress-bar" class="bg-blue-500 h-3 rounded-full progress-bar-animated" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Live WPM Graph -->
+        <div class="mt-4">
+            <h4 class="text-xs font-semibold text-primary mb-2">WPM rivojlanishi</h4>
+            <canvas id="wpmChart" height="80"></canvas>
         </div>
     </div>
 
@@ -80,6 +162,10 @@
         <div class="stats-card time">
             <p class="text-sm font-medium text-primary opacity-90 mb-1">Vaqt</p>
             <p class="text-3xl font-bold text-primary" id="timer">0s</p>
+            <div class="w-full bg-gray-200 rounded-full h-1 mt-2">
+                <div id="time-progress" class="bg-red-500 h-1 rounded-full transition-all duration-100" style="width: 0%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1" id="time-limit-text">Limit: {{ battle.time_limit_seconds }}s</p>
         </div>
         <div class="stats-card mistakes">
             <p class="text-sm font-medium text-primary opacity-90 mb-1">Xatolar</p>
@@ -127,6 +213,18 @@
     
     <!-- Results -->
     <div id="results" class="hidden mt-6 bg-white rounded-lg shadow-lg p-6 animate-fadeIn">
+        <div id="winner-badge" class="hidden text-center mb-4">
+            <div class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-8 py-4 rounded-lg shadow-lg winner-badge">
+                <h2 class="text-3xl font-bold">🏆 G'OLIB! 🏆</h2>
+                <p class="text-lg mt-2">Tabriklaymiz! Siz yutdingiz!</p>
+            </div>
+        </div>
+        <div id="loser-badge" class="hidden text-center mb-4">
+            <div class="inline-block bg-gray-500 text-white px-8 py-4 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold">Jang tugadi</h2>
+                <p class="text-sm mt-2">Yaxshi urinish! Keyingi safar omad!</p>
+            </div>
+        </div>
         <h3 class="text-2xl font-bold text-primary mb-4">Sizning natijangiz</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
@@ -165,11 +263,18 @@ const originalCode = `{{ battle.code_snippet.code_body|escapejs }}`;
 const codeLanguage = '{{ battle.code_snippet.language }}';
 {% endif %}
 const battleId = {{ battle.id }};
+const timeLimit = {{ battle.time_limit_seconds }};
+const countdownSeconds = {{ battle.countdown_seconds }};
 let startTime = null;
 let timerInterval = null;
 let isFinished = false;
 let mistakesList = [];
 let opponentCheckInterval = null;
+let countdownInterval = null;
+let myProgress = 0;
+let wpmHistory = [];
+let wpmChart = null;
+let wpmChartData = { labels: [], datasets: [] };
 
 const typingInput = document.getElementById('typing-input');
 const finishBtn = document.getElementById('finish-btn');
@@ -286,17 +391,64 @@ function updateDisplay() {
     
     textDisplay.innerHTML = html;
     
-    if (startTime) {
+        if (startTime) {
         const elapsed = (Date.now() - startTime) / 1000;
         const typedChars = typed.length;
         const correctChars = typedChars - mistakes;
         const wpm = (typedWords.length / elapsed) * 60;
         const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
         
+        // Calculate progress
+        const totalWords = words.length;
+        const typedWordsCount = typedWords.length;
+        myProgress = Math.min(100, (typedWordsCount / totalWords) * 100);
+        
         document.getElementById('wpm').textContent = Math.round(wpm);
         document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
         document.getElementById('timer').textContent = Math.round(elapsed) + 's';
         document.getElementById('mistakes-count').textContent = mistakes;
+        
+        // Update progress bars
+        document.getElementById('my-progress').style.width = myProgress + '%';
+        
+        // Update WPM chart
+        if (wpmChart && elapsed > 0) {
+            const timeLabel = Math.round(elapsed) + 's';
+            if (!wpmChartData.labels.includes(timeLabel)) {
+                wpmChartData.labels.push(timeLabel);
+                wpmChartData.datasets[0].data.push(Math.round(wpm));
+                if (wpmChartData.labels.length > 20) {
+                    wpmChartData.labels.shift();
+                    wpmChartData.datasets[0].data.shift();
+                }
+                wpmChart.update('none');
+            } else {
+                const lastIndex = wpmChartData.datasets[0].data.length - 1;
+                if (lastIndex >= 0) {
+                    wpmChartData.datasets[0].data[lastIndex] = Math.round(wpm);
+                    wpmChart.update('none');
+                }
+            }
+        }
+        
+        // Update time limit progress
+        const timeProgress = Math.min(100, (elapsed / timeLimit) * 100);
+        document.getElementById('time-progress').style.width = timeProgress + '%';
+        
+        // Color coding for time
+        const timeProgressEl = document.getElementById('time-progress');
+        if (timeProgress > 80) {
+            timeProgressEl.className = 'bg-red-500 h-1 rounded-full transition-all duration-100 pulse-animation';
+        } else if (timeProgress > 60) {
+            timeProgressEl.className = 'bg-yellow-500 h-1 rounded-full transition-all duration-100';
+        } else {
+            timeProgressEl.className = 'bg-green-500 h-1 rounded-full transition-all duration-100';
+        }
+        
+        if (timeProgress >= 100) {
+            // Time limit reached
+            finishTyping(wpm, accuracy, mistakes, elapsed);
+        }
         
         if (typedWords.length >= words.length && typed.trim().length >= originalText.trim().length) {
             finishTyping(wpm, accuracy, mistakes, elapsed);
@@ -374,10 +526,56 @@ function updateDisplay() {
         const wpm = (typedChars / 5 / elapsed) * 60;
         const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
         
+        // Calculate progress for code
+        const totalChars = originalCode.length;
+        myProgress = Math.min(100, (typedChars / totalChars) * 100);
+        
         document.getElementById('wpm').textContent = Math.round(wpm);
         document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
         document.getElementById('timer').textContent = Math.round(elapsed) + 's';
         document.getElementById('mistakes-count').textContent = mistakes;
+        
+        // Update progress bars
+        document.getElementById('my-progress').style.width = myProgress + '%';
+        
+        // Update WPM chart
+        if (wpmChart && elapsed > 0) {
+            const timeLabel = Math.round(elapsed) + 's';
+            if (!wpmChartData.labels.includes(timeLabel)) {
+                wpmChartData.labels.push(timeLabel);
+                wpmChartData.datasets[0].data.push(Math.round(wpm));
+                if (wpmChartData.labels.length > 20) {
+                    wpmChartData.labels.shift();
+                    wpmChartData.datasets[0].data.shift();
+                }
+                wpmChart.update('none');
+            } else {
+                const lastIndex = wpmChartData.datasets[0].data.length - 1;
+                if (lastIndex >= 0) {
+                    wpmChartData.datasets[0].data[lastIndex] = Math.round(wpm);
+                    wpmChart.update('none');
+                }
+            }
+        }
+        
+        // Update time limit progress
+        const timeProgress = Math.min(100, (elapsed / timeLimit) * 100);
+        document.getElementById('time-progress').style.width = timeProgress + '%';
+        
+        // Color coding for time
+        const timeProgressEl = document.getElementById('time-progress');
+        if (timeProgress > 80) {
+            timeProgressEl.className = 'bg-red-500 h-1 rounded-full transition-all duration-100 pulse-animation';
+        } else if (timeProgress > 60) {
+            timeProgressEl.className = 'bg-yellow-500 h-1 rounded-full transition-all duration-100';
+        } else {
+            timeProgressEl.className = 'bg-green-500 h-1 rounded-full transition-all duration-100';
+        }
+        
+        if (timeProgress >= 100) {
+            // Time limit reached
+            finishTyping(wpm, accuracy, mistakes, elapsed);
+        }
         
         if (typed.trim() === originalCode.trim()) {
             finishTyping(wpm, accuracy, mistakes, elapsed);
@@ -386,12 +584,63 @@ function updateDisplay() {
 }
 {% endif %}
 
+// Countdown before starting
+function startCountdown() {
+    let count = countdownSeconds;
+    const countdownModal = document.getElementById('countdown-modal');
+    const countdownNumber = document.getElementById('countdown-number');
+    
+    countdownModal.classList.remove('hidden');
+    countdownNumber.textContent = count;
+    
+    countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownNumber.textContent = count;
+        } else {
+            countdownNumber.textContent = 'GO!';
+            clearInterval(countdownInterval);
+            setTimeout(() => {
+                countdownModal.classList.add('hidden');
+                typingInput.disabled = false;
+                typingInput.focus();
+                startTyping();
+            }, 500);
+        }
+    }, 1000);
+}
+
 function startTyping() {
     if (!startTime) {
         startTime = Date.now();
         timerInterval = setInterval(updateDisplay, 100);
         finishBtn.disabled = false;
+        
+        // Start checking opponent progress
+        checkOpponentProgress();
+        opponentCheckInterval = setInterval(checkOpponentProgress, 2000);
     }
+}
+
+// Check opponent progress
+function checkOpponentProgress() {
+    fetch(`{% url 'battles:opponent_progress' battle.id %}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.progress !== undefined) {
+                document.getElementById('opponent-progress').style.width = data.progress + '%';
+                document.getElementById('opponent-progress-text').textContent = Math.round(data.progress) + '%';
+                document.getElementById('opponent-progress-bar').style.width = data.progress + '%';
+                
+                if (data.is_finished) {
+                    document.getElementById('opponent-finished').textContent = 'Tugatdi!';
+                    if (data.wpm) {
+                        document.getElementById('opponent-finished').textContent = `Tugatdi! (${Math.round(data.wpm)} WPM)`;
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Error checking opponent:', err));
 }
 
 function finishTyping(wpm, accuracy, mistakes, duration) {
@@ -422,6 +671,7 @@ function finishTyping(wpm, accuracy, mistakes, duration) {
             wpm: wpm,
             accuracy: accuracy,
             mistakes: mistakes,
+            progress: myProgress,
         })
     })
     .then(response => response.json())
@@ -430,6 +680,25 @@ function finishTyping(wpm, accuracy, mistakes, duration) {
             // Check if battle is finished
             if (data.battle_finished) {
                 document.getElementById('opponent-finished').textContent = 'Jang tugadi!';
+                
+                // Show winner/loser badge
+                if (data.winner && data.winner === '{{ request.user.username }}') {
+                    document.getElementById('winner-badge').classList.remove('hidden');
+                    // Confetti animation for winner
+                    if (window.confetti) {
+                        confetti({
+                            particleCount: 200,
+                            spread: 100,
+                            origin: { y: 0.6 },
+                            colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF']
+                        });
+                        // Multiple bursts
+                        setTimeout(() => confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } }), 300);
+                        setTimeout(() => confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } }), 600);
+                    }
+                } else {
+                    document.getElementById('loser-badge').classList.remove('hidden');
+                }
             } else {
                 document.getElementById('opponent-finished').textContent = 'Raqib tugatishni kutmoqda...';
             }
@@ -459,11 +728,81 @@ finishBtn.addEventListener('click', () => {
     finishTyping(wpm, accuracy, mistakes, elapsed);
 });
 
+// Initialize WPM Chart
+function initWpmChart() {
+    const ctx = document.getElementById('wpmChart');
+    if (ctx) {
+        wpmChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'WPM',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Vaqt (s)',
+                            font: { size: 10 }
+                        },
+                        ticks: {
+                            font: { size: 9 }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'WPM',
+                            font: { size: 10 }
+                        },
+                        ticks: {
+                            font: { size: 9 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 0
+                }
+            }
+        });
+        wpmChartData = wpmChart.data;
+    }
+}
+
+// Initialize and start countdown
 {% if battle.mode == 'text' %}
 initTextDisplay();
 {% else %}
 initCodeDisplay();
 {% endif %}
+
+// Initialize chart
+initWpmChart();
+
+// Disable input during countdown
+typingInput.disabled = true;
+
+// Start countdown
+startCountdown();
 </script>
 {% endblock %}
 

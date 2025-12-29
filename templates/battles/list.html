@@ -4,29 +4,117 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
+    <!-- Header with Rating -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold flex items-center space-x-2 text-primary">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-            </svg>
-            <span>1v1 Janglar</span>
-        </h1>
-        <div class="flex space-x-3">
-            <form method="post" action="{% url 'battles:create' %}" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="mode" value="text">
-                <button type="submit" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
-                    Matn jangi yaratish
-                </button>
-            </form>
-            <form method="post" action="{% url 'battles:create' %}" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="mode" value="code">
-                <button type="submit" class="gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
-                    Kod jangi yaratish
-                </button>
-            </form>
+        <div>
+            <h1 class="text-3xl font-bold flex items-center space-x-2 text-primary">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                </svg>
+                <span>1v1 Janglar</span>
+            </h1>
+            {% if user_rating %}
+            <div class="mt-2 flex items-center space-x-4 text-sm">
+                <span class="text-primary font-semibold">Rating: <span class="text-2xl font-bold">{{ user_rating.rating }}</span></span>
+                <span class="text-gray-600">W: {{ user_rating.wins }} | L: {{ user_rating.losses }} | D: {{ user_rating.draws }}</span>
+                {% if user_rating.win_streak > 0 %}
+                <span class="text-red-500 font-semibold">🔥 {{ user_rating.win_streak }} ketma-ket</span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4 text-primary">Jang yaratish</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Quick Match -->
+            <div class="border-2 border-dashed border-primary rounded-lg p-4">
+                <h3 class="font-semibold text-primary mb-2">⚡ Tezkor jang</h3>
+                <p class="text-sm text-gray-600 mb-3">Avtomatik raqib topish</p>
+                <form method="post" action="{% url 'battles:quick_match' %}" class="space-y-2">
+                    {% csrf_token %}
+                    <select name="mode" class="w-full p-2 border rounded text-sm">
+                        <option value="text">Matn</option>
+                        <option value="code">Kod</option>
+                    </select>
+                    <select name="battle_type" class="w-full p-2 border rounded text-sm">
+                        <option value="balanced">Muvozanatli</option>
+                        <option value="speed">Tezlik</option>
+                        <option value="accuracy">Aniqlik</option>
+                        <option value="endurance">Chidamlilik</option>
+                    </select>
+                    <button type="submit" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                        Raqib topish
+                    </button>
+                </form>
+            </div>
+
+            <!-- Create Battle -->
+            <div class="border-2 border-dashed border-primary rounded-lg p-4">
+                <h3 class="font-semibold text-primary mb-2">➕ Yangi jang</h3>
+                <p class="text-sm text-gray-600 mb-3">O'zingiz yarating</p>
+                <div class="space-y-2">
+                    <form method="post" action="{% url 'battles:create' %}" class="inline w-full">
+                        {% csrf_token %}
+                        <input type="hidden" name="mode" value="text">
+                        <input type="hidden" name="battle_type" value="balanced">
+                        <button type="submit" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                            📝 Matn jangi
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'battles:create' %}" class="inline w-full">
+                        {% csrf_token %}
+                        <input type="hidden" name="mode" value="code">
+                        <input type="hidden" name="battle_type" value="balanced">
+                        <button type="submit" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                            💻 Kod jangi
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Invite User -->
+            <div class="border-2 border-dashed border-primary rounded-lg p-4">
+                <h3 class="font-semibold text-primary mb-2">✉️ Taklif yuborish</h3>
+                <p class="text-sm text-gray-600 mb-3">Do'stingizni taklif qiling</p>
+                <button onclick="document.getElementById('invite-modal').classList.remove('hidden')" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                    Taklif yuborish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-lg p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-primary mb-1">Qidiruv</label>
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Username..." class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-primary mb-1">Status</label>
+                <select name="status" class="p-2 border rounded">
+                    <option value="">Barchasi</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Kutilmoqda</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Faol</option>
+                    <option value="finished" {% if status_filter == 'finished' %}selected{% endif %}>Tugallangan</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-primary mb-1">Mode</label>
+                <select name="mode" class="p-2 border rounded">
+                    <option value="">Barchasi</option>
+                    <option value="text" {% if mode_filter == 'text' %}selected{% endif %}>Matn</option>
+                    <option value="code" {% if mode_filter == 'code' %}selected{% endif %}>Kod</option>
+                </select>
+            </div>
+            <button type="submit" class="gradient-secondary text-primary px-4 py-2 rounded font-semibold">Qidirish</button>
+            {% if status_filter or mode_filter or search_query %}
+            <a href="{% url 'battles:list' %}" class="bg-gray-200 hover:bg-gray-300 text-primary px-4 py-2 rounded font-semibold">Tozalash</a>
+            {% endif %}
+        </form>
     </div>
     
     <!-- Pending Battles -->
@@ -37,12 +125,20 @@
             {% for battle in pending_battles %}
             <div class="border rounded-lg p-4 hover:bg-gray-50 transition-all">
                 <div class="flex justify-between items-center">
-                    <div>
+                    <div class="flex-1">
                         <h3 class="font-bold text-lg">{{ battle.creator.username }}</h3>
-                        <p class="text-sm text-primary">
-                            {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
-                        </p>
-                        <p class="text-xs text-gray-600">{{ battle.created_at|date:"d.m.Y H:i" }}</p>
+                        <div class="flex items-center space-x-3 mt-1">
+                            <span class="text-sm text-primary">
+                                {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                {% if battle.battle_type == 'speed' %}⚡ Tezlik
+                                {% elif battle.battle_type == 'accuracy' %}🎯 Aniqlik
+                                {% elif battle.battle_type == 'endurance' %}💪 Chidamlilik
+                                {% else %}⚖️ Muvozanatli{% endif %}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ battle.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
                     </div>
                     <a href="{% url 'battles:join' battle.id %}" class="gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
                         Qo'shilish
@@ -62,27 +158,43 @@
             {% for battle in user_battles %}
             <div class="border rounded-lg p-4 hover:bg-gray-50 transition-all">
                 <div class="flex justify-between items-center">
-                    <div>
+                    <div class="flex-1">
                         <h3 class="font-bold text-lg">
                             {{ battle.creator.username }} 
                             {% if battle.opponent %}vs {{ battle.opponent.username }}{% else %}(Kutilmoqda){% endif %}
                         </h3>
-                        <p class="text-sm text-primary">
-                            {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
-                            • 
-                            {% if battle.status == 'pending' %}Kutilmoqda
-                            {% elif battle.status == 'active' %}Faol
-                            {% elif battle.status == 'finished' %}Tugallangan
-                            {% else %}Bekor qilingan{% endif %}
-                        </p>
+                        <div class="flex items-center space-x-3 mt-1">
+                            <span class="text-sm text-primary">
+                                {% if battle.mode == 'text' %}📝 Matn{% else %}💻 Kod{% endif %}
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                {% if battle.battle_type == 'speed' %}⚡ Tezlik
+                                {% elif battle.battle_type == 'accuracy' %}🎯 Aniqlik
+                                {% elif battle.battle_type == 'endurance' %}💪 Chidamlilik
+                                {% else %}⚖️ Muvozanatli{% endif %}
+                            </span>
+                            <span class="text-sm {% if battle.status == 'pending' %}text-yellow-600{% elif battle.status == 'active' %}text-green-600{% elif battle.status == 'finished' %}text-gray-600{% else %}text-red-600{% endif %}">
+                                {% if battle.status == 'pending' %}Kutilmoqda
+                                {% elif battle.status == 'active' %}Faol
+                                {% elif battle.status == 'finished' %}Tugallangan
+                                {% else %}Bekor qilingan{% endif %}
+                            </span>
+                        </div>
                         {% if battle.winner %}
-                        <p class="text-sm font-bold text-primary">🏆 G'olib: {{ battle.winner.username }}</p>
+                        <p class="text-sm font-bold text-primary mt-1">🏆 G'olib: {{ battle.winner.username }}</p>
                         {% endif %}
-                        <p class="text-xs text-gray-600">{{ battle.created_at|date:"d.m.Y H:i" }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ battle.created_at|date:"d.m.Y H:i" }}</p>
                     </div>
-                    <a href="{% url 'battles:detail' battle.id %}" class="gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
-                        Ko'rish
-                    </a>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'battles:detail' battle.id %}" class="gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                            Ko'rish
+                        </a>
+                        {% if battle.status == 'finished' %}
+                        <a href="{% url 'battles:rematch' battle.id %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                            🔄 Rematch
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -92,5 +204,39 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
 
+<!-- Invite Modal -->
+<div id="invite-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-primary mb-4">Do'stingizni taklif qiling</h3>
+        <form method="post" action="{% url 'battles:invite' %}" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-primary mb-1">Foydalanuvchi username</label>
+                <input type="text" name="username" placeholder="Username kiriting..." class="w-full p-2 border rounded" required autocomplete="username">
+                <p class="text-xs text-gray-500 mt-1">Foydalanuvchi username'ini kiriting</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-primary mb-1">Mode</label>
+                <select name="mode" class="w-full p-2 border rounded">
+                    <option value="text">Matn</option>
+                    <option value="code">Kod</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-primary mb-1">Jang turi</label>
+                <select name="battle_type" class="w-full p-2 border rounded">
+                    <option value="balanced">Muvozanatli</option>
+                    <option value="speed">Tezlik</option>
+                    <option value="accuracy">Aniqlik</option>
+                    <option value="endurance">Chidamlilik</option>
+                </select>
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="flex-1 gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold">Yuborish</button>
+                <button type="button" onclick="document.getElementById('invite-modal').classList.add('hidden')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-primary px-4 py-2 rounded-lg font-semibold">Bekor qilish</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

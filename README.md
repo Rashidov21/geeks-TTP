@@ -10,6 +10,8 @@ Geeks Andijan o'quvchilari uchun typing tezligi va code typing malakasini oshiri
 - **Syntax Highlighting**: highlight.js
 - **Caching**: Django LocMemCache (configurable)
 - **Logging**: File and console logging
+- **Image Processing**: Pillow (PIL)
+- **Middleware**: ActiveUserMiddleware (online user tracking)
 
 ## Funksiyalar
 
@@ -150,6 +152,20 @@ Superuser credentials bilan kirish mumkin.
 
 Platforma faqat Django views va templates ishlatadi. API yo'q.
 
+## Funksiyalar (Yangi)
+
+### Online User Tracking
+- Navbar'da real-time online user count ko'rsatiladi
+- Faqat 5 daqiqa ichida faol bo'lgan userlar "online" hisoblanadi
+- Cache-based tracking (tez va samarali)
+- Total registered users count ham ko'rsatiladi
+
+### Image Processing
+- Profile rasmlari avtomatik resize va compress qilinadi
+- JPEG format'ga konvertatsiya (quality: 85%)
+- Maksimal o'lcham: 400x400px (aspect ratio saqlanadi)
+- Pillow library ishlatiladi
+
 ## Optimizatsiyalar
 
 Loyiha quyidagi optimizatsiyalar bilan jihozlangan:
@@ -160,6 +176,8 @@ Loyiha quyidagi optimizatsiyalar bilan jihozlangan:
 - ✅ Caching strategiyasi (leaderboard, user stats, competitions)
 - ✅ Efficient random selection (order_by('?') o'rniga)
 - ✅ Single aggregate queries
+- ✅ Batch queries (N+1 muammosini oldini olish)
+- ✅ Code duplication kamaytirish (helper functions)
 
 ### Security
 - ✅ Environment variables (SECRET_KEY, DEBUG, ALLOWED_HOSTS)
@@ -167,6 +185,7 @@ Loyiha quyidagi optimizatsiyalar bilan jihozlangan:
 - ✅ Input validation va sanitization
 - ✅ Security headers (XSS, HSTS, etc.)
 - ✅ SQL injection prevention (Django ORM)
+- ✅ POST method for logout (security best practice)
 
 ### Code Quality
 - ✅ Exception handling va logging
@@ -174,6 +193,16 @@ Loyiha quyidagi optimizatsiyalar bilan jihozlangan:
 - ✅ Model methods (business logic)
 - ✅ Transaction management
 - ✅ Error messages (O'zbek tilida)
+- ✅ Comprehensive error handling (try-except blocks)
+- ✅ Logging for debugging
+- ✅ Helper functions for code reuse
+
+### UX/UI
+- ✅ Loading states (AJAX requests uchun)
+- ✅ Error handling (user-friendly messages)
+- ✅ Responsive design (TailwindCSS)
+- ✅ Real-time feedback
+- ✅ Offline support (localStorage queue)
 
 ### Database
 - ✅ Optimized indexes

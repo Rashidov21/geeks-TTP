@@ -282,8 +282,17 @@ def save_result(request):
         # Clear user stats cache
         cache.delete(f'user_stats_{request.user.id}')
         
+        # Get motivational message
+        motivational_message = get_motivational_message(request.user, result)
+        
         logger.info(f"Result saved: user={request.user.username}, wpm={wpm}, accuracy={accuracy}")
-        return JsonResponse({'success': True, 'result_id': result.id})
+        return JsonResponse({
+            'success': True, 
+            'result_id': result.id,
+            'message': motivational_message['message'],
+            'type': motivational_message['type'],
+            'icon': motivational_message['icon']
+        })
     
     except json.JSONDecodeError:
         logger.error("Invalid JSON in save_result request")
@@ -305,6 +314,83 @@ def achievements(request):
         'streak_days': 0,
     }
     return JsonResponse({'success': True, 'achievements': data})
+
+
+def get_motivational_message(user, result):
+    """Get motivational message based on user's performance"""
+    try:
+        # Get previous best
+        previous_best = UserResult.objects.filter(user=user).exclude(id=result.id).aggregate(max_wpm=Max('wpm'))['max_wpm'] or 0
+        
+        # Check if new record
+        if result.wpm > previous_best:
+            return {
+                'message': f'🎉 Yangi rekord! {result.wpm:.1f} WPM - Ajoyib ish!',
+                'type': 'success',
+                'icon': '🎉'
+            }
+        
+        # High performance messages
+        if result.wpm >= 100:
+            return {
+                'message': '🔥 Elite tezlik! 100+ WPM - Siz professional darajadasiz!',
+                'type': 'success',
+                'icon': '🔥'
+            }
+        elif result.wpm >= 80:
+            return {
+                'message': '💪 Expert daraja! 80+ WPM - A\'lo natija!',
+                'type': 'success',
+                'icon': '💪'
+            }
+        elif result.wpm >= 60:
+            return {
+                'message': '⭐ Advanced daraja! 60+ WPM - Yaxshi ish!',
+                'type': 'info',
+                'icon': '⭐'
+            }
+        
+        # Accuracy messages
+        if result.accuracy >= 95:
+            return {
+                'message': '🎯 Mukammal aniqlik! 95%+ - Ajoyib!',
+                'type': 'success',
+                'icon': '🎯'
+            }
+        elif result.accuracy < 80:
+            return {
+                'message': '💪 Aniqlikni yaxshilashga harakat qiling!',
+                'type': 'warning',
+                'icon': '💪'
+            }
+        
+        # Improvement messages
+        profile = UserProfile.objects.get(user=user)
+        if profile.current_streak >= 7:
+            return {
+                'message': f'🔥 {profile.current_streak} kun ketma-ketlik! Ajoyib izchillik!',
+                'type': 'success',
+                'icon': '🔥'
+            }
+        
+        # Default encouraging message
+        messages = [
+            'Yaxshi ish! Davom eting! 💪',
+            'Ajoyib natija! Keyingi mashqda yanada yaxshiroq bo\'ling! ⭐',
+            'Yaxshi! Har bir mashq sizni yanada yaxshiroq qiladi! 🚀',
+        ]
+        return {
+            'message': random.choice(messages),
+            'type': 'info',
+            'icon': '👍'
+        }
+    except Exception as e:
+        logger.error(f"Error getting motivational message: {e}")
+        return {
+            'message': 'Natija saqlandi!',
+            'type': 'info',
+            'icon': '✅'
+        }
 
 
 @csrf_exempt

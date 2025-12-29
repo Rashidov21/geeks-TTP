@@ -3,6 +3,78 @@
 {% block title %}Dashboard - Typing Trainer{% endblock %}
 
 {% block content %}
+<!-- Gamification Header -->
+<div class="bg-gradient-to-r from-primary to-primary-light text-white rounded-lg shadow-lg p-6 mb-8">
+    <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+        <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-2">
+                <span class="text-4xl">⭐</span>
+                <div>
+                    <h2 class="text-2xl font-bold">Level {{ level_info.level }}</h2>
+                    <p class="text-sm opacity-90">{{ level_info.total_xp }} XP</p>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="flex items-center justify-between text-sm mb-1">
+                    <span>Keyingi level: {{ level_info.get_xp_for_next_level }} XP</span>
+                    <span>{{ level_info.get_progress_percentage }}%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                    <div class="bg-secondary h-3 rounded-full transition-all duration-500" style="width: {{ level_info.get_progress_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-center">
+                <div class="text-3xl font-bold">🔥</div>
+                <div class="text-sm opacity-90">Ketma-ketlik</div>
+                <div class="text-2xl font-bold">{{ profile.current_streak }} kun</div>
+            </div>
+            {% if unread_notifications > 0 %}
+            <a href="{% url 'accounts:notifications' %}" class="relative">
+                <div class="text-3xl">🔔</div>
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ unread_notifications }}</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Daily Challenge -->
+{% if today_challenge %}
+<div class="bg-white rounded-lg shadow-lg p-6 mb-8 border-2 {% if challenge_completed %}border-green-500{% else %}border-primary{% endif %}">
+    <div class="flex items-center justify-between">
+        <div class="flex-1">
+            <h3 class="text-xl font-bold text-primary mb-2 flex items-center space-x-2">
+                <span>🎯</span>
+                <span>Kunlik vazifa</span>
+                {% if challenge_completed %}
+                <span class="text-green-600 text-sm">✅ Bajarildi</span>
+                {% endif %}
+            </h3>
+            <p class="text-primary mb-2">{{ today_challenge.title }}</p>
+            <p class="text-sm text-gray-600">{{ today_challenge.description }}</p>
+            {% if not challenge_completed %}
+            <div class="mt-3 space-y-1">
+                {% if today_challenge.target_wpm %}
+                <p class="text-sm"><strong>Maqsad:</strong> {{ today_challenge.target_wpm }} WPM</p>
+                {% endif %}
+                {% if today_challenge.target_accuracy %}
+                <p class="text-sm"><strong>Aniqlik:</strong> {{ today_challenge.target_accuracy|floatformat:1 }}%</p>
+                {% endif %}
+                <p class="text-sm text-primary font-semibold">Mukofot: {{ today_challenge.reward_xp }} XP</p>
+            </div>
+            {% endif %}
+        </div>
+        {% if not challenge_completed %}
+        <a href="{% url 'typing_practice:text_settings' %}" class="gradient-secondary text-primary px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+            Vazifani bajarish
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Quick Practice Actions -->
 <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
     <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2 text-primary">
@@ -34,6 +106,24 @@
         </a>
     </div>
 </div>
+
+<!-- Badges Showcase -->
+{% if earned_badges %}
+<div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4 flex items-center space-x-2 text-primary">
+        <span>🏆</span>
+        <span>Olgan badge'lar</span>
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {% for user_badge in earned_badges %}
+        <div class="text-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors" title="{{ user_badge.badge.name }}">
+            <div class="text-4xl mb-2">{{ user_badge.badge.icon }}</div>
+            <p class="text-xs font-semibold text-primary truncate">{{ user_badge.badge.name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-lg p-6 hover-lift animate-fadeIn" style="animation-delay: 0.1s;">
@@ -73,6 +163,16 @@
         <p class="text-3xl font-bold text-primary transition-all duration-300">{{ total_sessions }}</p>
     </div>
 </div>
+
+<!-- Progress Chart -->
+{% if wpm_data %}
+<div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4 text-primary">Progress (Oxirgi 10 natija)</h2>
+    <div class="h-64">
+        <canvas id="progressChart"></canvas>
+    </div>
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="bg-white rounded-lg shadow-lg p-6 hover-lift animate-slideIn">
@@ -178,5 +278,67 @@
         {% endif %}
     </div>
 </div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    {% if wpm_data %}
+    const ctx = document.getElementById('progressChart');
+    if (ctx) {
+        const wpmData = JSON.parse('{{ wpm_data|safe }}');
+        const accuracyData = JSON.parse('{{ accuracy_data|safe }}');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: wpmData.map(d => d.date),
+                datasets: [{
+                    label: 'WPM',
+                    data: wpmData.map(d => d.wpm),
+                    borderColor: '#292929',
+                    backgroundColor: 'rgba(41, 41, 41, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y',
+                }, {
+                    label: 'Aniqlik %',
+                    data: accuracyData.map(d => d.accuracy),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'WPM'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Aniqlik %'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+</script>
+{% endblock %}
 {% endblock %}
 
