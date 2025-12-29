@@ -3,71 +3,8 @@
 
 {% block title %}Code Practice - Typing Trainer{% endblock %}
 
-        (async function(){
-            const payload = {
-                code_id: codeId,
-                typed_text: typingInput.value,
-                mode: 'full',
-                time_limit: 0,
-                wpm: wpm,
-                accuracy: accuracy,
-                mistakes: mistakes,
-                mistakes_list: mistakesList,
-                duration_seconds: Math.round(duration)
-            };
-            const csrf = getCSRFToken();
-            <script src="{% static 'js/practice.js' %}"></script>
-            <script>
-            // Load achievements and render small summary for code practice
-            (async function(){
-                try{
-                    const res = await fetch('{% url "typing_practice:achievements" %}');
-                    const json = await res.json().catch(()=>null);
-                    if(res.ok && json && json.success && json.achievements){
-                        const a = json.achievements;
-                        const panel = document.getElementById('achievements-panel');
-                        if(panel){
-                            panel.innerHTML = `So'nggi WPM: <strong>${Math.round(a.last_wpm)}</strong> • Eng yaxshi: <strong>${Math.round(a.best_wpm)}</strong>`;
-                        }
-                    }
-                }catch(e){ /* ignore */ }
-            })();
-            </script>
-            if (navigator.onLine && window.TP_utils){
-                const res = await window.TP_utils.autoSave('{% url "typing_practice:save_result" %}', payload, csrf);
-                if (res.ok && res.body && res.body.success){
-                    // Show motivational message if available
-                    if (res.body.message) {
-                        saveStatus.textContent = res.body.message;
-                        const msgType = res.body.type || 'success';
-                        if (msgType === 'success') {
-                            saveStatus.className = 'mt-3 text-sm text-green-600 font-semibold';
-                        } else if (msgType === 'warning') {
-                            saveStatus.className = 'mt-3 text-sm text-yellow-600 font-semibold';
-                        } else {
-                            saveStatus.className = 'mt-3 text-sm text-blue-600 font-semibold';
-                        }
-                    } else {
-                        saveStatus.textContent = 'Natija saqlandi.';
-                        saveStatus.className = 'mt-3 text-sm text-green-600';
-                    }
-                    const wpmEl = document.getElementById('result-wpm');
-                    if(window.TP_utils) window.TP_utils.animateCounter(wpmEl, 0, Math.round(wpm));
-                    if(window.confetti && (accuracy >= 80 || typingInput.value.trim().length >= originalCode.trim().length)){
-                        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-                    }
-                } else {
-                    const msg = (res && res.body && res.body.error) ? res.body.error : (res && res.error) ? String(res.error) : 'Server xatosi';
-                    saveStatus.textContent = 'Xato: ' + msg;
-                    saveStatus.className = 'mt-3 text-sm text-red-600';
-                    if(window.TP_utils) window.TP_utils.enqueueOfflineSave(payload);
-                }
-            } else {
-                if(window.TP_utils) window.TP_utils.enqueueOfflineSave(payload);
-                saveStatus.textContent = 'Siz hozir offline — natija mahalliy navbatga qo‘yildi.';
-                saveStatus.className = 'mt-3 text-sm text-yellow-600';
-            }
-        })();
+{% block extra_css %}
+<style>
     .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
     #wpm, #accuracy, #timer, #mistakes-count { font-size: 1.5rem; }
     #code-display { font-size: 0.95rem; padding: 0.75rem; }
@@ -146,7 +83,7 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="stats-card wpm">
-            <p class="text-sm font-medium opacity-90 mb-1">Code WPM</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Code WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
             <p class="text-3xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
@@ -213,7 +150,7 @@
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
-                <p class="text-sm font-semibold text-primary mb-1">Code WPM</p>
+                <p class="text-sm font-semibold text-primary mb-1">Code WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
                 <p class="text-3xl font-bold text-primary" id="result-wpm">0</p>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
@@ -279,7 +216,7 @@ function initCodeDisplay() {
 // Prevent copy-paste and show friendly toast
 typingInput.addEventListener('paste', (e) => {
     e.preventDefault();
-    if(window.TP_utils) TP_utils.showToast('Paste bloklandi. Adolatli o‘yin uchun to‘g‘ri yozing.', 'error', 3500);
+    if(window.TP_utils) TP_utils.showToast('Paste bloklandi. Adolatli o\'yin uchun to\'g\'ri yozing.', 'error', 3500);
     return false;
 });
 
@@ -497,69 +434,51 @@ function finishTyping(wpm, accuracy, mistakes) {
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCSRFToken()
-        fetch('{% url "typing_practice:save_result" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
-                code_id: codeId,
-                typed_text: typingInput.value,
-                mode: 'full',
-                time_limit: 0,
-                wpm: wpm,
-                accuracy: accuracy,
-                mistakes: mistakes,
-                mistakes_list: mistakesList,
-                duration_seconds: Math.round(duration)
-            })
+        },
+        body: JSON.stringify({
+            code_id: codeId,
+            typed_text: typingInput.value,
+            mode: 'full',
+            time_limit: 0,
+            wpm: wpm,
+            accuracy: accuracy,
+            mistakes: mistakes,
+            mistakes_list: mistakesList,
+            duration_seconds: Math.round(duration)
         })
-        .then(response => response.json().then(json => ({ status: response.status, body: json })))
-        .then(({ status, body }) => {
-            if (status >= 200 && status < 300 && body && body.success) {
-                // Show motivational message if available
-                if (body.message) {
-                    saveStatus.textContent = body.message;
-                    const msgType = body.type || 'success';
-                    if (msgType === 'success') {
-                        saveStatus.className = 'mt-3 text-sm text-green-600 font-semibold';
-                    } else if (msgType === 'warning') {
-                        saveStatus.className = 'mt-3 text-sm text-yellow-600 font-semibold';
-                    } else {
-                        saveStatus.className = 'mt-3 text-sm text-blue-600 font-semibold';
-                    }
+    })
+    .then(response => response.json().then(json => ({ status: response.status, body: json })))
+    .then(({ status, body }) => {
+        if (status >= 200 && status < 300 && body && body.success) {
+            // Show motivational message if available
+            if (body.message) {
+                saveStatus.textContent = body.message;
+                const msgType = body.type || 'success';
+                if (msgType === 'success') {
+                    saveStatus.className = 'mt-3 text-sm text-green-600 font-semibold';
+                } else if (msgType === 'warning') {
+                    saveStatus.className = 'mt-3 text-sm text-yellow-600 font-semibold';
                 } else {
-                    saveStatus.textContent = 'Natija saqlandi.';
-                    saveStatus.className = 'mt-3 text-sm text-green-600';
-                }
-                // animate and celebrate
-                const wpmEl = document.getElementById('result-wpm');
-                animateCounter(wpmEl, 0, Math.round(wpm));
-                if(window.confetti && (accuracy >= 80 || typed.trim().length >= originalCode.trim().length)){
-                    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+                    saveStatus.className = 'mt-3 text-sm text-blue-600 font-semibold';
                 }
             } else {
-                const msg = (body && body.error) ? body.error : 'Server xatosi';
-                saveStatus.textContent = 'Xato: ' + msg;
-                saveStatus.className = 'mt-3 text-sm text-red-600';
+                saveStatus.textContent = 'Natija saqlandi.';
+                saveStatus.className = 'mt-3 text-sm text-green-600';
             }
-        })
-        .catch(err => {
-            saveStatus.textContent = 'Tarmoq xatosi: natija saqlanmadi.';
-            saveStatus.className = 'mt-3 text-sm text-red-600';
-            console.error('Save result error:', err);
-        });
-            saveStatus.textContent = 'Natija saqlandi.';
-            saveStatus.className = 'mt-3 text-sm text-green-600';
+            // animate and celebrate
+            const wpmEl = document.getElementById('result-wpm');
+            animateCounter(wpmEl, 0, Math.round(wpm));
+            if(window.confetti && (accuracy >= 80 || typingInput.value.trim().length >= originalCode.trim().length)){
+                confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+            }
         } else {
-            const msg = (body && body.error) ? body.error : 'Server xatosi';
+            const msg = (body && body.error) ? body.error : 'Xatolik yuz berdi';
             saveStatus.textContent = 'Xato: ' + msg;
             saveStatus.className = 'mt-3 text-sm text-red-600';
         }
     })
     .catch(err => {
-        saveStatus.textContent = 'Tarmoq xatosi: natija saqlanmadi.';
+        saveStatus.textContent = 'Internet aloqasi yo\'q: natija saqlanmadi.';
         saveStatus.className = 'mt-3 text-sm text-red-600';
         console.error('Save result error:', err);
     });
@@ -601,7 +520,6 @@ if (finishBtn) {
 }
 
 resetBtn.addEventListener('click', reset);
-resetBtn.addEventListener('click', reset);
 
 initCodeDisplay();
 // Remove the visible finish button — sessions finish automatically when the text/code is complete
@@ -620,7 +538,25 @@ document.addEventListener('keydown', function(e){
     }
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
 <script>
+// Load achievements and render small summary for code practice
+(async function(){
+    try{
+        const res = await fetch('{% url "typing_practice:achievements" %}');
+        const json = await res.json().catch(()=>null);
+        if(res.ok && json && json.success && json.achievements){
+            const a = json.achievements;
+            const panel = document.getElementById('achievements-panel');
+            if(panel){
+                panel.innerHTML = `So'nggi WPM: <strong>${Math.round(a.last_wpm)}</strong> • Eng yaxshi: <strong>${Math.round(a.best_wpm)}</strong>`;
+            }
+        }
+    }catch(e){ /* ignore */ }
+})();
+
 // Flush offline queue when connection resumes
 if(window.TP_utils){
     window.addEventListener('online', ()=>{

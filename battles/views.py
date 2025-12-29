@@ -224,6 +224,56 @@ def battle_play(request, battle_id):
 
 @login_required
 @require_http_methods(["POST"])
+def battle_update_progress(request, battle_id):
+    """Update real-time progress during battle (without finishing)"""
+    try:
+        battle = get_object_or_404(Battle, id=battle_id)
+        
+        if battle.status != 'active':
+            return JsonResponse({'error': 'Jang faol emas'}, status=400)
+        
+        # Check if user is participant
+        if battle.creator != request.user and battle.opponent != request.user:
+            return JsonResponse({'error': 'Siz bu jangda ishtirok etmaysiz'}, status=403)
+        
+        # Parse data
+        try:
+            data = json.loads(request.body)
+            from typing_practice.utils import validate_wpm, validate_accuracy
+            wpm = validate_wpm(data.get('wpm', 0))
+            accuracy = validate_accuracy(data.get('accuracy', 0))
+            mistakes = max(0, int(data.get('mistakes', 0)))
+            progress = float(data.get('progress', 0))  # 0-100
+        except (ValueError, TypeError, json.JSONDecodeError) as e:
+            logger.warning(f"Invalid data in battle_update_progress: {e}")
+            return JsonResponse({'error': 'Noto\'g\'ri ma\'lumot formati'}, status=400)
+        
+        # Save or update participant result (without marking as finished)
+        participant, created = BattleParticipant.objects.get_or_create(
+            battle=battle,
+            user=request.user
+        )
+        
+        # Update real-time progress (don't set is_finished=True)
+        participant.wpm = wpm
+        participant.accuracy = accuracy
+        participant.mistakes = mistakes
+        participant.progress_percent = min(100, max(0, progress))
+        # Don't set is_finished or finished_at here
+        participant.save()
+        
+        return JsonResponse({
+            'success': True,
+            'wpm': wpm,
+            'progress': progress,
+        })
+    except Exception as e:
+        logger.error(f"Error updating battle progress: {e}", exc_info=True)
+        return JsonResponse({'error': 'Xatolik yuz berdi'}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
 def battle_save_result(request, battle_id):
     """Save battle result"""
     try:
@@ -577,8 +627,9 @@ def battle_opponent_progress(request, battle_id):
     participant = BattleParticipant.objects.filter(battle=battle, user=opponent).first()
     
     if participant:
+        # Return current WPM even if not finished (for real-time chart)
         return JsonResponse({
-            'wpm': participant.wpm if participant.is_finished else None,
+            'wpm': participant.wpm,  # Show real-time WPM, not just when finished
             'accuracy': participant.accuracy if participant.is_finished else None,
             'progress': participant.progress_percent,
             'is_finished': participant.is_finished,

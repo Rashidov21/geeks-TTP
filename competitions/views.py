@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
-from django.db.models import Avg
+from django.db.models import Avg, Max
 from django.db import transaction
 from .models import Competition, CompetitionParticipant, CompetitionStage, CompetitionParticipantStage, Certificate
 from typing_practice.models import Text, CodeSnippet
@@ -540,6 +540,17 @@ def competition_results(request, competition_id):
             user_participant = participant
             break
     
+    # Calculate competition analytics
+    finished_participants = participants.filter(is_finished=True)
+    analytics = {
+        'total_participants': participants.count(),
+        'finished_count': finished_participants.count(),
+        'avg_wpm': finished_participants.aggregate(Avg('result_wpm'))['result_wpm__avg'] or 0,
+        'avg_accuracy': finished_participants.aggregate(Avg('accuracy'))['accuracy__avg'] or 0,
+        'max_wpm': finished_participants.aggregate(Max('result_wpm'))['result_wpm__max'] or 0,
+        'total_mistakes': sum(p.mistakes or 0 for p in finished_participants),
+    }
+    
     return render(request, 'competitions/results.html', {
         'competition': competition,
         'participants': participants,
@@ -548,6 +559,7 @@ def competition_results(request, competition_id):
         'user_rank': user_rank,
         'user_participant': user_participant,
         'top_three': top_three,
+        'analytics': analytics,
     })
 
 

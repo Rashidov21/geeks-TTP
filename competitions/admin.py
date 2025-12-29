@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.utils.html import format_html
+from django.db.models import Avg, Count, Max
 from .models import Competition, CompetitionParticipant, CompetitionStage, CompetitionParticipantStage, Certificate
 
 
@@ -15,17 +17,97 @@ class CompetitionParticipantInline(admin.TabularInline):
 
 @admin.register(Competition)
 class CompetitionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'mode', 'difficulty', 'status', 'enable_certificates', 'start_time', 'created_by', 'created_at']
-    list_filter = ['mode', 'difficulty', 'status', 'enable_certificates', 'start_time', 'created_at']
-    search_fields = ['name', 'access_code']
+    list_display = ['name', 'mode', 'difficulty', 'status', 'participant_count', 'avg_wpm', 'enable_certificates', 'start_time', 'created_by', 'created_at']
+    list_filter = ['mode', 'difficulty', 'status', 'enable_certificates', ('start_time', admin.DateFieldListFilter), ('created_at', admin.DateFieldListFilter)]
+    search_fields = ['name', 'access_code', 'created_by__username']
     inlines = [CompetitionStageInline, CompetitionParticipantInline]
+    date_hierarchy = 'created_at'
+    readonly_fields = ['created_at', 'competition_stats']
+    fieldsets = (
+        ('Asosiy ma\'lumotlar', {
+            'fields': ('name', 'mode', 'difficulty', 'status', 'created_by', 'access_code', 'is_public')
+        }),
+        ('Vaqt', {
+            'fields': ('start_time',)
+        }),
+        ('Sozlamalar', {
+            'fields': ('enable_certificates', 'max_attempts_per_stage')
+        }),
+        ('Statistika', {
+            'fields': ('competition_stats',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def participant_count(self, obj):
+        count = obj.participants.count()
+        finished = CompetitionParticipant.objects.filter(competition=obj, is_finished=True).count()
+        return format_html(
+            '<strong>{}</strong> / {} tugatgan',
+            finished, count
+        )
+    participant_count.short_description = 'Ishtirokchilar'
+    
+    def avg_wpm(self, obj):
+        avg = CompetitionParticipant.objects.filter(
+            competition=obj, 
+            result_wpm__isnull=False
+        ).aggregate(Avg('result_wpm'))['result_wpm__avg']
+        if avg:
+            return format_html('<strong>{:.1f}</strong>', avg)
+        return '-'
+    avg_wpm.short_description = 'O\'rtacha WPM'
+    
+    def competition_stats(self, obj):
+        if obj.pk:
+            participants = CompetitionParticipant.objects.filter(competition=obj)
+            total = participants.count()
+            finished = participants.filter(is_finished=True).count()
+            avg_wpm = participants.filter(result_wpm__isnull=False).aggregate(Avg('result_wpm'))['result_wpm__avg'] or 0
+            avg_accuracy = participants.filter(accuracy__isnull=False).aggregate(Avg('accuracy'))['accuracy__avg'] or 0
+            max_wpm = participants.filter(result_wpm__isnull=False).aggregate(Max('result_wpm'))['result_wpm__max'] or 0
+            
+            return format_html(
+                '<strong>Jami ishtirokchilar:</strong> {}<br>'
+                '<strong>Tugatgan:</strong> {}<br>'
+                '<strong>O\'rtacha WPM:</strong> {:.1f}<br>'
+                '<strong>O\'rtacha aniqlik:</strong> {:.1f}%<br>'
+                '<strong>Eng yuqori WPM:</strong> {:.1f}',
+                total, finished, avg_wpm, avg_accuracy, max_wpm
+            )
+        return 'Saqlangandan keyin ko\'rsatiladi'
+    competition_stats.short_description = 'Statistika'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('created_by').prefetch_related('participants')
 
 
 @admin.register(CompetitionParticipant)
 class CompetitionParticipantAdmin(admin.ModelAdmin):
-    list_display = ['user', 'competition', 'result_wpm', 'accuracy', 'current_stage', 'is_finished', 'finished_at']
-    list_filter = ['is_finished', 'competition']
+    list_display = ['user', 'competition', 'result_wpm', 'accuracy', 'current_stage', 'is_finished', 'rank', 'finished_at']
+    list_filter = ['is_finished', 'competition', 'competition__status', 'competition__mode']
     search_fields = ['user__username', 'competition__name']
+    readonly_fields = ['started_at', 'finished_at', 'result_wpm', 'accuracy', 'current_stage']
+    date_hierarchy = 'started_at'
+    
+    def rank(self, obj):
+        if obj.is_finished and obj.result_wpm:
+            # Calculate rank based on WPM
+            better_count = CompetitionParticipant.objects.filter(
+                competition=obj.competition,
+                is_finished=True,
+                result_wpm__gt=obj.result_wpm
+            ).count()
+            rank = better_count + 1
+            medal = '🥇' if rank == 1 else '🥈' if rank == 2 else '🥉' if rank == 3 else ''
+            return format_html('{} {}', medal, rank)
+        return '-'
+    rank.short_description = 'O\'rin'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user', 'competition')
 
 
 @admin.register(CompetitionStage)

@@ -18,6 +18,16 @@
             <span>{% if competition.difficulty == 'easy' %}🌱 Oson{% else %}🔥 Qiyin{% endif %}</span>
             <span>•</span>
             <span>{{ participants.count }} ishtirokchi</span>
+            {% if competition.status == 'finished' %}
+            <span>•</span>
+            <span>✅ Tugatilgan</span>
+            {% elif competition.status == 'active' %}
+            <span>•</span>
+            <span>🟢 Faol</span>
+            {% else %}
+            <span>•</span>
+            <span>⏳ Kutilmoqda</span>
+            {% endif %}
         </div>
     </div>
 
@@ -50,6 +60,36 @@
                 </a>
             </div>
             {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Competition Analytics -->
+    {% if competition.status == 'finished' and analytics %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center space-x-2">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>Musobaqa statistikasi</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                <p class="text-sm font-medium text-gray-600 mb-1">O'rtacha WPM</p>
+                <p class="text-2xl font-bold text-blue-600">{{ analytics.avg_wpm|floatformat:1 }}</p>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+                <p class="text-sm font-medium text-gray-600 mb-1">O'rtacha aniqlik</p>
+                <p class="text-2xl font-bold text-green-600">{{ analytics.avg_accuracy|floatformat:1 }}%</p>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
+                <p class="text-sm font-medium text-gray-600 mb-1">Tugatganlar</p>
+                <p class="text-2xl font-bold text-yellow-600">{{ analytics.finished_count }} / {{ analytics.total_participants }}</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+                <p class="text-sm font-medium text-gray-600 mb-1">Eng yuqori WPM</p>
+                <p class="text-2xl font-bold text-purple-600">{{ analytics.max_wpm|floatformat:1 }}</p>
+            </div>
         </div>
     </div>
     {% endif %}

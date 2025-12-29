@@ -14,6 +14,7 @@ urlpatterns = [
     path('<int:battle_id>/play/', views.battle_play, name='play'),
     path('<int:battle_id>/rematch/', views.battle_rematch, name='rematch'),
     path('<int:battle_id>/save-result/', views.battle_save_result, name='save_result'),
+    path('<int:battle_id>/update-progress/', views.battle_update_progress, name='update_progress'),
     path('<int:battle_id>/opponent-progress/', views.battle_opponent_progress, name='opponent_progress'),
 ]
 

@@ -52,7 +52,7 @@
     <!-- Stats Cards at top -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="stats-card wpm">
-            <p class="text-sm font-medium opacity-90 mb-1">WPM</p>
+            <p class="text-sm font-medium opacity-90 mb-1">WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
             <p class="text-3xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
@@ -116,7 +116,7 @@
         </div>
 
         <!-- Text Display - Larger and more prominent (scrolls internally) -->
-        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-mono text-primary">
+        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-sans text-primary" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em;">
             <!-- Text will be loaded here -->
         </div>
         <div class="mb-4">
@@ -128,7 +128,7 @@
         <!-- Typing Input - Larger and more prominent -->
         <textarea 
             id="typing-input" 
-            class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary font-mono text-primary placeholder-gray-400 transition-all duration-300"
+            class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary font-sans text-primary placeholder-gray-400 transition-all duration-300" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em;"
             rows="4"
             placeholder="Bu yerga yozishni boshlang..."
             autofocus
@@ -155,7 +155,7 @@
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
-                <p class="text-sm font-semibold text-primary mb-1">WPM</p>
+                <p class="text-sm font-semibold text-primary mb-1">WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
                 <p class="text-3xl font-bold text-primary" id="result-wpm">0</p>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg hover-lift border-2 border-gray-200">
@@ -473,7 +473,7 @@ function finishTyping(wpm, cpm, accuracy, mistakes) {
                     confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
                 }
             } else {
-                const msg = (res && res.body && res.body.error) ? res.body.error : (res && res.error) ? String(res.error) : 'Server xatosi';
+                const msg = (res && res.body && res.body.error) ? res.body.error : (res && res.error) ? String(res.error) : 'Xatolik yuz berdi';
                 saveStatus.textContent = 'Xato: ' + msg;
                 saveStatus.className = 'mt-3 text-sm text-red-600';
                 // enqueue for retry

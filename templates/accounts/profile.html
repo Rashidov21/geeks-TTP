@@ -74,7 +74,7 @@
                 <div class="text-center">
                     <div class="text-5xl font-bold">⭐</div>
                     <div class="text-2xl font-bold mt-2">Level {{ level_info.level }}</div>
-                    <div class="text-sm opacity-90">{{ level_info.total_xp }} XP</div>
+                    <div class="text-sm opacity-90">{{ level_info.total_xp }} XP <span class="text-xs opacity-75">(Tajriba ballari)</span></div>
                 </div>
                 <div class="text-center">
                     <div class="text-5xl font-bold">🔥</div>
@@ -89,7 +89,7 @@
             </div>
             <div class="flex-1 max-w-md">
                 <div class="flex items-center justify-between text-sm mb-1">
-                    <span>Keyingi level: {{ level_info.get_xp_for_next_level }} XP</span>
+                    <span>Keyingi level uchun: {{ level_info.get_xp_for_next_level }} XP</span>
                     <span>{{ level_info.get_progress_percentage }}%</span>
                 </div>
                 <div class="w-full bg-white/20 rounded-full h-4">
@@ -171,7 +171,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h2 class="text-xl font-bold mb-4 text-primary flex items-center space-x-2">
             <span>🏆</span>
-            <span>Badge kolleksiyasi</span>
+            <span>Yutuqlar kolleksiyasi (Badge'lar)</span>
             <span class="text-sm font-normal text-gray-600">({{ all_badges.count }})</span>
         </h2>
         {% if all_badges %}
@@ -186,16 +186,36 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-gray-600 text-center py-8">Hali badge'lar yo'q. Mashq qilib, badge'lar oling!</p>
+        <p class="text-gray-600 text-center py-8">Hali yutuqlar yo'q. Mashq qilib, yutuqlar oling!</p>
         {% endif %}
     </div>
 
-    <!-- Progress Chart -->
+    <!-- Progress Summary -->
     {% if wpm_progress %}
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 class="text-xl font-bold mb-4 text-primary">Progress (Oxirgi 30 kun)</h2>
-        <div class="h-80">
-            <canvas id="profileProgressChart"></canvas>
+        <h2 class="text-xl font-bold mb-4 text-primary flex items-center space-x-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>Progress (Oxirgi 30 kun)</span>
+        </h2>
+        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+            {% for data in wpm_progress|slice:":30" %}
+            <div class="text-center p-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-primary transition-all duration-300">
+                <div class="flex items-center justify-center mb-1">
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <p class="text-xs text-gray-600 mb-1">{{ data.date|slice:":5" }}</p>
+                <p class="text-base font-bold text-primary">{{ data.wpm|floatformat:0 }}</p>
+                {% for acc_data in accuracy_progress %}
+                    {% if acc_data.date == data.date %}
+                    <p class="text-xs text-gray-500 mt-1">{{ acc_data.accuracy|floatformat:0 }}%</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
         </div>
     </div>
     {% endif %}
@@ -273,68 +293,5 @@
     </div>
 </div>
 
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-    {% if wpm_progress %}
-    const profileCtx = document.getElementById('profileProgressChart');
-    if (profileCtx) {
-        const wpmProgress = JSON.parse('{{ wpm_progress|safe }}');
-        const accuracyProgress = JSON.parse('{{ accuracy_progress|safe }}');
-        
-        new Chart(profileCtx, {
-            type: 'line',
-            data: {
-                labels: wpmProgress.map(d => d.date),
-                datasets: [{
-                    label: 'WPM',
-                    data: wpmProgress.map(d => d.wpm),
-                    borderColor: '#292929',
-                    backgroundColor: 'rgba(41, 41, 41, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    yAxisID: 'y',
-                }, {
-                    label: 'Aniqlik %',
-                    data: accuracyProgress.map(d => d.accuracy),
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    yAxisID: 'y1',
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'WPM'
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Aniqlik %'
-                        },
-                        grid: {
-                            drawOnChartArea: false,
-                        },
-                    }
-                }
-            }
-        });
-    }
-    {% endif %}
-</script>
-{% endblock %}
 {% endblock %}
 
