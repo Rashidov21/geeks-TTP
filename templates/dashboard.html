@@ -181,13 +181,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <p class="text-xs text-gray-600 mb-1">{{ data.date|slice:":5" }}</p>
+            <p class="text-xs text-gray-600 mb-1">{{ data.date }}</p>
             <p class="text-lg font-bold text-primary">{{ data.wpm|floatformat:0 }} WPM</p>
             {% for acc_data in accuracy_data %}
                 {% if acc_data.date == data.date %}
                 <p class="text-xs text-gray-500 mt-1">{{ acc_data.accuracy|floatformat:0 }}%</p>
                 {% endif %}
             {% endfor %}
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center text-gray-600 py-4">
+            <p>Hali progress ma'lumotlari yo'q</p>
         </div>
         {% endfor %}
     </div>

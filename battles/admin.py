@@ -34,10 +34,12 @@ class BattleAdmin(admin.ModelAdmin):
         if participants.exists():
             avg_wpm = participants.aggregate(Avg('wpm'))['wpm__avg'] or 0
             avg_accuracy = participants.aggregate(Avg('accuracy'))['accuracy__avg'] or 0
+            wpm_str = f'{avg_wpm:.1f}'
+            accuracy_str = f'{avg_accuracy:.1f}'
             return format_html(
-                '<span style="color: #3b82f6;">WPM: {:.1f}</span><br>'
-                '<span style="color: #22c55e;">Aniqlik: {:.1f}%</span>',
-                avg_wpm, avg_accuracy
+                '<span style="color: #3b82f6;">WPM: {}</span><br>'
+                '<span style="color: #22c55e;">Aniqlik: {}%</span>',
+                wpm_str, accuracy_str
             )
         return '-'
     battle_stats.short_description = 'Statistika'
@@ -71,7 +73,8 @@ class BattleRatingAdmin(admin.ModelAdmin):
         if obj.total_battles > 0:
             rate = (obj.wins / obj.total_battles) * 100
             color = '#22c55e' if rate >= 50 else '#ef4444' if rate < 30 else '#f59e0b'
-            return format_html('<span style="color: {};">{:.1f}%</span>', color, rate)
+            rate_str = f'{rate:.1f}'
+            return format_html('<span style="color: {};">{}%</span>', color, rate_str)
         return '-'
     win_rate.short_description = 'G\'alaba %'
     

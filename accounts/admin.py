@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
+from django.urls import path, reverse
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from .models import (
     UserProfile, Badge, UserBadge, UserLevel, 
     DailyChallenge, ChallengeCompletion, Notification
@@ -37,30 +41,45 @@ class UserAdmin(BaseUserAdmin):
     
     def user_level(self, obj):
         try:
-            level_info = obj.level_info
-            return format_html('<strong>Level {}</strong>', level_info.level)
-        except:
+            # Use getattr with default to avoid RelatedObjectDoesNotExist
+            level_info = getattr(obj, 'level_info', None)
+            if level_info:
+                return format_html('<strong>Level {}</strong>', level_info.level)
+            return '-'
+        except Exception:
             return '-'
     user_level.short_description = 'Level'
+    user_level.admin_order_field = 'level_info__level'
     
     def user_xp(self, obj):
         try:
-            level_info = obj.level_info
-            return format_html('{} XP', level_info.total_xp)
-        except:
+            level_info = getattr(obj, 'level_info', None)
+            if level_info:
+                return format_html('{} XP', level_info.total_xp)
+            return '-'
+        except Exception:
             return '-'
     user_xp.short_description = 'XP'
+    user_xp.admin_order_field = 'level_info__total_xp'
     
     def battle_stats(self, obj):
         try:
-            rating = BattleRating.objects.get(user=obj)
-            return format_html(
-                'W:{} L:{} D:{}<br><small>Rating: {}</small>',
-                rating.wins, rating.losses, rating.draws, rating.rating
-            )
-        except:
+            # Use related_name 'battle_rating' from BattleRating model
+            rating = getattr(obj, 'battle_rating', None)
+            if rating:
+                return format_html(
+                    'W:{} L:{} D:{}<br><small>Rating: {}</small>',
+                    rating.wins, rating.losses, rating.draws, rating.rating
+                )
+            return '-'
+        except Exception:
             return '-'
     battle_stats.short_description = 'Battle'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Optimize queries by prefetching related objects (use correct related_name)
+        return qs.select_related('level_info', 'battle_rating').prefetch_related('earned_badges')
 
 
 @admin.register(Badge)
@@ -133,10 +152,11 @@ class DailyChallengeAdmin(admin.ModelAdmin):
             if total_users > 0:
                 rate = (completed / total_users) * 100
                 color = '#22c55e' if rate >= 50 else '#ef4444' if rate < 20 else '#f59e0b'
+                rate_str = f'{rate:.1f}'
                 return format_html(
-                    '<span style="color: {};"><strong>{:.1f}%</strong></span><br>'
+                    '<span style="color: {};"><strong>{}%</strong></span><br>'
                     '<small>{}/{} foydalanuvchi</small>',
-                    color, rate, completed, total_users
+                    color, rate_str, completed, total_users
                 )
         return '-'
     completion_rate.short_description = 'Bajarilish %'
@@ -160,7 +180,17 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'title', 'message']
     readonly_fields = ['created_at']
     date_hierarchy = 'created_at'
-    actions = ['mark_as_read', 'mark_as_unread', 'resend_notification']
+    actions = ['mark_as_read', 'mark_as_unread', 'send_to_all_users', 'send_to_selected_users']
+    
+    fieldsets = (
+        ('Asosiy ma\'lumotlar', {
+            'fields': ('user', 'notification_type', 'title', 'message', 'icon', 'link')
+        }),
+        ('Holat', {
+            'fields': ('is_read', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
     
     def icon(self, obj):
         return format_html('<span style="font-size: 1.2em;">{}</span>', obj.icon or '📢')
@@ -176,11 +206,116 @@ class NotificationAdmin(admin.ModelAdmin):
         updated = queryset.update(is_read=False)
         self.message_user(request, f'{updated} xabar o\'qilmagan deb belgilandi.')
     
-    @admin.action(description='Resend selected notifications')
-    def resend_notification(self, request, queryset):
-        # This would trigger notification sending logic
-        count = queryset.count()
-        self.message_user(request, f'{count} xabar qayta yuborish funksiyasi keyingi versiyada qo\'shiladi.')
+    @admin.action(description='Send notification to all users')
+    def send_to_all_users(self, request, queryset):
+        """Send notification to all users based on selected notification template"""
+        if queryset.count() != 1:
+            self.message_user(request, 'Iltimos, faqat bitta xabarni tanlang.', level='error')
+            return
+        
+        template = queryset.first()
+        from django.contrib.auth.models import User
+        users = User.objects.filter(is_active=True)
+        count = 0
+        
+        for user in users:
+            Notification.objects.create(
+                user=user,
+                notification_type=template.notification_type,
+                title=template.title,
+                message=template.message,
+                icon=template.icon,
+                link=template.link,
+                is_read=False
+            )
+            count += 1
+        
+        self.message_user(request, f'{count} foydalanuvchiga xabar yuborildi.')
+    
+    @admin.action(description='Send notification to selected users')
+    def send_to_selected_users(self, request, queryset):
+        """Send notification to users from selected notifications"""
+        if queryset.count() != 1:
+            self.message_user(request, 'Iltimos, faqat bitta xabarni tanlang.', level='error')
+            return
+        
+        template = queryset.first()
+        # Get unique users from selected notifications
+        users = User.objects.filter(notifications__in=queryset).distinct()
+        count = 0
+        
+        for user in users:
+            Notification.objects.create(
+                user=user,
+                notification_type=template.notification_type,
+                title=template.title,
+                message=template.message,
+                icon=template.icon,
+                link=template.link,
+                is_read=False
+            )
+            count += 1
+        
+        self.message_user(request, f'{count} foydalanuvchiga xabar yuborildi.')
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('send-notification/', self.admin_site.admin_view(self.send_notification_view), name='accounts_notification_send'),
+        ]
+        return custom_urls + urls
+    
+    def send_notification_view(self, request):
+        """Custom view for sending notifications to users"""
+        if request.method == 'POST':
+            notification_type = request.POST.get('notification_type')
+            title = request.POST.get('title')
+            message = request.POST.get('message')
+            icon = request.POST.get('icon', '🔔')
+            link = request.POST.get('link', '')
+            user_ids = request.POST.getlist('users')
+            send_to_all = request.POST.get('send_to_all') == 'on'
+            
+            if not title or not message:
+                messages.error(request, 'Sarlavha va xabar matni to\'ldirilishi shart.')
+                return redirect('admin:accounts_notification_changelist')
+            
+            count = 0
+            if send_to_all:
+                users = User.objects.filter(is_active=True)
+            else:
+                if not user_ids:
+                    messages.error(request, 'Kamida bitta foydalanuvchi tanlanishi kerak.')
+                    return redirect('admin:accounts_notification_changelist')
+                users = User.objects.filter(id__in=user_ids, is_active=True)
+            
+            for user in users:
+                Notification.objects.create(
+                    user=user,
+                    notification_type=notification_type,
+                    title=title,
+                    message=message,
+                    icon=icon,
+                    link=link,
+                    is_read=False
+                )
+                count += 1
+            
+            messages.success(request, f'{count} foydalanuvchiga xabar yuborildi.')
+            return redirect('admin:accounts_notification_changelist')
+        
+        # GET request - show form
+        users = User.objects.filter(is_active=True).order_by('username')
+        context = {
+            'title': 'Xabar yuborish',
+            'users': users,
+            'notification_types': Notification.NOTIFICATION_TYPE_CHOICES,
+            'opts': self.model._meta,
+            'has_view_permission': self.has_view_permission(request),
+            'site_header': admin.site.site_header,
+            'site_title': admin.site.site_title,
+        }
+        return render(request, 'admin/accounts/notification/send_notification.html', context)
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)

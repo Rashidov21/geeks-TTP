@@ -54,7 +54,8 @@ class CompetitionAdmin(admin.ModelAdmin):
             result_wpm__isnull=False
         ).aggregate(Avg('result_wpm'))['result_wpm__avg']
         if avg:
-            return format_html('<strong>{:.1f}</strong>', avg)
+            avg_str = f'{avg:.1f}'
+            return format_html('<strong>{}</strong>', avg_str)
         return '-'
     avg_wpm.short_description = 'O\'rtacha WPM'
     
@@ -67,13 +68,16 @@ class CompetitionAdmin(admin.ModelAdmin):
             avg_accuracy = participants.filter(accuracy__isnull=False).aggregate(Avg('accuracy'))['accuracy__avg'] or 0
             max_wpm = participants.filter(result_wpm__isnull=False).aggregate(Max('result_wpm'))['result_wpm__max'] or 0
             
+            avg_wpm_str = f'{avg_wpm:.1f}'
+            avg_accuracy_str = f'{avg_accuracy:.1f}'
+            max_wpm_str = f'{max_wpm:.1f}'
             return format_html(
                 '<strong>Jami ishtirokchilar:</strong> {}<br>'
                 '<strong>Tugatgan:</strong> {}<br>'
-                '<strong>O\'rtacha WPM:</strong> {:.1f}<br>'
-                '<strong>O\'rtacha aniqlik:</strong> {:.1f}%<br>'
-                '<strong>Eng yuqori WPM:</strong> {:.1f}',
-                total, finished, avg_wpm, avg_accuracy, max_wpm
+                '<strong>O\'rtacha WPM:</strong> {}<br>'
+                '<strong>O\'rtacha aniqlik:</strong> {}%<br>'
+                '<strong>Eng yuqori WPM:</strong> {}',
+                total, finished, avg_wpm_str, avg_accuracy_str, max_wpm_str
             )
         return 'Saqlangandan keyin ko\'rsatiladi'
     competition_stats.short_description = 'Statistika'
@@ -92,17 +96,20 @@ class CompetitionParticipantAdmin(admin.ModelAdmin):
     date_hierarchy = 'started_at'
     
     def rank(self, obj):
-        if obj.is_finished and obj.result_wpm:
-            # Calculate rank based on WPM
-            better_count = CompetitionParticipant.objects.filter(
-                competition=obj.competition,
-                is_finished=True,
-                result_wpm__gt=obj.result_wpm
-            ).count()
-            rank = better_count + 1
-            medal = '🥇' if rank == 1 else '🥈' if rank == 2 else '🥉' if rank == 3 else ''
-            return format_html('{} {}', medal, rank)
-        return '-'
+        try:
+            if obj.is_finished and obj.result_wpm is not None:
+                # Calculate rank based on WPM
+                better_count = CompetitionParticipant.objects.filter(
+                    competition=obj.competition,
+                    is_finished=True,
+                    result_wpm__gt=obj.result_wpm
+                ).count()
+                rank = better_count + 1
+                medal = '🥇' if rank == 1 else '🥈' if rank == 2 else '🥉' if rank == 3 else ''
+                return format_html('{} {}', medal, rank)
+            return '-'
+        except Exception:
+            return '-'
     rank.short_description = 'O\'rin'
     
     def get_queryset(self, request):

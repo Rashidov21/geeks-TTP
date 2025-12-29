@@ -1,0 +1,153 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Xabar yuborish | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Bosh sahifa</a>
+    &rsaquo; <a href="{% url 'admin:accounts_notification_changelist' %}">Xabarlar</a>
+    &rsaquo; Xabar yuborish
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Xabar yuborish</h1>
+
+<form method="post" id="notification-form">
+    {% csrf_token %}
+    
+    <fieldset class="module aligned">
+        <h2>Xabar ma'lumotlari</h2>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_notification_type">Xabar turi:</label>
+                <select name="notification_type" id="id_notification_type" required>
+                    <option value="">Tanlang...</option>
+                    {% for value, label in notification_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_title">Sarlavha:</label>
+                <input type="text" name="title" id="id_title" maxlength="200" required style="width: 100%; padding: 8px;">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_message">Xabar matni:</label>
+                <textarea name="message" id="id_message" rows="5" required style="width: 100%; padding: 8px;"></textarea>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_icon">Icon (emoji):</label>
+                <input type="text" name="icon" id="id_icon" maxlength="50" value="🔔" style="width: 100px; padding: 8px;">
+                <p class="help">Masalan: 🔔, 🎉, ⚠️, ✅</p>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_link">Havola (ixtiyoriy):</label>
+                <input type="text" name="link" id="id_link" maxlength="200" placeholder="/dashboard/" style="width: 100%; padding: 8px;">
+                <p class="help">Xabar bosilganda ochiladigan sahifa</p>
+            </div>
+        </div>
+    </fieldset>
+    
+    <fieldset class="module aligned">
+        <h2>Qabul qiluvchilar</h2>
+        
+        <div class="form-row">
+            <div>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="send_to_all" id="id_send_to_all" onchange="toggleUserSelection()">
+                    <strong>Barcha faol foydalanuvchilarga yuborish</strong>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-row" id="user-selection" style="display: none;">
+            <div>
+                <label for="id_users">Foydalanuvchilar:</label>
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                    {% for user in users %}
+                        <label style="display: block; padding: 5px;">
+                            <input type="checkbox" name="users" value="{{ user.id }}" class="user-checkbox">
+                            {{ user.username }}{% if user.first_name or user.last_name %} ({{ user.first_name }} {{ user.last_name }}){% endif %}
+                        </label>
+                    {% endfor %}
+                </div>
+                <p class="help">Xabarni yubormoqchi bo'lgan foydalanuvchilarni tanlang</p>
+            </div>
+        </div>
+    </fieldset>
+    
+    <div class="submit-row">
+        <input type="submit" value="Xabar yuborish" class="default" style="padding: 10px 20px; font-size: 14px;">
+        <a href="{% url 'admin:accounts_notification_changelist' %}" class="button" style="padding: 10px 20px; margin-left: 10px;">Bekor qilish</a>
+    </div>
+</form>
+
+<script>
+function toggleUserSelection() {
+    const sendToAll = document.getElementById('id_send_to_all').checked;
+    const userSelection = document.getElementById('user-selection');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    
+    if (sendToAll) {
+        userSelection.style.display = 'none';
+        checkboxes.forEach(cb => cb.checked = false);
+    } else {
+        userSelection.style.display = 'block';
+    }
+}
+
+document.getElementById('notification-form').addEventListener('submit', function(e) {
+    const sendToAll = document.getElementById('id_send_to_all').checked;
+    const checkedUsers = document.querySelectorAll('.user-checkbox:checked').length;
+    
+    if (!sendToAll && checkedUsers === 0) {
+        e.preventDefault();
+        alert('Iltimos, kamida bitta foydalanuvchi tanlang yoki "Barcha faol foydalanuvchilarga yuborish" ni belgilang.');
+        return false;
+    }
+});
+</script>
+
+<style>
+.form-row {
+    margin-bottom: 15px;
+}
+.form-row label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.form-row input[type="text"],
+.form-row input[type="checkbox"],
+.form-row textarea,
+.form-row select {
+    margin-top: 5px;
+}
+.help {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+.submit-row {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+</style>
+{% endblock %}
+

@@ -8,6 +8,7 @@ from django.db.models import Avg, Max, Count, Sum
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import timedelta
+from collections import defaultdict
 import json
 from .models import UserProfile, UserLevel, UserBadge, Notification
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm
@@ -178,11 +179,19 @@ def profile_view(request, user_id=None):
     earned_badges = UserBadge.objects.filter(user=profile_user).select_related('badge').order_by('-earned_at')
     all_badges = UserBadge.objects.filter(user=profile_user).select_related('badge')
     
-    # Progress data for charts (last 30 days)
+    # Progress data (last 30 days, grouped by date)
     thirty_days_ago = timezone.now() - timedelta(days=30)
     progress_results = list(user_results.filter(time__gte=thirty_days_ago).order_by('time')[:30])
-    wpm_progress = [{'date': r.time.strftime('%Y-%m-%d'), 'wpm': float(r.wpm)} for r in progress_results]
-    accuracy_progress = [{'date': r.time.strftime('%Y-%m-%d'), 'accuracy': float(r.accuracy)} for r in progress_results]
+    # Group by date and calculate average for same dates
+    wpm_by_date = defaultdict(list)
+    accuracy_by_date = defaultdict(list)
+    for r in progress_results:
+        date_str = r.time.strftime('%d.%m')
+        wpm_by_date[date_str].append(float(r.wpm))
+        accuracy_by_date[date_str].append(float(r.accuracy))
+    
+    wpm_progress = [{'date': date, 'wpm': sum(wpms) / len(wpms)} for date, wpms in wpm_by_date.items()]
+    accuracy_progress = [{'date': date, 'accuracy': sum(accs) / len(accs)} for date, accs in accuracy_by_date.items()]
     
     context = {
         'profile_user': profile_user,
@@ -202,8 +211,8 @@ def profile_view(request, user_id=None):
         'level_info': level_info,
         'earned_badges': earned_badges,
         'all_badges': all_badges,
-        'wpm_progress': mark_safe(json.dumps(wpm_progress)),
-        'accuracy_progress': mark_safe(json.dumps(accuracy_progress)),
+        'wpm_progress': wpm_progress,  # Pass as list, not JSON string
+        'accuracy_progress': accuracy_progress,  # Pass as list, not JSON string
     }
     
     return render(request, 'accounts/profile.html', context)

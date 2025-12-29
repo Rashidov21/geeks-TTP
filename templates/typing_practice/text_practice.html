@@ -48,7 +48,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="practice-container">
+<div class="practice-container" 
+     data-text-id="{{ text.id }}"
+     data-text-body="{% if text_body %}{{ text_body|escapejs }}{% else %}{{ text.body|escapejs }}{% endif %}"
+     data-mode="{{ mode|default:'full' }}"
+     data-time-limit="{{ time_limit|default:0 }}">
     <!-- Stats Cards at top -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="stats-card wpm">
@@ -188,10 +192,12 @@ function animateCounter(el, from, to, duration=800){
     }
     requestAnimationFrame(step);
 }
-const textId = {{ text.id }};
-const originalText = `{% if text_body %}{{ text_body|escapejs }}{% else %}{{ text.body|escapejs }}{% endif %}`;
-const mode = '{{ mode|default:"full" }}';
-const timeLimit = {{ time_limit|default:0 }};
+// Template data - linter xatoliklarini oldini olish uchun data-attribute orqali
+const container = document.querySelector('.practice-container');
+const textId = parseInt(container.getAttribute('data-text-id') || '0', 10);
+const originalText = container.getAttribute('data-text-body') || '';
+const mode = container.getAttribute('data-mode') || 'full';
+const timeLimit = parseInt(container.getAttribute('data-time-limit') || '0', 10);
 let startTime = null;
 let timerInterval = null;
 let isFinished = false;

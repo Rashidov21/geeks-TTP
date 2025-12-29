@@ -39,11 +39,14 @@ def get_env_variable(var_name, default=None):
 SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-dev-key-change-in-production-ivzkh8b)o-te_f-ze%b_0i+p_^b)!l^2b+6qp(j9oj&363aw4%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = get_env_variable('DEBUG', 'False') == 'True'
+DEBUG = get_env_variable('DEBUG', 'True') == 'True'
 
-# ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '*').split(',') if get_env_variable('ALLOWED_HOSTS', '*') != '*' else ['*']
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS - production'da domain nomlarini belgilang
+ALLOWED_HOSTS_STR = get_env_variable('ALLOWED_HOSTS', '*')
+if ALLOWED_HOSTS_STR == '*':
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
 
 # Application definition
 
@@ -100,12 +103,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# PostgreSQL yoki SQLite - environment variable orqali tanlash
+DB_ENGINE = get_env_variable('DB_ENGINE', 'django.db.backends.sqlite3')
+
+if DB_ENGINE == 'django.db.backends.postgresql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': get_env_variable('DB_NAME'),
+            'USER': get_env_variable('DB_USER'),
+            'PASSWORD': get_env_variable('DB_PASSWORD'),
+            'HOST': get_env_variable('DB_HOST', 'localhost'),
+            'PORT': get_env_variable('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    # Default SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -171,16 +190,45 @@ else:
     SECURE_HSTS_PRELOAD = True
 
 # Caching
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 minutes
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
+# Production uchun Redis tavsiya qilinadi, lekin LocMemCache ham ishlaydi
+CACHE_BACKEND = get_env_variable('CACHE_BACKEND', 'locmem')
+
+if CACHE_BACKEND == 'redis':
+    try:
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': get_env_variable('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+                'TIMEOUT': 300,  # 5 minutes
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                }
+            }
+        }
+    except ImportError:
+        # Redis library yo'q bo'lsa, LocMemCache ishlatiladi
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'unique-snowflake',
+                'TIMEOUT': 300,
+                'OPTIONS': {
+                    'MAX_ENTRIES': 1000
+                }
+            }
+        }
+else:
+    # Default LocMemCache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'TIMEOUT': 300,  # 5 minutes
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000
+            }
         }
     }
-}
 
 # Logging
 LOGGING = {

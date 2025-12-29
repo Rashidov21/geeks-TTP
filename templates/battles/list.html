@@ -15,7 +15,7 @@
             </h1>
             {% if user_rating %}
             <div class="mt-2 flex items-center space-x-4 text-sm">
-                <span class="text-primary font-semibold">Rating: <span class="text-2xl font-bold">{{ user_rating.rating }}</span></span>
+                <span class="text-primary font-semibold">Battle reyting: <span class="text-2xl font-bold">{{ user_rating.rating }}</span></span>
                 <span class="text-gray-600">W: {{ user_rating.wins }} | L: {{ user_rating.losses }} | D: {{ user_rating.draws }}</span>
                 {% if user_rating.win_streak > 0 %}
                 <span class="text-red-500 font-semibold">🔥 {{ user_rating.win_streak }} ketma-ket</span>
@@ -64,11 +64,12 @@
                             📝 Matn jangi
                         </button>
                     </form>
-                    <form method="post" action="{% url 'battles:create' %}" class="inline w-full">
+                    
+                    <form method="post" action="{% url 'battles:create' %}" class="inline w-full ">
                         {% csrf_token %}
                         <input type="hidden" name="mode" value="code">
                         <input type="hidden" name="battle_type" value="balanced">
-                        <button type="submit" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md">
+                        <button type="submit" class="w-full gradient-secondary text-primary px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-md mt-2">
                             💻 Kod jangi
                         </button>
                     </form>

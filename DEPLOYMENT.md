@@ -76,33 +76,59 @@ gunicorn typing_platform.wsgi:application --bind 0.0.0.0:8000
 ### 9. Nginx Configuration Example
 
 ```nginx
+# HTTP to HTTPS redirect
 server {
     listen 80;
-    server_name yourdomain.com;
+    server_name yourdomain.com www.yourdomain.com;
     return 301 https://$server_name$request_uri;
 }
 
+# HTTPS server
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com;
+    server_name yourdomain.com www.yourdomain.com;
 
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
+    # SSL certificates (Let's Encrypt yoki boshqa)
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    
+    # SSL optimization
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
 
+    # Security headers
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Static files
     location /static/ {
-        alias /path/to/staticfiles/;
+        alias /path/to/geeks-TTP/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 
+    # Media files
     location /media/ {
-        alias /path/to/media/;
+        alias /path/to/geeks-TTP/media/;
+        expires 7d;
+        add_header Cache-Control "public";
     }
 
+    # Django application
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $server_name;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 }
 ```
@@ -135,13 +161,68 @@ Regular backups are recommended:
 python manage.py dumpdata > backup.json
 ```
 
-### 14. Updates
+### 14. Systemd Service (Tavsiya qilinadi)
+
+Production uchun systemd service yaratish:
+
+1. **Service faylini yaratish:**
+```bash
+sudo cp systemd/typing-platform.service /etc/systemd/system/
+sudo nano /etc/systemd/system/typing-platform.service
+# WorkingDirectory va PATH ni o'zgartiring
+```
+
+2. **Service ishga tushirish:**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable typing-platform
+sudo systemctl start typing-platform
+sudo systemctl status typing-platform
+```
+
+3. **Service boshqarish:**
+```bash
+sudo systemctl restart typing-platform  # Qayta ishga tushirish
+sudo systemctl stop typing-platform     # To'xtatish
+sudo systemctl start typing-platform    # Ishga tushirish
+sudo journalctl -u typing-platform -f  # Loglarni ko'rish
+```
+
+### 15. Updates
 
 When updating the application:
 
-1. Pull latest code
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run migrations: `python manage.py migrate`
-4. Collect static files: `python manage.py collectstatic --noinput`
-5. Restart the application server
+1. Pull latest code: `git pull origin main`
+2. Activate virtual environment: `source venv/bin/activate`
+3. Install dependencies: `pip install -r requirements.txt`
+4. Run migrations: `python manage.py migrate`
+5. Collect static files: `python manage.py collectstatic --noinput`
+6. Restart the application server:
+   ```bash
+   sudo systemctl restart typing-platform
+   # yoki
+   # pkill -f gunicorn
+   # gunicorn typing_platform.wsgi:application --bind 0.0.0.0:8000 --workers 4 &
+   ```
+
+### 16. Database Backup
+
+Regular backups are recommended:
+
+```bash
+# SQLite uchun
+cp db.sqlite3 backups/db_$(date +%Y%m%d_%H%M%S).sqlite3
+
+# PostgreSQL uchun
+pg_dump -U your_user your_db_name > backups/db_$(date +%Y%m%d_%H%M%S).sql
+
+# Django dumpdata
+python manage.py dumpdata > backups/data_$(date +%Y%m%d_%H%M%S).json
+```
+
+### 17. Monitoring
+
+- **Logs:** `logs/django.log` va `logs/error.log`
+- **System logs:** `journalctl -u typing-platform -f`
+- **Nginx logs:** `/var/log/nginx/access.log` va `/var/log/nginx/error.log`
 

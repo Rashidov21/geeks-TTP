@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 import json
+from collections import defaultdict
 from typing_practice.models import UserResult
 from competitions.models import Competition, CompetitionParticipant
 from accounts.models import UserProfile, UserLevel, UserBadge, DailyChallenge, ChallengeCompletion, Notification
@@ -72,10 +73,18 @@ def dashboard(request):
     if today_challenge:
         challenge_completed = ChallengeCompletion.objects.filter(user=user, challenge=today_challenge).exists()
     
-    # Recent progress data for chart (last 10 results)
+    # Recent progress data (last 10 results, grouped by date)
     progress_data = UserResult.objects.filter(user=user).order_by('-time')[:10]
-    wpm_data = [{'date': r.time.strftime('%Y-%m-%d'), 'wpm': r.wpm} for r in reversed(progress_data)]
-    accuracy_data = [{'date': r.time.strftime('%Y-%m-%d'), 'accuracy': r.accuracy} for r in reversed(progress_data)]
+    # Group by date and calculate average for same dates
+    wpm_by_date = defaultdict(list)
+    accuracy_by_date = defaultdict(list)
+    for r in reversed(progress_data):
+        date_str = r.time.strftime('%d.%m')
+        wpm_by_date[date_str].append(r.wpm)
+        accuracy_by_date[date_str].append(r.accuracy)
+    
+    wpm_data = [{'date': date, 'wpm': sum(wpms) / len(wpms)} for date, wpms in wpm_by_date.items()]
+    accuracy_data = [{'date': date, 'accuracy': sum(accs) / len(accs)} for date, accs in accuracy_by_date.items()]
     
     # Unread notifications count
     unread_notifications = Notification.get_unread_count(user)
@@ -94,8 +103,8 @@ def dashboard(request):
         'earned_badges': earned_badges,
         'today_challenge': today_challenge,
         'challenge_completed': challenge_completed,
-        'wpm_data': mark_safe(json.dumps(wpm_data)),
-        'accuracy_data': mark_safe(json.dumps(accuracy_data)),
+        'wpm_data': wpm_data,  # Pass as list, not JSON string
+        'accuracy_data': accuracy_data,  # Pass as list, not JSON string
         'unread_notifications': unread_notifications,
     }
     
