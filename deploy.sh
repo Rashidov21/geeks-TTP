@@ -38,7 +38,7 @@ fi
 
 # Activate virtual environment
 echo "🔌 Virtual environment faollashtirilmoqda..."
-source venv/bin/activate
+source .venv/bin/activate
 
 # Upgrade pip
 echo "⬆️  pip yangilanmoqda..."
