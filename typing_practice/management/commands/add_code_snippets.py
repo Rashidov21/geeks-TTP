@@ -7,7 +7,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         snippets = [
-            # Python
+            # Python - Easy
             {
                 "title": "Python | FizzBuzz easy",
                 "language": "python",
@@ -27,12 +27,67 @@ fizzbuzz(20)
 """,
             },
             {
+                "title": "Python | List sum easy",
+                "language": "python",
+                "difficulty": "easy",
+                "code_body": """numbers = [1, 2, 3, 4, 5]
+total = sum(numbers)
+average = total / len(numbers)
+print(f"Sum: {total}, Average: {average}")
+""",
+            },
+            {
+                "title": "Python | String reverse easy",
+                "language": "python",
+                "difficulty": "easy",
+                "code_body": """def reverse_string(text):
+    return text[::-1]
+
+result = reverse_string("Hello World")
+print(result)
+""",
+            },
+            {
+                "title": "Python | Dictionary access easy",
+                "language": "python",
+                "difficulty": "easy",
+                "code_body": """student = {"name": "Alice", "age": 20, "grade": "A"}
+print(f"{student['name']} is {student['age']} years old")
+print(f"Grade: {student.get('grade', 'N/A')}")
+""",
+            },
+            {
                 "title": "Python | List comprehension medium",
                 "language": "python",
                 "difficulty": "medium",
                 "code_body": """names = ["alice", "Bob", "charlie", "dave"]
 normalized = [name.strip().title() for name in names if name]
 print(", ".join(normalized))
+""",
+            },
+            {
+                "title": "Python | File reading medium",
+                "language": "python",
+                "difficulty": "medium",
+                "code_body": """def read_file_lines(filename):
+    try:
+        with open(filename, 'r') as f:
+            return [line.strip() for line in f.readlines()]
+    except FileNotFoundError:
+        return []
+
+lines = read_file_lines("data.txt")
+print(f"Read {len(lines)} lines")
+""",
+            },
+            {
+                "title": "Python | Lambda filter medium",
+                "language": "python",
+                "difficulty": "medium",
+                "code_body": """numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+squares = list(map(lambda x: x ** 2, evens))
+print(f"Even squares: {squares}")
 """,
             },
             {
@@ -50,7 +105,52 @@ def fib(n):
 print([fib(i) for i in range(15)])
 """,
             },
-            # JavaScript
+            {
+                "title": "Python | Class decorator hard",
+                "language": "python",
+                "difficulty": "hard",
+                "code_body": """class Timer:
+    def __init__(self, func):
+        self.func = func
+        self.count = 0
+    
+    def __call__(self, *args, **kwargs):
+        self.count += 1
+        return self.func(*args, **kwargs)
+
+@Timer
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Alice"))
+print(f"Called {greet.count} times")
+""",
+            },
+            {
+                "title": "Python | Generator pipeline hard",
+                "language": "python",
+                "difficulty": "hard",
+                "code_body": """def numbers():
+    n = 1
+    while True:
+        yield n
+        n += 1
+
+def squares(seq):
+    for x in seq:
+        yield x * x
+
+def take(n, seq):
+    for i, x in enumerate(seq):
+        if i >= n:
+            break
+        yield x
+
+result = list(take(10, squares(numbers())))
+print(result)
+""",
+            },
+            # JavaScript - Easy
             {
                 "title": "JavaScript | Debounce utility easy",
                 "language": "javascript",
@@ -68,6 +168,38 @@ log();
 """,
             },
             {
+                "title": "JavaScript | Array methods easy",
+                "language": "javascript",
+                "difficulty": "easy",
+                "code_body": """const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((a, b) => a + b, 0);
+console.log({ doubled, evens, sum });
+""",
+            },
+            {
+                "title": "JavaScript | Object destructuring easy",
+                "language": "javascript",
+                "difficulty": "easy",
+                "code_body": """const user = { name: "Alice", age: 30, city: "NYC" };
+const { name, age } = user;
+const greeting = `Hello, ${name}! You are ${age} years old.`;
+console.log(greeting);
+""",
+            },
+            {
+                "title": "JavaScript | Template literals easy",
+                "language": "javascript",
+                "difficulty": "easy",
+                "code_body": """const product = "Laptop";
+const price = 999;
+const discount = 0.1;
+const finalPrice = price * (1 - discount);
+console.log(`${product}: $${price} (${discount * 100}% off) = $${finalPrice}`);
+""",
+            },
+            {
                 "title": "JavaScript | Fetch JSON medium",
                 "language": "javascript",
                 "difficulty": "medium",
@@ -79,6 +211,47 @@ log();
 }
 
 loadUsers().then(console.log).catch(console.error);
+""",
+            },
+            {
+                "title": "JavaScript | Closure counter medium",
+                "language": "javascript",
+                "difficulty": "medium",
+                "code_body": """function createCounter(initial = 0) {
+  let count = initial;
+  return {
+    increment: () => ++count,
+    decrement: () => --count,
+    getValue: () => count
+  };
+}
+
+const counter = createCounter(10);
+counter.increment();
+counter.increment();
+console.log(counter.getValue());
+""",
+            },
+            {
+                "title": "JavaScript | Event emitter medium",
+                "language": "javascript",
+                "difficulty": "medium",
+                "code_body": """class EventEmitter {
+  constructor() {
+    this.events = {};
+  }
+  on(event, handler) {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event].push(handler);
+  }
+  emit(event, data) {
+    (this.events[event] || []).forEach(handler => handler(data));
+  }
+}
+
+const emitter = new EventEmitter();
+emitter.on('click', (data) => console.log('Clicked:', data));
+emitter.emit('click', 'button1');
 """,
             },
             {

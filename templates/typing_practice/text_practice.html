@@ -33,7 +33,20 @@
     .compact .stats-card { padding: 0.5rem 0.75rem; }
     .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
     #wpm, #accuracy, #timer, #cpm { font-size: 1.5rem; }
-    #text-display { font-size: 1rem; padding: 0.75rem; }
+    #text-display { 
+        font-size: 1rem; 
+        padding: 0.75rem; 
+        word-wrap: break-word; 
+        overflow-wrap: break-word; 
+        word-break: break-word;
+        white-space: normal; 
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    .tp-char { 
+        display: inline; 
+        white-space: normal;
+    }
     #typing-input { font-size: 0.95rem; padding: 0.5rem; }
     .action-buttons > * { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
     #results { padding: 0.75rem; }
@@ -120,7 +133,7 @@
         </div>
 
         <!-- Text Display - Larger and more prominent (scrolls internally) -->
-        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-sans text-primary" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em;">
+        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-sans text-primary" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
             <!-- Text will be loaded here -->
         </div>
         <div class="mb-4">

@@ -57,7 +57,9 @@ window.TP_utils = (function(){
         const len = original.length;
         const parts = [];
         for(let i=0;i<len;i++){
-            const ch = original[i] === ' ' ? '&nbsp;' : escapeHtml(original[i]);
+            // Use regular space instead of &nbsp; to allow proper wrapping
+            // The span will preserve the space visually
+            const ch = original[i] === ' ' ? ' ' : escapeHtml(original[i]);
             let cls = 'pending';
             if(i < typed.length){ cls = (typed[i] === original[i]) ? 'correct' : 'incorrect'; }
             parts.push(`<span class="tp-char ${cls}" data-index="${i}">${ch}</span>`);
