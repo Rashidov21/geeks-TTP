@@ -38,8 +38,8 @@
                     <p class="text-primary font-semibold">Sizning o'rningiz: <span class="text-2xl font-bold text-primary">#{{ user_rank }}</span></p>
                     {% if user_stats %}
                     <p class="text-sm text-gray-600 mt-1">
-                        Sizning eng yaxshi WPM: <strong>{{ user_stats.max_wpm|floatformat:1 }}</strong> | 
-                        O'rtacha: <strong>{{ user_stats.avg_wpm|floatformat:1 }}</strong>
+                        Sizning o'rtacha WPM: <strong>{{ user_stats.avg_wpm|floatformat:1 }}</strong> | 
+                        Eng yaxshi: <strong>{{ user_stats.max_wpm|floatformat:1 }}</strong>
                     </p>
                     {% endif %}
                 </div>
@@ -50,7 +50,7 @@
                     <p class="text-xs">
                         <strong>{{ comp.username }}</strong>: {{ comp.wpm|floatformat:1 }} WPM
                         {% if user_stats %}
-                        ({{ comp.wpm|add:"-"|add:user_stats.max_wpm|floatformat:1 }} farq)
+                        ({{ comp.wpm_diff|floatformat:1 }} farq)
                         {% endif %}
                     </p>
                     {% endfor %}
@@ -71,8 +71,8 @@
                         {% if leaderboard_type == 'accuracy' %}
                         <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Aniqlik</th>
                         {% else %}
-                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Eng yaxshi WPM</th>
                         <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">O'rtacha WPM</th>
+                        <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Eng yaxshi WPM</th>
                         {% endif %}
                         <th class="px-6 py-4 text-white text-left text-sm font-semibold uppercase">Mashqlar</th>
                     </tr>
@@ -159,7 +159,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-gray-600 font-medium">{{ entry.avg_wpm }}</span>
+                            <span class="text-gray-600 font-medium">{{ entry.max_wpm }}</span>
                         </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap">

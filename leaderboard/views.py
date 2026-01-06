@@ -92,23 +92,23 @@ def index(request):
         
         # Get leaderboard based on type with optimized query
         if leaderboard_type == 'wpm':
-            # Overall WPM leaderboard
+            # Overall WPM leaderboard - ordered by average WPM
             user_stats = results.values('user__username', 'user__id', 'user__first_name', 'user__last_name').annotate(
                 avg_wpm=Avg('wpm'),
                 max_wpm=Max('wpm'),
                 total_sessions=Count('id')
-            ).order_by('-max_wpm')
+            ).filter(total_sessions__gte=1).order_by('-avg_wpm')
             
             leaderboard_data = build_leaderboard_data(user_stats, include_accuracy=False)
         
         elif leaderboard_type == 'code_wpm':
-            # Code WPM leaderboard
+            # Code WPM leaderboard - ordered by average WPM
             code_results = results.filter(session_type='code')
             user_stats = code_results.values('user__username', 'user__id', 'user__first_name', 'user__last_name').annotate(
                 avg_wpm=Avg('wpm'),
                 max_wpm=Max('wpm'),
                 total_sessions=Count('id')
-            ).order_by('-max_wpm')
+            ).filter(total_sessions__gte=1).order_by('-avg_wpm')
             
             leaderboard_data = build_leaderboard_data(user_stats, include_accuracy=False)
         
@@ -160,8 +160,8 @@ def index(request):
         for entry in top_3:
             if entry['username'] != request.user.username:
                 wpm_diff = 0
-                if user_stats and 'max_wpm' in user_stats and user_stats['max_wpm']:
-                    wpm_diff = entry.get('wpm', 0) - (user_stats['max_wpm'] or 0)
+                if user_stats and 'avg_wpm' in user_stats and user_stats['avg_wpm']:
+                    wpm_diff = entry.get('wpm', 0) - (user_stats['avg_wpm'] or 0)
                 comparison_data.append({
                     'username': entry['username'],
                     'wpm': entry.get('wpm', 0),
