@@ -92,32 +92,33 @@ def index(request):
         
         # Get leaderboard based on type with optimized query
         if leaderboard_type == 'wpm':
-            # Overall WPM leaderboard - ordered by average WPM
+            # Overall WPM leaderboard - ordered by average WPM, then max WPM, then username for consistency
             user_stats = results.values('user__username', 'user__id', 'user__first_name', 'user__last_name').annotate(
                 avg_wpm=Avg('wpm'),
                 max_wpm=Max('wpm'),
                 total_sessions=Count('id')
-            ).filter(total_sessions__gte=1).order_by('-avg_wpm')
+            ).filter(total_sessions__gte=1).order_by('-avg_wpm', '-max_wpm', 'user__username')
             
             leaderboard_data = build_leaderboard_data(user_stats, include_accuracy=False)
         
         elif leaderboard_type == 'code_wpm':
-            # Code WPM leaderboard - ordered by average WPM
+            # Code WPM leaderboard - ordered by average WPM, then max WPM, then username for consistency
             code_results = results.filter(session_type='code')
             user_stats = code_results.values('user__username', 'user__id', 'user__first_name', 'user__last_name').annotate(
                 avg_wpm=Avg('wpm'),
                 max_wpm=Max('wpm'),
                 total_sessions=Count('id')
-            ).filter(total_sessions__gte=1).order_by('-avg_wpm')
+            ).filter(total_sessions__gte=1).order_by('-avg_wpm', '-max_wpm', 'user__username')
             
             leaderboard_data = build_leaderboard_data(user_stats, include_accuracy=False)
         
         else:  # accuracy
-            # Accuracy leaderboard
+            # Accuracy leaderboard - ordered by accuracy, then avg WPM, then username for consistency
             user_stats = results.values('user__username', 'user__id', 'user__first_name', 'user__last_name').annotate(
                 avg_accuracy=Avg('accuracy'),
+                avg_wpm=Avg('wpm'),
                 total_sessions=Count('id')
-            ).filter(total_sessions__gte=5).order_by('-avg_accuracy')
+            ).filter(total_sessions__gte=5).order_by('-avg_accuracy', '-avg_wpm', 'user__username')
             
             leaderboard_data = build_leaderboard_data(user_stats, include_accuracy=True)
         
