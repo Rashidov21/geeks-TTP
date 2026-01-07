@@ -5,6 +5,32 @@
 
 {% block extra_css %}
 <style>
+    .word { margin-right: 0.5rem; }
+    .correct { color: #292929; }
+    .incorrect { background-color: #fee2e2; color: #dc2626; }
+    .current { background-color: rgba(41, 41, 41, 0.1); border-left: 3px solid #292929; padding-left: 2px; }
+    .typed { color: #6b7280; }
+    .stats-card {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        color: #292929;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    .stats-card.wpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.accuracy { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.time { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    .stats-card.cpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    /* Progress bar */
+    .progress-wrap { background: #e5e7eb; border-radius: 9999px; height: 10px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg,#06b6d4,#7c3aed); width: 0%; transition: width 120ms linear; }
+    /* Compact adjustments to reduce padding and font sizes for tighter layout */
+    .compact .stats-card { padding: 0.5rem 0.75rem; }
     .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
     #wpm, #accuracy, #timer, #mistakes-count { font-size: 1.5rem; }
     #code-display { font-size: 0.95rem; padding: 0.75rem; }
@@ -15,6 +41,9 @@
     .practice-container { max-width: 1100px; margin: 0 auto; padding: 0 12px; }
     .practice-header { display:flex; gap:12px; align-items:center; justify-content:space-between; }
     .practice-instructions { background:#f8fafc; border:1px solid #eef2ff; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#374151; margin-bottom:12px; }
+    @media (max-width: 768px) {
+        .practice-instructions { font-size:0.9rem; }
+    }
 </style>
 {% endblock %}
 
@@ -248,15 +277,12 @@ typingInput.addEventListener('keydown', (e) => {
     const currentLength = currentValue.length;
     const originalLength = originalCode.length;
     
-    // Prevent typing beyond the original code
+    // Prevent typing beyond the original code length only
+    // Allow incorrect characters to be typed - they will be counted as mistakes
     if (currentLength >= originalLength) {
         e.preventDefault();
         return false;
     }
-    
-    // Get the expected character at current position
-    const expectedChar = originalCode[currentLength];
-    const typedChar = e.key;
     
     expectedNextChar = originalCode[currentLength + 1] || null;
 });
@@ -265,6 +291,7 @@ typingInput.addEventListener('input', (e) => {
     const currentValue = typingInput.value;
     const currentLength = currentValue.length;
     const previousLength = lastTypedLength;
+    const originalLength = originalCode.length;
     
     // Detect if multiple characters were added at once (paste or drag-drop)
     if (currentLength - previousLength > 1) {
@@ -273,20 +300,15 @@ typingInput.addEventListener('input', (e) => {
         return;
     }
     
-    // Check if character matches expected
-    if (currentLength > 0 && previousLength < currentLength) {
-        const expectedChar = originalCode[previousLength];
-        const typedChar = currentValue[previousLength];
-        
-        // If character doesn't match, remove it
-        if (expectedChar !== typedChar && typedChar !== undefined) {
-            // Invalid character, remove it
-            typingInput.value = currentValue.substring(0, previousLength);
-            return;
-        }
+    // Prevent typing beyond original code length
+    // Allow incorrect characters to be typed - they will be counted as mistakes in updateDisplay()
+    if (currentLength > originalLength) {
+        typingInput.value = currentValue.substring(0, originalLength);
+        lastTypedLength = originalLength;
+    } else {
+        lastTypedLength = typingInput.value.length;
     }
     
-    lastTypedLength = typingInput.value.length;
     startTyping();
     updateDisplay();
 });
@@ -295,10 +317,22 @@ function updateDisplay() {
     const typed = typingInput.value;
     const originalLines = originalCode.split('\n');
     const typedLines = typed.split('\n');
+    const original = originalCode;
     
     let html = '';
     let mistakes = 0;
     mistakesList = [];
+    
+    // Calculate character-level mistakes first (for accurate accuracy)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
     
     originalLines.forEach((line, lineIdx) => {
         const typedLine = typedLines[lineIdx] || '';
@@ -310,7 +344,6 @@ function updateDisplay() {
                 lineHtml += '<span class="correct typed">' + escapeHtml(line) + '</span>';
             } else {
                 lineHtml += '<span class="incorrect typed">' + escapeHtml(line) + '</span>';
-                mistakes++;
                 mistakesList.push({ line: lineIdx + 1, original: line, typed: typedLine });
             }
         } else if (lineIdx === typedLines.length - 1) {
@@ -324,7 +357,6 @@ function updateDisplay() {
                         lineHtml += '<span class="correct typed">' + escapeHtml(originalChar) + '</span>';
                     } else {
                         lineHtml += '<span class="incorrect">' + escapeHtml(originalChar) + '</span>';
-                        mistakes++;
                     }
                 } else if (i === typedLine.length) {
                     lineHtml += '<span class="current">' + escapeHtml(originalChar) + '</span>';
@@ -341,6 +373,9 @@ function updateDisplay() {
         lineHtml += '</div>';
         html += lineHtml;
     });
+    
+    // Use character-level mistakes for accuracy calculation
+    mistakes = charMistakes;
     
     codeDisplay.querySelector('pre code').innerHTML = html;
     
@@ -508,10 +543,25 @@ function reset() {
 
 if (finishBtn) {
     finishBtn.addEventListener('click', () => {
+        if (!startTime) return;
+        
         const typed = typingInput.value;
+        const original = originalCode;
+        
+        // Calculate character-level mistakes (same as updateDisplay)
+        let charMistakes = 0;
+        const minLen = Math.min(typed.length, original.length);
+        for (let i = 0; i < minLen; i++) {
+            if (typed[i] !== original[i]) {
+                charMistakes++;
+            }
+        }
+        // Add extra or missing characters as mistakes
+        charMistakes += Math.abs(typed.length - original.length);
+        
         const elapsed = (Date.now() - startTime) / 1000;
         const typedChars = typed.length;
-        const mistakes = mistakesList.length;
+        const mistakes = charMistakes;
         const correctChars = typedChars - mistakes;
         const wpm = (typedChars / 5 / elapsed) * 60;
         const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;

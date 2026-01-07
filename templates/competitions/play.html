@@ -6,26 +6,62 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
     .word { margin-right: 0.5rem; }
-    .correct { color: #10b981; }
+    .correct { color: #292929; }
     .incorrect { background-color: #fee2e2; color: #dc2626; }
     .current { background-color: rgba(41, 41, 41, 0.1); border-left: 3px solid #292929; padding-left: 2px; }
     .typed { color: #6b7280; }
     .stats-card {
-        background: linear-gradient(135deg, #292929 0%, #3a3a3a 100%);
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
         border-radius: 12px;
-        padding: 1.5rem;
-        color: white;
+        padding: 1rem 1.25rem;
+        color: #292929;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     }
     .stats-card.wpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
     .stats-card.accuracy { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
     .stats-card.time { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
     .stats-card.cpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
+    /* Progress bar */
+    .progress-wrap { background: #e5e7eb; border-radius: 9999px; height: 10px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg,#06b6d4,#7c3aed); width: 0%; transition: width 120ms linear; }
+    /* Compact adjustments */
+    .compact .stats-card { padding: 0.5rem 0.75rem; }
+    .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
+    #wpm, #accuracy, #timer, #mistakes-count { font-size: 1.5rem; }
+    #text-display { 
+        font-size: 1rem; 
+        padding: 0.75rem; 
+        word-wrap: break-word; 
+        overflow-wrap: break-word; 
+        word-break: break-word;
+        white-space: normal; 
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    #code-display {
+        font-size: 0.95rem;
+        padding: 0.75rem;
+    }
+    #typing-input { font-size: 0.95rem; padding: 0.5rem; }
+    .action-buttons > * { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    #results { padding: 0.75rem; }
+    /* Responsive practice layout and helpers */
+    .practice-container { max-width: 1100px; margin: 0 auto; padding: 0 12px; }
+    .practice-header { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    .practice-instructions { background:#f8fafc; border:1px solid #eef2ff; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#374151; margin-bottom:12px; }
+    @media (max-width: 768px) {
+        .practice-instructions { font-size:0.9rem; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="practice-container">
     <!-- Stage Progress -->
     <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
         <div class="flex items-center justify-between mb-2">
@@ -54,58 +90,85 @@
     </div>
 
     <!-- Stats Cards - All statistics at top -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="stats-card wpm">
-            <p class="text-sm text-primary opacity-90 mb-1">WPM</p>
-            <p class="text-4xl font-bold text-primary" id="wpm">0</p>
+            <p class="text-sm font-medium opacity-90 mb-1">WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
+            <p class="text-3xl font-bold" id="wpm">0</p>
         </div>
         <div class="stats-card accuracy">
-            <p class="text-sm text-primary opacity-90 mb-1">Aniqlik</p>
-            <p class="text-4xl font-bold text-primary" id="accuracy">100%</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Aniqlik</p>
+            <p class="text-3xl font-bold" id="accuracy">100%</p>
         </div>
         <div class="stats-card time">
-            <p class="text-sm text-primary opacity-90 mb-1">Vaqt</p>
-            <p class="text-4xl font-bold text-primary" id="timer">0s</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Vaqt</p>
+            <p class="text-3xl font-bold" id="timer">0s</p>
         </div>
         <div class="stats-card cpm">
-            <p class="text-sm text-primary opacity-90 mb-1">Xatolar</p>
-            <p class="text-4xl font-bold text-primary" id="mistakes-count">0</p>
+            <p class="text-sm font-medium opacity-90 mb-1">Xatolar</p>
+            <p class="text-3xl font-bold" id="mistakes-count">0</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
-        {% if stage.text %}
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">{{ stage.text.title }}</h3>
-            <div id="text-display" class="text-xl leading-relaxed p-6 bg-gray-50 rounded-lg border-2 border-gray-200 min-h-[250px] mb-4 font-mono">
+    <!-- Main Content - Text/Code and Typing Area -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="mb-4 practice-header">
+            <div>
+                {% if stage.text %}
+                <h2 class="text-xl font-bold text-primary mb-1">{{ stage.text.title }}</h2>
+                {% elif stage.code_snippet %}
+                <h2 class="text-xl font-bold text-primary mb-1">{{ stage.code_snippet.title }}</h2>
+                <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-semibold bg-gray-200 text-primary">
+                    <span>{{ stage.code_snippet.language|upper }}</span>
+                </span>
+                {% endif %}
+            </div>
+            <div class="flex flex-wrap gap-2 action-buttons">
+                <button id="finish-btn" class="flex items-center space-x-2 gradient-secondary text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Bosqichni tugatish</span>
+                </button>
             </div>
         </div>
+        
+        <!-- Instructions -->
+        <div class="practice-instructions" id="practice-instructions">
+            {% if stage.text %}
+            Boshlash uchun yozishni boshlang — matn uzun bo'lsa ichki maydonda skroll qiling. <strong>Ctrl+R</strong> — qayta boshlash, <strong>?</strong> — yordamni ko'rsatish/yo'qotish.
+            {% elif stage.code_snippet %}
+            Kodni aniq va ehtiyotkorlik bilan yozing — uzun kod bo'lsa ichki oynada skroll paydo bo'ladi. <strong>Ctrl+R</strong> — qayta boshlash, <strong>?</strong> — yordam.
+            {% endif %}
+        </div>
+
+        {% if stage.text %}
+        <!-- Text Display -->
+        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-sans text-primary" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
+            <!-- Text will be loaded here -->
+        </div>
         {% elif stage.code_snippet %}
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">{{ stage.code_snippet.title }}</h3>
-            <div id="code-display" class="p-6 bg-gray-50 text-primary rounded-lg border-2 border-gray-300 min-h-[400px] mb-4 overflow-auto">
-                <pre><code class="language-{{ stage.code_snippet.language }}">{{ stage.code_snippet.code_body }}</code></pre>
-            </div>
+        <!-- Code Display -->
+        <div id="code-display" role="region" aria-label="Practice code" class="bg-gray-50 text-primary rounded-lg border-2 border-gray-300 mb-6 overflow-auto" style="padding:0.75rem; max-height:42vh;">
+            <pre><code class="language-{{ stage.code_snippet.language }}">{{ stage.code_snippet.code_body }}</code></pre>
         </div>
         {% endif %}
         
+        <div class="mb-4">
+            <div class="progress-wrap">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+        
+        <!-- Typing Input -->
         <textarea 
             id="typing-input" 
-            class="w-full p-4 bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary text-lg font-mono text-primary placeholder-gray-400 transition-all duration-300"
-            rows="6"
+            class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary font-sans text-primary placeholder-gray-400 transition-all duration-300" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em;"
+            rows="{% if stage.text %}4{% else %}8{% endif %}"
             placeholder="Bu yerga yozishni boshlang..."
             autofocus
             spellcheck="false"
+            aria-label="Typing input"
         ></textarea>
-        
-        <div class="mt-4 flex space-x-4">
-            <button id="finish-btn" class="flex items-center space-x-2 gradient-secondary text-primary px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span>Bosqichni tugatish</span>
-            </button>
-        </div>
     </div>
     
     <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
@@ -203,21 +266,23 @@ typingInput.addEventListener('keydown', (e) => {
     
     const currentValue = typingInput.value;
     const currentLength = currentValue.length;
-    const originalLength = originalText.trim().length;
+    const originalLength = originalText.length;
     
-    // Prevent typing beyond the original text
+    // Prevent typing beyond the original text/code length only
+    // Allow incorrect characters to be typed - they will be counted as mistakes
     if (currentLength >= originalLength) {
         e.preventDefault();
         return false;
     }
     
-    expectedNextChar = originalText.trim()[currentLength + 1] || null;
+    expectedNextChar = originalText[currentLength + 1] || null;
 });
 
 typingInput.addEventListener('input', (e) => {
     const currentValue = typingInput.value;
     const currentLength = currentValue.length;
     const previousLength = lastTypedLength;
+    const originalLength = originalText.length;
     
     // Detect if multiple characters were added at once (paste or drag-drop)
     if (currentLength - previousLength > 1) {
@@ -226,45 +291,35 @@ typingInput.addEventListener('input', (e) => {
         return;
     }
     
-    // Check if character matches expected (for text mode)
-    if (!isCode && currentLength > 0 && previousLength < currentLength) {
-        const expectedChar = originalText.trim()[previousLength];
-        const typedChar = currentValue[previousLength];
-        
-        // If character doesn't match, remove it
-        if (expectedChar !== typedChar && typedChar !== undefined) {
-            // Allow if it's a space and we're at word boundary
-            if (typedChar === ' ' && expectedChar === ' ') {
-                // Valid space
-            } else if (typedChar !== ' ' || expectedChar !== ' ') {
-                // Invalid character, remove it
-                typingInput.value = currentValue.substring(0, previousLength);
-                return;
-            }
-        }
+    // Prevent typing beyond original text/code length
+    // Allow incorrect characters to be typed - they will be counted as mistakes in updateDisplay()
+    if (currentLength > originalLength) {
+        typingInput.value = currentValue.substring(0, originalLength);
+        lastTypedLength = originalLength;
+    } else {
+        lastTypedLength = typingInput.value.length;
     }
     
-    // For code mode, check character by character
-    if (isCode && currentLength > 0 && previousLength < currentLength) {
-        const expectedChar = originalText[previousLength];
-        const typedChar = currentValue[previousLength];
-        
-        if (expectedChar !== typedChar && typedChar !== undefined) {
-            // Invalid character, remove it
-            typingInput.value = currentValue.substring(0, previousLength);
-            return;
-        }
-    }
-    
-    lastTypedLength = typingInput.value.length;
     startTyping();
     updateDisplay();
 });
 
 function updateDisplay() {
     const typed = typingInput.value;
+    const original = originalText;
     let mistakes = 0;
     mistakesList = [];
+    
+    // Calculate character-level mistakes first (for accurate accuracy)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
     
     if (isCode) {
         const originalLines = originalText.split('\n');
@@ -280,7 +335,6 @@ function updateDisplay() {
                     lineHtml += '<span class="correct typed">' + escapeHtml(line) + '</span>';
                 } else {
                     lineHtml += '<span class="incorrect typed">' + escapeHtml(line) + '</span>';
-                    mistakes++;
                 }
             } else if (lineIdx === typedLines.length - 1) {
                 for (let i = 0; i < line.length; i++) {
@@ -292,7 +346,6 @@ function updateDisplay() {
                             lineHtml += '<span class="correct typed">' + escapeHtml(originalChar) + '</span>';
                         } else {
                             lineHtml += '<span class="incorrect">' + escapeHtml(originalChar) + '</span>';
-                            mistakes++;
                         }
                     } else if (i === typedLine.length) {
                         lineHtml += '<span class="current">' + escapeHtml(originalChar) + '</span>';
@@ -310,34 +363,40 @@ function updateDisplay() {
         
         display.querySelector('pre code').innerHTML = html;
     } else {
+        // Text mode - use character-level rendering if available
         const words = originalText.trim().split(/\s+/);
         const typedWords = typed.trim().split(/\s+/);
         let html = '';
         
-        words.forEach((word, i) => {
-            const typedWord = typedWords[i] || '';
-            let classes = 'word';
-            
-            if (i < typedWords.length - 1) {
-                if (word === typedWord) {
-                    classes += ' correct typed';
-                } else {
-                    classes += ' incorrect typed';
-                    mistakes++;
+        // Prefer per-character rendering if available for finer feedback
+        if(window.TP_utils && window.TP_utils.renderPerChar){
+            display.innerHTML = window.TP_utils.renderPerChar(originalText.trim(), typed);
+        } else {
+            words.forEach((word, i) => {
+                const typedWord = typedWords[i] || '';
+                let classes = 'word';
+                
+                if (i < typedWords.length - 1) {
+                    if (word === typedWord) {
+                        classes += ' correct typed';
+                    } else {
+                        classes += ' incorrect typed';
+                    }
+                } else if (i === typedWords.length - 1) {
+                    classes += ' current';
+                    if (typedWord.length > 0 && !word.startsWith(typedWord)) {
+                        classes += ' incorrect';
+                    }
                 }
-            } else if (i === typedWords.length - 1) {
-                classes += ' current';
-                if (typedWord.length > 0 && !word.startsWith(typedWord)) {
-                    classes += ' incorrect';
-                    mistakes++;
-                }
-            }
-            
-            html += `<span class="${classes}" data-index="${i}">${word}</span> `;
-        });
-        
-        display.innerHTML = html;
+                
+                html += `<span class="${classes}" data-index="${i}">${word}</span> `;
+            });
+            display.innerHTML = html;
+        }
     }
+    
+    // Use character-level mistakes for accuracy calculation
+    mistakes = charMistakes;
     
     if (startTime) {
         const elapsed = (Date.now() - startTime) / 1000;
@@ -351,8 +410,59 @@ function updateDisplay() {
         document.getElementById('timer').textContent = Math.round(elapsed) + 's';
         document.getElementById('mistakes-count').textContent = mistakes;
         
+        // Progress bar
+        const progressBar = document.getElementById('progress-bar');
+        if (progressBar) {
+            if (window.TP_utils) {
+                window.TP_utils.updateProgressBar(progressBar, originalText, typed);
+            } else {
+                const total = originalText.length || 1;
+                const pct = Math.min(100, Math.round((typed.length / total) * 100));
+                progressBar.style.width = pct + '%';
+            }
+        }
+        
         if (typed.trim() === originalText.trim()) {
             finishTyping(wpm, accuracy, mistakes);
+        }
+    } else {
+        // Even when not started, show mistakes count and accuracy if user has typed
+        if (typed.length > 0) {
+            const typedChars = typed.length;
+            const correctChars = typedChars - mistakes;
+            const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+            
+            document.getElementById('mistakes-count').textContent = mistakes;
+            document.getElementById('accuracy').textContent = Math.round(accuracy) + '%';
+            
+            // Progress bar
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                if (window.TP_utils) {
+                    window.TP_utils.updateProgressBar(progressBar, originalText, typed);
+                } else {
+                    const total = originalText.length || 1;
+                    const pct = Math.min(100, Math.round((typed.length / total) * 100));
+                    progressBar.style.width = pct + '%';
+                }
+            }
+            
+            // Auto-finish when text is completed
+            if (typed.trim() === originalText.trim() && !isFinished) {
+                // If startTime is not set, start it now (this will also enable timer)
+                if (!startTime) {
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateDisplay, 100);
+                    finishBtn.disabled = false;
+                }
+                // Calculate final results
+                const elapsed = (Date.now() - startTime) / 1000;
+                const typedChars = typed.length;
+                const correctChars = typedChars - mistakes;
+                const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
+                const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
+                finishTyping(wpm, accuracy, mistakes);
+            }
         }
     }
 }
@@ -399,7 +509,15 @@ function finishTyping(wpm, accuracy, mistakes) {
             accuracy: accuracy,
             mistakes: mistakes
         })
-    }).then(response => response.json())
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Xatolik yuz berdi');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             if (data.next_stage) {
@@ -407,17 +525,49 @@ function finishTyping(wpm, accuracy, mistakes) {
             } else if (data.finished) {
                 document.getElementById('view-results-btn').classList.remove('hidden');
             }
+        } else if (data.error) {
+            // Show error message in Uzbek
+            if (window.TP_utils && window.TP_utils.showToast) {
+                window.TP_utils.showToast(data.error, 'error', 5000);
+            } else {
+                alert(data.error);
+            }
         }
+    })
+    .catch(error => {
+        // Handle network errors and other exceptions
+        const errorMessage = error.message || 'Xatolik yuz berdi';
+        if (window.TP_utils && window.TP_utils.showToast) {
+            window.TP_utils.showToast(errorMessage, 'error', 5000);
+        } else {
+            alert(errorMessage);
+        }
+        console.error('Error saving competition result:', error);
     });
 }
 
 // Input event is already handled above with paste prevention
 
 finishBtn.addEventListener('click', () => {
+    if (!startTime) return;
+    
     const typed = typingInput.value;
+    const original = originalText;
+    
+    // Calculate character-level mistakes (same as updateDisplay)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
+    
     const elapsed = (Date.now() - startTime) / 1000;
     const typedChars = typed.length;
-    const mistakes = mistakesList.length || 0;
+    const mistakes = charMistakes;
     const correctChars = typedChars - mistakes;
     const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
     const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
@@ -425,5 +575,35 @@ finishBtn.addEventListener('click', () => {
 });
 
 initDisplay();
+
+// Keyboard shortcuts: Ctrl+R to reset, ? to toggle instructions
+document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r'){
+        e.preventDefault();
+        typingInput.value = '';
+        typingInput.disabled = false;
+        startTime = null;
+        isFinished = false;
+        mistakesList = [];
+        lastTypedLength = 0;
+        expectedNextChar = originalText[0] || null;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        finishBtn.disabled = true;
+        resultsDiv.classList.add('hidden');
+        initDisplay();
+        document.getElementById('wpm').textContent = '0';
+        document.getElementById('accuracy').textContent = '100%';
+        document.getElementById('timer').textContent = '0s';
+        document.getElementById('mistakes-count').textContent = '0';
+        const progressBar = document.getElementById('progress-bar');
+        if (progressBar) progressBar.style.width = '0%';
+        typingInput.focus();
+    }
+    if (e.key === '?'){
+        const instr = document.getElementById('practice-instructions');
+        if (instr) instr.style.display = (instr.style.display === 'none') ? 'block' : 'none';
+    }
+});
 </script>
 {% endblock %}

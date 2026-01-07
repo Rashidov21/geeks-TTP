@@ -384,10 +384,22 @@ function updateDisplay() {
     const typed = typingInput.value;
     const words = originalText.trim().split(/\s+/);
     const typedWords = typed.trim().split(/\s+/);
+    const original = originalText.trim();
     
     let html = '';
     let mistakes = 0;
     mistakesList = [];
+    
+    // Calculate character-level mistakes first (for accurate accuracy)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
     
     words.forEach((word, i) => {
         const typedWord = typedWords[i] || '';
@@ -398,18 +410,19 @@ function updateDisplay() {
                 classes += ' correct typed';
             } else {
                 classes += ' incorrect typed';
-                mistakes++;
             }
         } else if (i === typedWords.length - 1) {
             classes += ' current';
             if (typedWord.length > 0 && !word.startsWith(typedWord)) {
                 classes += ' incorrect';
-                mistakes++;
             }
         }
         
         html += `<span class="${classes}" data-index="${i}">${word}</span> `;
     });
+    
+    // Use character-level mistakes for accuracy calculation
+    mistakes = charMistakes;
     
     textDisplay.innerHTML = html;
     
@@ -471,10 +484,22 @@ function updateDisplay() {
     const typed = typingInput.value;
     const originalLines = originalCode.split('\n');
     const typedLines = typed.split('\n');
+    const original = originalCode;
     
     let html = '';
     let mistakes = 0;
     mistakesList = [];
+    
+    // Calculate character-level mistakes first (for accurate accuracy)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
     
     originalLines.forEach((line, lineIdx) => {
         const typedLine = typedLines[lineIdx] || '';
@@ -485,7 +510,6 @@ function updateDisplay() {
                 lineHtml += '<span class="correct typed">' + escapeHtml(line) + '</span>';
             } else {
                 lineHtml += '<span class="incorrect typed">' + escapeHtml(line) + '</span>';
-                mistakes++;
                 mistakesList.push({ line: lineIdx + 1, original: line, typed: typedLine });
             }
         } else if (lineIdx === typedLines.length - 1) {
@@ -498,7 +522,6 @@ function updateDisplay() {
                         lineHtml += '<span class="correct typed">' + escapeHtml(originalChar) + '</span>';
                     } else {
                         lineHtml += '<span class="incorrect">' + escapeHtml(originalChar) + '</span>';
-                        mistakes++;
                     }
                 } else if (i === typedLine.length) {
                     lineHtml += '<span class="current">' + escapeHtml(originalChar) + '</span>';
@@ -518,6 +541,9 @@ function updateDisplay() {
         lineHtml += '</div>';
         html += lineHtml;
     });
+    
+    // Use character-level mistakes for accuracy calculation
+    mistakes = charMistakes;
     
     codeDisplay.querySelector('pre code').innerHTML = html;
     if (typeof hljs !== 'undefined') {
@@ -713,7 +739,14 @@ function finishTyping(wpm, accuracy, mistakes, duration) {
             progress: myProgress,
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Xatolik yuz berdi');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Check if battle is finished
@@ -741,25 +774,70 @@ function finishTyping(wpm, accuracy, mistakes, duration) {
             } else {
                 document.getElementById('opponent-finished').textContent = 'Raqib tugatishni kutmoqda...';
             }
+        } else if (data.error) {
+            // Show error message in Uzbek
+            const errorMessage = data.error || 'Natija saqlashda xatolik yuz berdi';
+            if (window.TP_utils && window.TP_utils.showToast) {
+                window.TP_utils.showToast(errorMessage, 'error', 5000);
+            } else {
+                alert(errorMessage);
+            }
         }
     })
-    .catch(err => console.error('Error saving result:', err));
+    .catch(err => {
+        const errorMessage = 'Natija saqlashda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.';
+        if (window.TP_utils && window.TP_utils.showToast) {
+            window.TP_utils.showToast(errorMessage, 'error', 5000);
+        } else {
+            alert(errorMessage);
+        }
+        console.error('Error saving result:', err);
+    });
 }
 
 finishBtn.addEventListener('click', () => {
+    if (!startTime) return;
+    
     const typed = typingInput.value;
-    const elapsed = (Date.now() - startTime) / 1000;
     {% if battle.mode == 'text' %}
+    const original = originalText.trim();
     const words = originalText.trim().split(/\s+/);
     const typedWords = typed.trim().split(/\s+/);
+    
+    // Calculate character-level mistakes (same as updateDisplay)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
+    
+    const elapsed = (Date.now() - startTime) / 1000;
     const typedChars = typed.length;
-    const mistakes = mistakesList.length;
+    const mistakes = charMistakes;
     const correctChars = typedChars - mistakes;
     const wpm = (typedWords.length / elapsed) * 60;
     const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
     {% else %}
+    const original = originalCode;
+    
+    // Calculate character-level mistakes (same as updateDisplay)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
+    
+    const elapsed = (Date.now() - startTime) / 1000;
     const typedChars = typed.length;
-    const mistakes = mistakesList.length;
+    const mistakes = charMistakes;
     const correctChars = typedChars - mistakes;
     const wpm = (typedChars / 5 / elapsed) * 60;
     const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;

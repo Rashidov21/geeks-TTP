@@ -295,3 +295,9 @@ class Notification(models.Model):
     def get_unread_count(cls, user):
         """Get count of unread notifications for a user"""
         return cls.objects.filter(user=user, is_read=False).count()
+    
+    @classmethod
+    def mark_all_read(cls, user):
+        """Mark all unread notifications as read for a user"""
+        count = cls.objects.filter(user=user, is_read=False).update(is_read=True)
+        return count

@@ -269,32 +269,11 @@ typingInput.addEventListener('keydown', (e) => {
     const currentLength = currentValue.length;
     const originalLength = originalText.trim().length;
     
-    // Prevent typing beyond the original text
+    // Prevent typing beyond the original text length only
+    // Allow incorrect characters to be typed - they will be counted as mistakes
     if (currentLength >= originalLength) {
         e.preventDefault();
         return false;
-    }
-    
-    // Get the expected character at current position
-    const expectedChar = originalText.trim()[currentLength];
-    const typedChar = e.key;
-    
-    // If it's a space, check if we're at a word boundary
-    if (typedChar === ' ') {
-        const words = originalText.trim().split(/\s+/);
-        const typedWords = currentValue.trim().split(/\s+/);
-        const currentWordIndex = typedWords.length - 1;
-        
-        if (currentWordIndex < words.length) {
-            const currentWord = words[currentWordIndex];
-            const typedWord = typedWords[currentWordIndex] || '';
-            
-            // Only allow space if current word is complete
-            if (typedWord !== currentWord) {
-                e.preventDefault();
-                return false;
-            }
-        }
     }
     
     expectedNextChar = originalText.trim()[currentLength + 1] || null;
@@ -304,6 +283,7 @@ typingInput.addEventListener('input', (e) => {
     const currentValue = typingInput.value;
     const currentLength = currentValue.length;
     const previousLength = lastTypedLength;
+    const originalLength = originalText.trim().length;
     
     // Detect if multiple characters were added at once (paste or drag-drop)
     if (currentLength - previousLength > 1) {
@@ -312,25 +292,15 @@ typingInput.addEventListener('input', (e) => {
         return;
     }
     
-    // Check if character matches expected
-    if (currentLength > 0 && previousLength < currentLength) {
-        const expectedChar = originalText.trim()[previousLength];
-        const typedChar = currentValue[previousLength];
-        
-        // If character doesn't match, remove it
-        if (expectedChar !== typedChar && typedChar !== undefined) {
-            // Allow if it's a space and we're at word boundary
-            if (typedChar === ' ' && expectedChar === ' ') {
-                // Valid space
-            } else if (typedChar !== ' ' || expectedChar !== ' ') {
-                // Invalid character, remove it
-                typingInput.value = currentValue.substring(0, previousLength);
-                return;
-            }
-        }
+    // Prevent typing beyond original text length
+    // Allow incorrect characters to be typed - they will be counted as mistakes in updateDisplay()
+    if (currentLength > originalLength) {
+        typingInput.value = currentValue.substring(0, originalLength);
+        lastTypedLength = originalLength;
+    } else {
+        lastTypedLength = typingInput.value.length;
     }
     
-    lastTypedLength = typingInput.value.length;
     startTyping();
     updateDisplay();
 });
@@ -339,11 +309,24 @@ function updateDisplay() {
     const typed = typingInput.value;
     const words = originalText.trim().split(/\s+/);
     const typedWords = typed.trim().split(/\s+/);
+    const original = originalText.trim();
     
     let html = '';
     let mistakes = 0;
     mistakesList = [];
     
+    // Calculate character-level mistakes first (for accurate accuracy)
+    let charMistakes = 0;
+    const minLen = Math.min(typed.length, original.length);
+    for (let i = 0; i < minLen; i++) {
+        if (typed[i] !== original[i]) {
+            charMistakes++;
+        }
+    }
+    // Add extra or missing characters as mistakes
+    charMistakes += Math.abs(typed.length - original.length);
+    
+    // Also track word-level mistakes for mistakesList
     words.forEach((word, i) => {
         const typedWord = typedWords[i] || '';
         let classes = 'word';
@@ -353,23 +336,25 @@ function updateDisplay() {
                 classes += ' correct typed';
             } else {
                 classes += ' incorrect typed';
-                mistakes++;
                 mistakesList.push({ word: word, typed: typedWord, position: i });
             }
         } else if (i === typedWords.length - 1) {
             classes += ' current';
             if (typedWord.length > 0 && !word.startsWith(typedWord)) {
                 classes += ' incorrect';
-                mistakes++;
+                mistakesList.push({ word: word, typed: typedWord, position: i });
             }
         }
         
         html += `<span class="${classes}" data-index="${i}">${word}</span> `;
     });
     
+    // Use character-level mistakes for accuracy calculation
+    mistakes = charMistakes;
+    
     // Prefer per-character rendering if available for finer feedback
     if(window.TP_utils && window.TP_utils.renderPerChar){
-        textDisplay.innerHTML = window.TP_utils.renderPerChar(originalText.trim(), typed);
+        textDisplay.innerHTML = window.TP_utils.renderPerChar(original, typed);
     } else {
         textDisplay.innerHTML = html;
     }
@@ -531,12 +516,27 @@ function reset() {
 
 if (finishBtn) {
     finishBtn.addEventListener('click', () => {
+        if (!startTime) return;
+        
         const typed = typingInput.value;
         const words = originalText.trim().split(/\s+/);
         const typedWords = typed.trim().split(/\s+/);
+        const original = originalText.trim();
+        
+        // Calculate character-level mistakes (same as updateDisplay)
+        let charMistakes = 0;
+        const minLen = Math.min(typed.length, original.length);
+        for (let i = 0; i < minLen; i++) {
+            if (typed[i] !== original[i]) {
+                charMistakes++;
+            }
+        }
+        // Add extra or missing characters as mistakes
+        charMistakes += Math.abs(typed.length - original.length);
+        
         const elapsed = (Date.now() - startTime) / 1000;
         const typedChars = typed.length;
-        const mistakes = mistakesList.length;
+        const mistakes = charMistakes;
         const correctChars = typedChars - mistakes;
         const wpm = (typedWords.length / elapsed) * 60;
         const cpm = (typedChars / elapsed) * 60;
