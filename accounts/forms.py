@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.core.exceptions import ValidationError
 from .models import UserProfile
 import re
@@ -137,3 +137,47 @@ class UserProfileForm(forms.ModelForm):
         if self.instance and self.instance.user:
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
+
+
+class PasswordResetRequestForm(PasswordResetForm):
+    """Password reset so'rov formasi"""
+    email = forms.EmailField(
+        label='Email manzil',
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 placeholder:text-gray-400 text-primary',
+            'placeholder': 'Email manzilingizni kiriting'
+        })
+    )
+    
+    error_messages = {
+        'invalid_email': 'Noto\'g\'ri email manzil.',
+    }
+
+
+class PasswordResetConfirmForm(SetPasswordForm):
+    """Yangi parol o'rnatish formasi"""
+    new_password1 = forms.CharField(
+        label='Yangi parol',
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 placeholder:text-gray-400 text-primary',
+            'placeholder': 'Yangi parolni kiriting',
+            'id': 'id_new_password1'
+        }),
+        help_text='Parol kamida 8 belgidan iborat bo\'lishi kerak.'
+    )
+    new_password2 = forms.CharField(
+        label='Parolni tasdiqlash',
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 placeholder:text-gray-400 text-primary',
+            'placeholder': 'Parolni qayta kiriting',
+            'id': 'id_new_password2'
+        }),
+        help_text='Tasdiqlash uchun parolni qayta kiriting.'
+    )
+    
+    error_messages = {
+        'password_mismatch': 'Parollar mos kelmaydi.',
+        'password_too_short': 'Parol juda qisqa.',
+        'password_too_common': 'Parol juda oddiy.',
+        'password_entirely_numeric': 'Parol to\'liq raqamlardan iborat bo\'lmasligi kerak.',
+    }

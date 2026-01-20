@@ -2,9 +2,13 @@
 Custom adapters for django-allauth
 Google OAuth orqali ro'yxatdan o'tganda UserProfile yaratish uchun
 """
+import secrets
+import string
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.adapter import DefaultAccountAdapter
 from django.contrib.auth.models import User
+from django.shortcuts import resolve_url
+from django.conf import settings
 from .models import UserProfile
 
 
@@ -41,14 +45,39 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         """User saqlash va UserProfile yaratish"""
         user = super().save_user(request, sociallogin, form)
         
-        # UserProfile yaratish (agar mavjud bo'lmasa)
-        if not UserProfile.objects.filter(user=user).exists():
-            UserProfile.objects.create(
-                user=user,
-                is_manager=False,
-            )
+        # Google orqali ro'yxatdan o'tganligini aniqlash
+        is_google_signup = sociallogin.account.provider == 'google'
+        
+        # Parol generatsiya qilish (Google orqali ro'yxatdan o'tganda)
+        generated_password = None
+        if is_google_signup and not user.has_usable_password():
+            # Xavfsiz parol generatsiya qilish
+            alphabet = string.ascii_letters + string.digits + string.punctuation
+            # 14 belgi uzunlikda parol
+            generated_password = ''.join(secrets.choice(alphabet) for i in range(14))
+            # Parolni user ga o'rnatish
+            user.set_password(generated_password)
+            user.save()
+        
+        # UserProfile yaratish yoki yangilash
+        profile, created = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={'is_manager': False}
+        )
+        
+        # Google orqali ro'yxatdan o'tgan bo'lsa, flag va parolni saqlash
+        if is_google_signup:
+            profile.has_google_account = True
+            if generated_password:
+                profile.generated_password = generated_password
+            profile.save()
         
         return user
+    
+    def get_login_redirect_url(self, request):
+        """Google OAuth dan keyin qayerga o'tish"""
+        # Custom login/register sahifalariga emas, to'g'ridan-to'g'ri dashboard ga
+        return resolve_url(settings.LOGIN_REDIRECT_URL)
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -66,3 +95,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             )
         
         return user
+    
+    def get_login_redirect_url(self, request):
+        """Login dan keyin qayerga o'tish"""
+        return resolve_url(settings.LOGIN_REDIRECT_URL)

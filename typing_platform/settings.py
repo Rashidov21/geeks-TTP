@@ -44,7 +44,7 @@ def get_env_variable(var_name, default=None):
 SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-dev-key-change-in-production-ivzkh8b)o-te_f-ze%b_0i+p_^b)!l^2b+6qp(j9oj&363aw4%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'False') == 'False'
+DEBUG = get_env_variable('DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS - production'da domain nomlarini belgilang
 ALLOWED_HOSTS_STR = get_env_variable('ALLOWED_HOSTS', '*')
@@ -289,7 +289,7 @@ LOGGING = {
     },
 }
 
-LOGIN_URL = 'account_login'  # allauth login
+LOGIN_URL = 'accounts:login'  # Custom login (allauth emas)
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
@@ -309,6 +309,10 @@ ACCOUNT_EMAIL_VERIFICATION = 'optional'  # 'mandatory', 'optional', yoki 'none'
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_LOGOUT_ON_GET = True
+
+# Google OAuth dan keyin qayerga o'tish
+ACCOUNT_SIGNUP_REDIRECT_URL = 'dashboard'  # Yangi user ro'yxatdan o'tganda
+ACCOUNT_LOGIN_REDIRECT_URL = 'dashboard'   # Login qilganda
 
 # Social account sozlamalari
 SOCIALACCOUNT_PROVIDERS = {
@@ -337,8 +341,31 @@ SOCIALACCOUNT_AUTO_SIGNUP = True  # Avtomatik ro'yxatdan o'tish (tasdiqlash sahi
 SOCIALACCOUNT_QUERY_EMAIL = True  # Email so'rash
 SOCIALACCOUNT_EMAIL_REQUIRED = True  # Email majburiy
 SOCIALACCOUNT_STORE_TOKENS = True  # Token'larni saqlash
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'none' 
-SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+
+# Email sozlamalari
+# Development uchun console backend (terminal'da ko'rsatadi)
+# Production uchun SMTP sozlamalarini qo'shing
+EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+# SMTP sozlamalari (Production uchun)
+# Quyidagilarni .env faylga qo'shing:
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password
+# DEFAULT_FROM_EMAIL=your-email@gmail.com
+
+if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+    EMAIL_HOST = get_env_variable('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
 # HTTPS uchun (production)
 if not DEBUG:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

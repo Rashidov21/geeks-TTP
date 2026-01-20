@@ -2,18 +2,41 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Avg, Max, Count, Sum
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy
 from datetime import timedelta
 from collections import defaultdict
 import json
 from .models import UserProfile, UserLevel, UserBadge, Notification
-from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm, PasswordResetRequestForm, PasswordResetConfirmForm
 from typing_practice.models import UserResult
 from competitions.models import CompetitionParticipant
+
+
+def google_login_redirect(request):
+    """
+    Allauth ning 'Continue' sahifasini o'tkazib yuborib,
+    to'g'ridan-to'g'ri Google OAuth ga redirect qilish
+    """
+    try:
+        from allauth.socialaccount.views import login as socialaccount_login
+        from django.http import QueryDict
+        
+        # process='login' parametrini o'tkazish
+        # Bu allauth sahifasini o'tkazib yuboradi va to'g'ridan-to'g'ri Google ga o'tadi
+        mutable_get = request.GET.copy()
+        mutable_get['process'] = 'login'
+        request.GET = mutable_get
+        return socialaccount_login(request, 'google')
+    except Exception as e:
+        messages.error(request, f'Google OAuth xatosi: {str(e)}')
+        return redirect('accounts:login')
 
 
 def register_view(request):
@@ -274,4 +297,39 @@ def mark_all_notifications_read(request):
     from django.http import JsonResponse
     count = Notification.mark_all_read(request.user)
     return JsonResponse({'success': True, 'count': count})
+
+
+# Password Reset Views
+class CustomPasswordResetView(PasswordResetView):
+    """Password reset so'rov sahifasi"""
+    form_class = PasswordResetRequestForm
+    template_name = 'accounts/password_reset.html'
+    email_template_name = 'accounts/password_reset_email.html'
+    subject_template_name = 'accounts/password_reset_subject.txt'
+    success_url = reverse_lazy('accounts:password_reset_done')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Parolni tiklash uchun email manzilingizga link yuborildi.')
+        return super().form_valid(form)
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    """Yangi parol o'rnatish sahifasi"""
+    form_class = PasswordResetConfirmForm
+    template_name = 'accounts/password_reset_confirm.html'
+    success_url = reverse_lazy('accounts:password_reset_complete')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Parol muvaffaqiyatli o\'zgartirildi!')
+        return super().form_valid(form)
+
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    """Email yuborildi xabari"""
+    template_name = 'accounts/password_reset_done.html'
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    """Parol o'zgartirildi xabari"""
+    template_name = 'accounts/password_reset_complete.html'
 

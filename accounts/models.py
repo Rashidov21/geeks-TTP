@@ -28,6 +28,9 @@ class UserProfile(models.Model):
     longest_streak = models.IntegerField(default=0, help_text="Eng uzun ketma-ketlik")
     last_practice_date = models.DateField(null=True, blank=True, help_text="Oxirgi mashq qilgan sana")
     total_practice_days = models.IntegerField(default=0, help_text="Jami mashq qilgan kunlar")
+    # Google auth fields
+    has_google_account = models.BooleanField(default=False, help_text="Google orqali ro'yxatdan o'tgan")
+    generated_password = models.CharField(max_length=128, blank=True, null=True, help_text="Google orqali ro'yxatdan o'tganda generatsiya qilingan parol (vaqtincha)")
 
     def __str__(self):
         return f"{self.user.username} - {'Manager' if self.is_manager else 'User'}"
