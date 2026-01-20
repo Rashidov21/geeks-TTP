@@ -317,8 +317,9 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'OAUTH_PKCE_ENABLED': True,  # Security uchun
         'APP': {
-            'client_id': get_env_variable('GOOGLE_CLIENT_ID', ''),
-            'secret': get_env_variable('GOOGLE_CLIENT_SECRET', ''),
+            # NOTE: Static qiymatlar (env o‘rniga). Prod uchun real credentiallarni kiriting.
+            'client_id': '202337754756-lttbmrnmh2i5sj7a5cj0p28hstib40gq.apps.googleusercontent.com',
+            'secret': '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',
             'key': ''
         }
     }
