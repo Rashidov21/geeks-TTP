@@ -44,7 +44,7 @@ def get_env_variable(var_name, default=None):
 SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-dev-key-change-in-production-ivzkh8b)o-te_f-ze%b_0i+p_^b)!l^2b+6qp(j9oj&363aw4%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'True') == 'True'
+DEBUG = get_env_variable('DEBUG', 'False') == 'False'
 
 # ALLOWED_HOSTS - production'da domain nomlarini belgilang
 ALLOWED_HOSTS_STR = get_env_variable('ALLOWED_HOSTS', '*')
@@ -329,6 +329,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+# Custom adapters
 # Custom adapters
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
