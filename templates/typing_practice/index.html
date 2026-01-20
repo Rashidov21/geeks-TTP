@@ -3,56 +3,200 @@
 {% block title %}Practice - Typing Trainer{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-center text-primary animate-fadeIn">Mashq qilish</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2">Mashq qilish</h1>
+        <p class="text-gray-600 text-sm sm:text-base">Typing malakangizni rivojlantiring va yangi rekordlar qo'ying</p>
+    </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-lg p-6 hover-lift animate-slideIn">
-            <div class="flex items-center space-x-3 mb-4">
-                <svg class="w-8 h-8 text-primary transition-transform duration-300 hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <h2 class="text-2xl font-bold text-primary">Matn mashqlari</h2>
-            </div>
-            <p class="text-primary mb-4 text-base">Oddiy matnlar bilan mashq qiling va typing tezligingizni oshiring</p>
-            <div class="space-y-3">
-                <a href="{% url 'typing_practice:text_settings' %}" class="flex items-center justify-center space-x-2 gradient-secondary text-primary text-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-primary hover:shadow-lg transition-shadow duration-200">
+            <p class="text-xs text-gray-600 mb-1">O'rtacha WPM</p>
+            <p class="text-2xl font-bold text-primary">{{ stats.avg_wpm|floatformat:1 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
+            <p class="text-xs text-gray-600 mb-1">Eng yaxshi WPM</p>
+            <p class="text-2xl font-bold text-green-600">{{ stats.max_wpm|floatformat:1 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-200">
+            <p class="text-xs text-gray-600 mb-1">Jami mashqlar</p>
+            <p class="text-2xl font-bold text-blue-600">{{ stats.total_sessions }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500 hover:shadow-lg transition-shadow duration-200">
+            <p class="text-xs text-gray-600 mb-1">Ketma-ketlik</p>
+            <p class="text-2xl font-bold text-orange-600">{{ stats.streak }} 🔥</p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Text Practice (2 columns on large screens) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg p-6 lg:p-8 hover:shadow-xl transition-shadow duration-300 border-l-4 border-primary relative">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-primary">Matn mashqlari</h2>
+                            <p class="text-sm text-gray-600">Typing tezligingizni oshiring</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick start buttons -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <a href="{% url 'typing_practice:text_practice' 'easy' %}?mode=full&text_length=25" 
+                       class="flex items-center justify-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary py-2.5 px-4 rounded-lg font-medium transition-all duration-200 text-sm hover:scale-[1.02]">
+                        <span>🌱</span>
+                        <span>Oson</span>
+                    </a>
+                    <a href="{% url 'typing_practice:text_practice' 'hard' %}?mode=full&text_length=25" 
+                       class="flex items-center justify-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 px-4 rounded-lg font-medium transition-all duration-200 text-sm hover:scale-[1.02]">
+                        <span>🔥</span>
+                        <span>Qiyin</span>
+                    </a>
+                </div>
+                
+                <!-- Main button -->
+                <a href="{% url 'typing_practice:text_settings' %}" 
+                   class="w-full flex items-center justify-center space-x-2 gradient-secondary text-primary py-3 px-4 rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02] shadow-md hover:shadow-lg">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    <span>Matnda mashq qilish</span>
+                    <span>Batafsil sozlamalar</span>
                 </a>
+            </div>
+            <br>
+              <!-- Recent Activity -->
+              <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-primary mb-4 flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>So'nggi mashqlar</span>
+                </h3>
+                <div class="space-y-3">
+                    {% if recent_results %}
+                        {% for result in recent_results %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <span class="text-xs font-medium text-gray-600">
+                                        {% if result.session_type == 'text' %}📝{% else %}💻{% endif %}
+                                        {{ result.session_type|title }}
+                                    </span>
+                                    <span class="text-xs text-gray-500">{{ result.time|date:"H:i" }}</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-sm font-semibold text-primary">{{ result.wpm|floatformat:0 }} WPM</span>
+                                    <span class="text-xs text-gray-600">{{ result.accuracy|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-6 text-gray-500">
+                            <p class="text-sm">Hali mashq qilmadingiz</p>
+                            <p class="text-xs mt-1">Mashq qilishni boshlang!</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-lg p-6 hover-lift animate-slideIn" style="animation-delay: 0.2s;">
-            <div class="flex items-center space-x-3 mb-4">
-                <svg class="w-8 h-8 text-primary transition-transform duration-300 hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                </svg>
-                <h2 class="text-2xl font-bold text-primary">Kod mashqlari</h2>
+        <!-- Sidebar (1 column on large screens) -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Code Practice -->
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border-l-4 border-blue-500">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-primary">Kod mashqlari</h2>
+                        <p class="text-sm text-gray-600">Dasturlash tillarida mashq qiling</p>
+                    </div>
+                </div>
+                
+                <!-- Language grid - kompakt va chiroyli -->
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{% url 'typing_practice:code_practice' 'python' %}" 
+                       class="group relative flex flex-col items-center justify-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 rounded-lg border-2 border-transparent hover:border-yellow-300 transition-all duration-200 hover:scale-[1.02]">
+                        <span class="text-3xl mb-2">🐍</span>
+                        <span class="font-semibold text-sm text-gray-800">Python</span>
+                        <span class="absolute top-1 right-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    </a>
+                    <a href="{% url 'typing_practice:code_practice' 'javascript' %}" 
+                       class="group relative flex flex-col items-center justify-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 rounded-lg border-2 border-transparent hover:border-yellow-300 transition-all duration-200 hover:scale-[1.02]">
+                        <span class="text-3xl mb-2">🟨</span>
+                        <span class="font-semibold text-sm text-gray-800">JavaScript</span>
+                        <span class="absolute top-1 right-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    </a>
+                    <a href="{% url 'typing_practice:code_practice' 'cpp' %}" 
+                       class="group relative flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-lg border-2 border-transparent hover:border-gray-300 transition-all duration-200 hover:scale-[1.02]">
+                        <span class="text-3xl mb-2">⚙️</span>
+                        <span class="font-semibold text-sm text-gray-800">C++</span>
+                        <span class="absolute top-1 right-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    </a>
+                    <a href="{% url 'typing_practice:code_practice' 'java' %}" 
+                       class="group relative flex flex-col items-center justify-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-lg border-2 border-transparent hover:border-orange-300 transition-all duration-200 hover:scale-[1.02]">
+                        <span class="text-3xl mb-2">☕</span>
+                        <span class="font-semibold text-sm text-gray-800">Java</span>
+                        <span class="absolute top-1 right-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    </a>
+                </div>
             </div>
-            <p class="text-primary mb-4 text-base">Turli dasturlash tillarida kod yozing va code typing malakangizni rivojlantiring</p>
-            <div class="grid grid-cols-2 gap-3">
-                <a href="{% url 'typing_practice:code_practice' 'python' %}" class="flex items-center justify-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary text-center py-3 px-4 rounded-lg transition-all duration-300 hover:scale-105 shadow-md">
-                    <span class="text-2xl">🐍</span>
-                    <span class="font-medium">Python</span>
-                </a>
-                <a href="{% url 'typing_practice:code_practice' 'javascript' %}" class="flex items-center justify-center space-x-2 gradient-secondary text-primary text-center py-3 px-4 rounded-lg transition-all duration-300 hover:scale-105 shadow-md font-semibold">
-                    <span class="text-2xl">🟨</span>
-                    <span class="font-medium">JavaScript</span>
-                </a>
-                <a href="{% url 'typing_practice:code_practice' 'cpp' %}" class="flex items-center justify-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary text-center py-3 px-4 rounded-lg transition-all duration-300 hover:scale-105 shadow-md">
-                    <span class="text-2xl">⚙️</span>
-                    <span class="font-medium">C++</span>
-                </a>
-                <a href="{% url 'typing_practice:code_practice' 'java' %}" class="flex items-center justify-center space-x-2 gradient-secondary text-primary text-center py-3 px-4 rounded-lg transition-all duration-300 hover:scale-105 shadow-md font-semibold">
-                    <span class="text-2xl">☕</span>
-                    <span class="font-medium">Java</span>
-                </a>
+            
+          
+            
+            <!-- Quick Tips -->
+            <div class="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
+                <h3 class="text-lg font-bold text-primary mb-2 flex items-center space-x-2">
+                    <span>💡</span>
+                    <span>Maslahat</span>
+                </h3>
+                <p class="text-sm text-gray-700" id="random-tip">
+                    <span class="tip-text">Har kuni kamida 10 daqiqa mashq qiling - natijalar tezda ko'rinadi!</span>
+                </p>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
+<script>
+// Random tips rotation
+const tips = [
+    "Har kuni kamida 10 daqiqa mashq qiling - natijalar tezda ko'rinadi!",
+    "Aniqlik tezlikdan muhimroq - avval to'g'ri yozishni o'rganing",
+    "Kod mashqlari dasturlash malakangizni ham yaxshilaydi",
+    "Ketma-ketlikni saqlab qoling - har kuni mashq qiling",
+    "Qiyin matnlarni tanlang - bu sizni yanada rivojlantiradi",
+    "Xatolarni tahlil qiling va takrorlamang",
+    "Vaqt cheklovi bilan mashq qiling - bu tezlikni oshiradi",
+];
+
+function showRandomTip() {
+    const tipElement = document.querySelector('.tip-text');
+    if (tipElement) {
+        const randomTip = tips[Math.floor(Math.random() * tips.length)];
+        tipElement.textContent = randomTip;
+    }
+}
+
+// Show random tip on load
+showRandomTip();
+
+// Rotate tips every 10 seconds
+setInterval(showRandomTip, 10000);
+</script>
+{% endblock %}

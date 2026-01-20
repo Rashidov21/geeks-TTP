@@ -70,14 +70,40 @@ def check_and_award_badges(user, result=None):
         profile = UserProfile.objects.get(user=user)
         user_results = UserResult.objects.filter(user=user)
         
-        # Get user stats
+        # Get user stats (yaxshilangan)
         stats = user_results.aggregate(
             total_sessions=Count('id'),
             max_wpm=Max('wpm'),
+            avg_wpm=Avg('wpm'),
             avg_accuracy=Avg('accuracy'),
             text_sessions=Count('id', filter=Q(session_type='text')),
             code_sessions=Count('id', filter=Q(session_type='code')),
+            perfect_sessions=Count('id', filter=Q(accuracy=100)),
+            high_accuracy_sessions=Count('id', filter=Q(accuracy__gte=95)),
         )
+        
+        # Competition stats
+        try:
+            from competitions.models import CompetitionParticipant
+            comp_stats = CompetitionParticipant.objects.filter(user=user).aggregate(
+                total_participations=Count('id'),
+                finished_competitions=Count('id', filter=Q(is_finished=True)),
+            )
+        except ImportError:
+            comp_stats = {'total_participations': 0, 'finished_competitions': 0}
+        
+        # Battle stats
+        try:
+            from battles.models import BattleParticipant
+            battle_stats = BattleParticipant.objects.filter(
+                user=user,
+                is_finished=True
+            ).aggregate(
+                total_battles=Count('id'),
+                wins=Count('id', filter=Q(battle__winner=user)),
+            )
+        except ImportError:
+            battle_stats = {'total_battles': 0, 'wins': 0}
         
         # Get active badges
         badges = Badge.objects.filter(is_active=True)
@@ -105,6 +131,11 @@ def check_and_award_badges(user, result=None):
                         earned = True
                     else:
                         progress = int((stats['avg_accuracy'] or 0) / req['accuracy'] * 100) if req['accuracy'] > 0 else 0
+                elif 'perfect_sessions' in req:
+                    if stats['perfect_sessions'] and stats['perfect_sessions'] >= req['perfect_sessions']:
+                        earned = True
+                    else:
+                        progress = int((stats['perfect_sessions'] or 0) / req['perfect_sessions'] * 100) if req['perfect_sessions'] > 0 else 0
                         
             elif badge.badge_type == 'streak':
                 if 'days' in req:
@@ -136,6 +167,91 @@ def check_and_award_badges(user, result=None):
                         earned = True
                     else:
                         progress = int((profile.total_practice_days / req['practice_days']) * 100) if req['practice_days'] > 0 else 0
+            
+            elif badge.badge_type == 'competition':
+                if 'first_place' in req:
+                    # Check if user has first place in any competition
+                    # Simplified: check if user has highest result_wpm in any competition
+                    try:
+                        from competitions.models import CompetitionParticipant
+                        first_places = CompetitionParticipant.objects.filter(
+                            user=user,
+                            is_finished=True
+                        ).order_by('-result_wpm').first()
+                        if first_places and first_places.result_wpm:
+                            # Check if this is the highest in that competition
+                            competition = first_places.competition
+                            highest = CompetitionParticipant.objects.filter(
+                                competition=competition,
+                                is_finished=True
+                            ).order_by('-result_wpm').first()
+                            if highest and highest.user == user:
+                                earned = True
+                    except:
+                        pass
+                    progress = 0
+                elif 'second_place' in req:
+                    # Similar logic for second place
+                    progress = 0
+                elif 'third_place' in req:
+                    # Similar logic for third place
+                    progress = 0
+                elif 'participations' in req:
+                    if comp_stats['total_participations'] >= req['participations']:
+                        earned = True
+                    else:
+                        progress = int((comp_stats['total_participations'] / req['participations']) * 100) if req['participations'] > 0 else 0
+                elif 'wins' in req:
+                    # Simplified: count finished competitions as wins for now
+                    wins = comp_stats['finished_competitions']
+                    if wins >= req['wins']:
+                        earned = True
+                    else:
+                        progress = int((wins / req['wins']) * 100) if req['wins'] > 0 else 0
+            
+            elif badge.badge_type == 'battle':
+                if 'battle_wins' in req:
+                    if battle_stats['wins'] and battle_stats['wins'] >= req['battle_wins']:
+                        earned = True
+                    else:
+                        progress = int((battle_stats['wins'] or 0) / req['battle_wins'] * 100) if req['battle_wins'] > 0 else 0
+                elif 'battles' in req:
+                    if battle_stats['total_battles'] and battle_stats['total_battles'] >= req['battles']:
+                        earned = True
+                    else:
+                        progress = int((battle_stats['total_battles'] or 0) / req['battles'] * 100) if req['battles'] > 0 else 0
+            
+            elif badge.badge_type == 'special':
+                # Special badges require custom logic
+                if 'perfect_week' in req:
+                    # Check if user completed all daily challenges in a week
+                    try:
+                        from .models import ChallengeCompletion, DailyChallenge
+                        from datetime import timedelta
+                        today = timezone.now().date()
+                        week_start = today - timedelta(days=7)
+                        week_challenges = DailyChallenge.objects.filter(date__gte=week_start, date__lte=today)
+                        completed = ChallengeCompletion.objects.filter(
+                            user=user,
+                            challenge__in=week_challenges
+                        ).count()
+                        if completed >= week_challenges.count() and week_challenges.count() >= 7:
+                            earned = True
+                    except:
+                        pass
+                    progress = 0
+                elif 'early_completion' in req:
+                    # Check early morning completions (before 10 AM)
+                    # This would need to be tracked separately
+                    progress = 0
+                elif 'late_completion' in req:
+                    # Check late night completions (after 10 PM)
+                    # This would need to be tracked separately
+                    progress = 0
+                elif 'comebacks' in req:
+                    # Track streak breaks and restarts
+                    # This would need to be tracked separately
+                    progress = 0
             
             # Award badge if earned
             if earned:
@@ -186,8 +302,7 @@ def check_and_award_badges(user, result=None):
                     defaults={'progress': progress}
                 )
                 if not created:
-                    user_badge.progress = min(100, progress)
-                    user_badge.save()
+                    user_badge.update_progress(min(100, progress))
         
         return None
         
@@ -197,30 +312,52 @@ def check_and_award_badges(user, result=None):
 
 
 def calculate_xp_for_result(result):
-    """Calculate XP reward for a practice result"""
-    base_xp = 10  # Base XP for completing a practice
+    """Calculate XP reward for a practice result with improved multipliers"""
+    base_xp = 10
     
-    # Bonus XP for good performance
-    bonus_xp = 0
-    if result.wpm >= 100:
-        bonus_xp += 50  # Elite speed
+    # Performance multipliers
+    wpm_multiplier = 1.0
+    if result.wpm >= 150:
+        wpm_multiplier = 3.0
+    elif result.wpm >= 120:
+        wpm_multiplier = 2.5
+    elif result.wpm >= 100:
+        wpm_multiplier = 2.0
     elif result.wpm >= 80:
-        bonus_xp += 25  # Expert speed
+        wpm_multiplier = 1.5
     elif result.wpm >= 60:
-        bonus_xp += 10  # Advanced speed
+        wpm_multiplier = 1.2
     
-    if result.accuracy >= 95:
-        bonus_xp += 25  # Perfect accuracy
+    accuracy_multiplier = 1.0
+    if result.accuracy >= 100:
+        accuracy_multiplier = 2.0
+    elif result.accuracy >= 98:
+        accuracy_multiplier = 1.5
+    elif result.accuracy >= 95:
+        accuracy_multiplier = 1.3
     elif result.accuracy >= 90:
-        bonus_xp += 10  # High accuracy
+        accuracy_multiplier = 1.1
+    
+    # Streak bonus
+    try:
+        profile = UserProfile.objects.get(user=result.user)
+        streak_bonus = min(profile.current_streak * 0.1, 1.0)  # Max 100% bonus
+    except:
+        streak_bonus = 0
+    
+    # Session type bonus
+    session_bonus = 1.2 if result.session_type == 'code' else 1.0
+    
+    # Calculate total XP
+    total_xp = int(base_xp * wpm_multiplier * accuracy_multiplier * (1 + streak_bonus) * session_bonus)
     
     # Record bonus (if this is a new personal best)
     user_results = UserResult.objects.filter(user=result.user)
     max_wpm = user_results.aggregate(max_wpm=Max('wpm'))['max_wpm']
     if result.wpm == max_wpm and result.wpm > 0:
-        bonus_xp += 50  # New record!
+        total_xp += 50  # New record!
     
-    return base_xp + bonus_xp
+    return total_xp
 
 
 def award_xp_for_practice(user, result):

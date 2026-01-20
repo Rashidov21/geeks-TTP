@@ -417,9 +417,79 @@ def competition_save_result(request, competition_id, stage_number):
             wpm = validate_wpm(data.get('wpm', 0))
             accuracy = validate_accuracy(data.get('accuracy', 0))
             mistakes = max(0, int(data.get('mistakes', 0)))
+            typed_text = data.get('typed_text', '')
+            duration_seconds = max(0, float(data.get('duration_seconds', 0)))
         except (ValueError, TypeError, json.JSONDecodeError) as e:
             logger.warning(f"Invalid data in competition_save_result: {e}")
             return JsonResponse({'error': 'Noto\'g\'ri ma\'lumot formati'}, status=400)
+        
+        # Server-side validation and metrics calculation
+        def normalize_text(s: str) -> str:
+            if not isinstance(s, str):
+                return ''
+            # Normalize whitespace for plain texts: collapse all whitespace to single spaces
+            return ' '.join(s.replace('\r\n', '\n').split())
+        
+        def normalize_code(s: str) -> str:
+            if not isinstance(s, str):
+                return ''
+            # Normalize line endings and strip trailing spaces per line
+            return '\n'.join([line.rstrip() for line in s.replace('\r\n', '\n').split('\n')])
+        
+        # Validate typed text against original and calculate server-side metrics
+        if stage.text:
+            original_norm = normalize_text(stage.text.body)
+            typed_norm = normalize_text(typed_text)
+            
+            # Calculate server-side metrics
+            typed_chars = len(typed_norm)
+            typed_words = len(typed_norm.split()) if typed_norm.strip() else 0
+            mismatches = 0
+            # per-char mismatch counting against original
+            for i, ch in enumerate(typed_norm):
+                if i >= len(original_norm) or ch != original_norm[i]:
+                    mismatches += 1
+            mismatches += max(0, len(original_norm) - len(typed_norm))
+            server_accuracy = round(((typed_chars - mismatches) / typed_chars) * 100, 2) if typed_chars > 0 else 100.0
+            server_wpm = round((typed_words / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+            server_mistakes = mismatches
+            
+            # Override client values if they differ significantly
+            if abs(server_wpm - wpm) / (server_wpm + 1e-6) > 0.2:
+                logger.info(f"Competition WPM mismatch for user {request.user.username}: client={wpm}, server={server_wpm}")
+                wpm = server_wpm
+            if abs(server_accuracy - accuracy) > 10:
+                logger.info(f"Competition accuracy mismatch for user {request.user.username}: client={accuracy}, server={server_accuracy}")
+                accuracy = server_accuracy
+            if abs(server_mistakes - mistakes) > 2:
+                logger.info(f"Competition mistakes mismatch for user {request.user.username}: client={mistakes}, server={server_mistakes}")
+                mistakes = server_mistakes
+                
+        elif stage.code_snippet:
+            original_norm = normalize_code(stage.code_snippet.code_body)
+            typed_norm = normalize_code(typed_text)
+            
+            # Calculate server-side metrics for code (chars based)
+            typed_chars = len(typed_norm)
+            mismatches = 0
+            for i, ch in enumerate(typed_norm):
+                if i >= len(original_norm) or ch != original_norm[i]:
+                    mismatches += 1
+            mismatches += max(0, len(original_norm) - len(typed_norm))
+            server_accuracy = round(((typed_chars - mismatches) / typed_chars) * 100, 2) if typed_chars > 0 else 100.0
+            server_wpm = round(((typed_chars / 5.0) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+            server_mistakes = mismatches
+            
+            # Override client values if they differ significantly
+            if abs(server_wpm - wpm) / (server_wpm + 1e-6) > 0.2:
+                logger.info(f"Competition Code WPM mismatch for user {request.user.username}: client={wpm}, server={server_wpm}")
+                wpm = server_wpm
+            if abs(server_accuracy - accuracy) > 10:
+                logger.info(f"Competition Code accuracy mismatch for user {request.user.username}: client={accuracy}, server={server_accuracy}")
+                accuracy = server_accuracy
+            if abs(server_mistakes - mistakes) > 2:
+                logger.info(f"Competition Code mistakes mismatch for user {request.user.username}: client={mistakes}, server={server_mistakes}")
+                mistakes = server_mistakes
         
         # Save stage result with transaction
         with transaction.atomic():

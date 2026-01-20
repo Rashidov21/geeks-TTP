@@ -119,6 +119,15 @@ class Badge(models.Model):
         ('milestone', 'Yutuq'),
         ('competition', 'Musobaqa'),
         ('consistency', 'Izchillik'),
+        ('battle', 'Jang'),
+        ('special', 'Maxsus'),
+    ]
+    
+    RARITY_CHOICES = [
+        ('common', 'Oddiy'),
+        ('rare', 'Noyob'),
+        ('epic', 'Epik'),
+        ('legendary', 'Afsonaviy'),
     ]
     
     name = models.CharField(max_length=100, unique=True)
@@ -127,6 +136,8 @@ class Badge(models.Model):
     badge_type = models.CharField(max_length=20, choices=BADGE_TYPE_CHOICES)
     requirement = models.JSONField(default=dict, help_text="Talablar (masalan: {'wpm': 100, 'sessions': 50})")
     xp_reward = models.IntegerField(default=50, help_text="XP mukofoti")
+    rarity = models.CharField(max_length=20, choices=RARITY_CHOICES, default='common', help_text="Badge noyobligi")
+    rarity_color = models.CharField(max_length=20, default='#6b7280', help_text="Hex color for rarity")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -146,6 +157,7 @@ class UserBadge(models.Model):
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='user_badges')
     earned_at = models.DateTimeField(auto_now_add=True)
     progress = models.IntegerField(default=100, help_text="Progress foizi (0-100)")
+    progress_history = models.JSONField(default=list, blank=True, help_text="Progress tarixi")
     
     class Meta:
         unique_together = ['user', 'badge']
@@ -153,6 +165,19 @@ class UserBadge(models.Model):
         indexes = [
             models.Index(fields=['user', '-earned_at']),
         ]
+    
+    def update_progress(self, new_progress):
+        """Update progress and save history"""
+        from django.utils import timezone
+        if new_progress > self.progress:
+            if not self.progress_history:
+                self.progress_history = []
+            self.progress_history.append({
+                'progress': new_progress,
+                'timestamp': timezone.now().isoformat()
+            })
+            self.progress = min(100, new_progress)
+            self.save()
     
     def __str__(self):
         return f"{self.user.username} - {self.badge.name}"

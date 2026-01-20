@@ -19,7 +19,41 @@ logger = logging.getLogger('typing_platform')
 
 @login_required
 def index(request):
-    return render(request, 'typing_practice/index.html')
+    """Practice index page with user stats"""
+    from django.db.models import Count, Max, Avg
+    from accounts.models import UserProfile
+    
+    # Get user stats
+    user_results = UserResult.objects.filter(user=request.user)
+    stats = user_results.aggregate(
+        total_sessions=Count('id'),
+        max_wpm=Max('wpm'),
+        avg_wpm=Avg('wpm'),
+        avg_accuracy=Avg('accuracy'),
+    )
+    
+    # Get streak
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        streak = profile.current_streak
+    except:
+        streak = 0
+    
+    # Get recent results (last 5)
+    recent_results = user_results.order_by('-time')[:5]
+    
+    context = {
+        'stats': {
+            'total_sessions': stats['total_sessions'] or 0,
+            'max_wpm': round(stats['max_wpm'] or 0, 1),
+            'avg_wpm': round(stats['avg_wpm'] or 0, 1),
+            'avg_accuracy': round(stats['avg_accuracy'] or 0, 1),
+            'streak': streak,
+        },
+        'recent_results': recent_results,
+    }
+    
+    return render(request, 'typing_practice/index.html', context)
 
 
 @login_required

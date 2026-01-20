@@ -205,7 +205,7 @@
 const competitionId = {{ competition.id }};
 const stageNumber = {{ stage_number }};
 const isCode = {% if stage.code_snippet %}true{% else %}false{% endif %};
-const originalText = `{% if stage.text %}{{ stage.text.body|escapejs }}{% elif stage.code_snippet %}{{ stage.code_snippet.code_body|escapejs }}{% endif %}`;
+const originalText = `{% if stage.text %}{{ stage.text.body|escapejs }}{% elif stage.code_snippet %}{{ stage.code_snippet.code_body|escapejs }}{% endif %}`.trim();
 let startTime = null;
 let timerInterval = null;
 let isFinished = false;
@@ -264,9 +264,9 @@ typingInput.addEventListener('keydown', (e) => {
         return;
     }
     
-    const currentValue = typingInput.value;
-    const currentLength = currentValue.length;
-    const originalLength = originalText.length;
+        const currentValue = typingInput.value;
+        const currentLength = currentValue.length;
+        const originalLength = originalText.trim().length;
     
     // Prevent typing beyond the original text/code length only
     // Allow incorrect characters to be typed - they will be counted as mistakes
@@ -282,7 +282,7 @@ typingInput.addEventListener('input', (e) => {
     const currentValue = typingInput.value;
     const currentLength = currentValue.length;
     const previousLength = lastTypedLength;
-    const originalLength = originalText.length;
+    const originalLength = originalText.trim().length;
     
     // Detect if multiple characters were added at once (paste or drag-drop)
     if (currentLength - previousLength > 1) {
@@ -306,24 +306,25 @@ typingInput.addEventListener('input', (e) => {
 
 function updateDisplay() {
     const typed = typingInput.value;
-    const original = originalText;
+    const typedTrimmed = typed.trim();
+    const original = originalText.trim();
     let mistakes = 0;
     mistakesList = [];
     
     // Calculate character-level mistakes first (for accurate accuracy)
     let charMistakes = 0;
-    const minLen = Math.min(typed.length, original.length);
+    const minLen = Math.min(typedTrimmed.length, original.length);
     for (let i = 0; i < minLen; i++) {
-        if (typed[i] !== original[i]) {
+        if (typedTrimmed[i] !== original[i]) {
             charMistakes++;
         }
     }
     // Add extra or missing characters as mistakes
-    charMistakes += Math.abs(typed.length - original.length);
+    charMistakes += Math.abs(typedTrimmed.length - original.length);
     
     if (isCode) {
-        const originalLines = originalText.split('\n');
-        const typedLines = typed.split('\n');
+        const originalLines = original.split('\n');
+        const typedLines = typedTrimmed.split('\n');
         let html = '';
         
         originalLines.forEach((line, lineIdx) => {
@@ -364,13 +365,13 @@ function updateDisplay() {
         display.querySelector('pre code').innerHTML = html;
     } else {
         // Text mode - use character-level rendering if available
-        const words = originalText.trim().split(/\s+/);
-        const typedWords = typed.trim().split(/\s+/);
+        const words = original.split(/\s+/);
+        const typedWords = typedTrimmed.split(/\s+/);
         let html = '';
         
         // Prefer per-character rendering if available for finer feedback
         if(window.TP_utils && window.TP_utils.renderPerChar){
-            display.innerHTML = window.TP_utils.renderPerChar(originalText.trim(), typed);
+            display.innerHTML = window.TP_utils.renderPerChar(original, typedTrimmed);
         } else {
             words.forEach((word, i) => {
                 const typedWord = typedWords[i] || '';
@@ -400,9 +401,9 @@ function updateDisplay() {
     
     if (startTime) {
         const elapsed = (Date.now() - startTime) / 1000;
-        const typedChars = typed.length;
+        const typedChars = typedTrimmed.length;
         const correctChars = typedChars - mistakes;
-        const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
+        const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typedTrimmed.split(/\s+/).length / elapsed) * 60;
         const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
         
         document.getElementById('wpm').textContent = Math.round(wpm);
@@ -414,21 +415,22 @@ function updateDisplay() {
         const progressBar = document.getElementById('progress-bar');
         if (progressBar) {
             if (window.TP_utils) {
-                window.TP_utils.updateProgressBar(progressBar, originalText, typed);
+                window.TP_utils.updateProgressBar(progressBar, original, typedTrimmed);
             } else {
-                const total = originalText.length || 1;
-                const pct = Math.min(100, Math.round((typed.length / total) * 100));
+                const total = original.length || 1;
+                const pct = Math.min(100, Math.round((typedTrimmed.length / total) * 100));
                 progressBar.style.width = pct + '%';
             }
         }
         
-        if (typed.trim() === originalText.trim()) {
+        // Auto-finish when text is completed (only if startTime is set)
+        if (typedTrimmed === original && !isFinished) {
             finishTyping(wpm, accuracy, mistakes);
         }
     } else {
         // Even when not started, show mistakes count and accuracy if user has typed
-        if (typed.length > 0) {
-            const typedChars = typed.length;
+        if (typedTrimmed.length > 0) {
+            const typedChars = typedTrimmed.length;
             const correctChars = typedChars - mistakes;
             const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
             
@@ -439,30 +441,16 @@ function updateDisplay() {
             const progressBar = document.getElementById('progress-bar');
             if (progressBar) {
                 if (window.TP_utils) {
-                    window.TP_utils.updateProgressBar(progressBar, originalText, typed);
+                    window.TP_utils.updateProgressBar(progressBar, original, typedTrimmed);
                 } else {
-                    const total = originalText.length || 1;
-                    const pct = Math.min(100, Math.round((typed.length / total) * 100));
+                    const total = original.length || 1;
+                    const pct = Math.min(100, Math.round((typedTrimmed.length / total) * 100));
                     progressBar.style.width = pct + '%';
                 }
             }
             
-            // Auto-finish when text is completed
-            if (typed.trim() === originalText.trim() && !isFinished) {
-                // If startTime is not set, start it now (this will also enable timer)
-                if (!startTime) {
-                    startTime = Date.now();
-                    timerInterval = setInterval(updateDisplay, 100);
-                    finishBtn.disabled = false;
-                }
-                // Calculate final results
-                const elapsed = (Date.now() - startTime) / 1000;
-                const typedChars = typed.length;
-                const correctChars = typedChars - mistakes;
-                const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
-                const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
-                finishTyping(wpm, accuracy, mistakes);
-            }
+            // Don't auto-finish if startTime is null - wait for user to start typing
+            // This prevents incorrect WPM calculation
         }
     }
 }
@@ -507,7 +495,9 @@ function finishTyping(wpm, accuracy, mistakes) {
         body: JSON.stringify({
             wpm: wpm,
             accuracy: accuracy,
-            mistakes: mistakes
+            mistakes: mistakes,
+            typed_text: typingInput.value.trim(),
+            duration_seconds: Math.round(duration)
         })
     })
     .then(response => {
@@ -551,8 +541,8 @@ function finishTyping(wpm, accuracy, mistakes) {
 finishBtn.addEventListener('click', () => {
     if (!startTime) return;
     
-    const typed = typingInput.value;
-    const original = originalText;
+    const typed = typingInput.value.trim();
+    const original = originalText.trim();
     
     // Calculate character-level mistakes (same as updateDisplay)
     let charMistakes = 0;
@@ -569,7 +559,7 @@ finishBtn.addEventListener('click', () => {
     const typedChars = typed.length;
     const mistakes = charMistakes;
     const correctChars = typedChars - mistakes;
-    const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.trim().split(/\s+/).length / elapsed) * 60;
+    const wpm = isCode ? (typedChars / 5 / elapsed) * 60 : (typed.split(/\s+/).length / elapsed) * 60;
     const accuracy = typedChars > 0 ? ((correctChars / typedChars) * 100) : 100;
     finishTyping(wpm, accuracy, mistakes);
 });

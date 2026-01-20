@@ -57,6 +57,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # allauth uchun kerak
+    
+    # allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
     'accounts',
     'typing_practice',
     'competitions',
@@ -70,6 +78,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Allauth middleware
     'typing_platform.middleware.ActiveUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -275,6 +284,55 @@ LOGGING = {
     },
 }
 
-LOGIN_URL = 'accounts:login'
+LOGIN_URL = 'account_login'  # allauth login
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
+
+# SITE_ID - allauth uchun kerak
+SITE_ID = 1
+
+# AUTHENTICATION_BACKENDS - allauth qo'shish
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default
+    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
+]
+
+# Allauth sozlamalari
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Email yoki username bilan kirish
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Ro'yxatdan o'tish maydonlari
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # 'mandatory', 'optional', yoki 'none'
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_LOGOUT_ON_GET = True
+
+# Social account sozlamalari
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,  # Security uchun
+        'APP': {
+            'client_id': get_env_variable('GOOGLE_CLIENT_ID', ''),
+            'secret': get_env_variable('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
+
+# Custom adapters
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Avtomatik ro'yxatdan o'tish (tasdiqlash sahifasini o'tkazib yuborish)
+SOCIALACCOUNT_QUERY_EMAIL = True  # Email so'rash
+SOCIALACCOUNT_EMAIL_REQUIRED = True  # Email majburiy
+SOCIALACCOUNT_STORE_TOKENS = True  # Token'larni saqlash
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none' 
+SOCIALACCOUNT_AUTO_SIGNUP = True
+# HTTPS uchun (production)
+if not DEBUG:
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

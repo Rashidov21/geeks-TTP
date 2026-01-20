@@ -10,52 +10,170 @@
     .incorrect { background-color: #fee2e2; color: #dc2626; }
     .current { background-color: rgba(41, 41, 41, 0.1); border-left: 3px solid #292929; padding-left: 2px; }
     .typed { color: #6b7280; }
-    .stats-card {
-        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        color: #292929;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+    /* Stats - kompakt, 1 qator */
+    .stats-compact {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 0.75rem 1rem;
+        transition: opacity 0.3s ease;
     }
-    .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    .stats-compact .stat-item {
+        text-align: center;
     }
-    .stats-card.wpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.accuracy { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.time { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    .stats-card.cpm { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
-    /* Progress bar */
-    .progress-wrap { background: #e5e7eb; border-radius: 9999px; height: 10px; overflow: hidden; }
-    .progress-bar { height: 100%; background: linear-gradient(90deg,#06b6d4,#7c3aed); width: 0%; transition: width 120ms linear; }
-    /* Compact adjustments to reduce padding and font sizes for tighter layout */
-    .compact .stats-card { padding: 0.5rem 0.75rem; }
-    .compact .stats-card p.text-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
-    #wpm, #accuracy, #timer, #cpm { font-size: 1.5rem; }
+    .stats-compact .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+    .stats-compact .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    .stats-compact .stat-divider {
+        width: 1px;
+        height: 2.5rem;
+        background: #e5e7eb;
+    }
+    
+    /* Progress bar - kattalashtirilgan */
+    .progress-wrap { 
+        background: #e5e7eb; 
+        border-radius: 9999px; 
+        height: 14px; 
+        overflow: hidden; 
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .progress-bar { 
+        height: 100%; 
+        background: linear-gradient(90deg,#06b6d4,#7c3aed); 
+        width: 0%; 
+        transition: width 120ms linear; 
+    }
+    
+    /* Text display - KATTA va MARKAZDA */
     #text-display { 
-        font-size: 1rem; 
-        padding: 0.75rem; 
+        font-size: 1.25rem; 
+        line-height: 1.8;
+        padding: 2rem; 
         word-wrap: break-word; 
         overflow-wrap: break-word; 
         word-break: break-word;
         white-space: normal; 
         max-width: 100%;
-        overflow-x: auto;
+        overflow-y: auto;
+        min-height: 250px;
+        max-height: 400px;
+        border: 3px solid rgba(41, 41, 41, 0.15);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        background: #f9fafb;
+    }
+    .border-3 {
+        border-width: 3px;
     }
     .tp-char { 
         display: inline; 
         white-space: normal;
     }
-    #typing-input { font-size: 0.95rem; padding: 0.5rem; }
-    .action-buttons > * { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-    #results { padding: 0.75rem; }
-    /* Responsive practice layout and helpers */
-    .practice-container { max-width: 1100px; margin: 0 auto; padding: 0 12px; }
-    .practice-header { display:flex; gap:12px; align-items:center; justify-content:space-between; }
-    .practice-instructions { background:#f8fafc; border:1px solid #eef2ff; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#374151; margin-bottom:12px; }
+    
+    /* Typing input - KATTA va FOCUS */
+    #typing-input { 
+        font-size: 1.125rem; 
+        line-height: 1.8;
+        padding: 1.5rem; 
+        min-height: 180px;
+        border: 3px solid rgba(41, 41, 41, 0.2);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        resize: none;
+    }
+    #typing-input:focus {
+        border-color: #292929;
+        box-shadow: 0 0 0 4px rgba(41, 41, 41, 0.1), 0 10px 25px rgba(0, 0, 0, 0.1);
+        outline: none;
+    }
+    
+    /* Action buttons - kompakt */
+    .action-buttons > * { 
+        padding: 0.5rem 1rem; 
+        font-size: 0.875rem; 
+    }
+    
+    /* Practice container - markazda */
+    .practice-container { 
+        max-width: 900px; 
+        margin: 0 auto; 
+        padding: 1rem; 
+    }
+    
+    /* Header - kompakt */
+    .practice-header { 
+        display: flex; 
+        gap: 12px; 
+        align-items: center; 
+        justify-content: space-between; 
+        padding: 0.75rem;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    
+    /* Instructions - minimal */
+    .practice-instructions { 
+        background: #f8fafc; 
+        border: 1px solid #eef2ff; 
+        padding: 8px 12px; 
+        border-radius: 8px; 
+        font-size: 0.875rem; 
+        color: #374151; 
+        margin-bottom: 1rem;
+    }
+    
+    /* Focus mode - typing boshlanganda */
+    .focus-mode .practice-header {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+    .focus-mode .stats-compact {
+        opacity: 0.75;
+        transition: opacity 0.3s ease;
+    }
+    
     @media (max-width: 768px) {
-        .practice-instructions { font-size:0.9rem; }
+        .practice-container {
+            padding: 0.5rem;
+        }
+        #text-display {
+            font-size: 1.125rem;
+            padding: 1.5rem;
+            min-height: 200px;
+            max-height: 300px;
+        }
+        #typing-input {
+            font-size: 1rem;
+            padding: 1.25rem;
+            min-height: 150px;
+        }
+        .stats-compact {
+            gap: 1rem;
+            padding: 0.5rem;
+        }
+        .stats-compact .stat-value {
+            font-size: 1rem;
+        }
+        .practice-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .action-buttons {
+            width: 100%;
+            justify-content: space-between;
+        }
     }
 </style>
 {% endblock %}
@@ -66,92 +184,91 @@
      data-text-body="{% if text_body %}{{ text_body|escapejs }}{% else %}{{ text.body|escapejs }}{% endif %}"
      data-mode="{{ mode|default:'full' }}"
      data-time-limit="{{ time_limit|default:0 }}">
-    <!-- Stats Cards at top -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="stats-card wpm">
-            <p class="text-sm font-medium opacity-90 mb-1">WPM <span class="text-xs opacity-75">(Soatda so'zlar)</span></p>
-            <p class="text-3xl font-bold" id="wpm">0</p>
+    <!-- Minimal Header -->
+    <div class="practice-header mb-4">
+        <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-semibold text-primary">{{ text.title }}</h2>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                {% if difficulty == 'easy' %}🌱 Oson{% else %}🔥 Qiyin{% endif %}
+            </span>
         </div>
-        <div class="stats-card accuracy">
-            <p class="text-sm font-medium opacity-90 mb-1">Aniqlik</p>
-            <p class="text-3xl font-bold" id="accuracy">100%</p>
-        </div>
-        <div class="stats-card time">
-            <p class="text-sm font-medium opacity-90 mb-1">Vaqt</p>
-            <p class="text-3xl font-bold" id="timer">0s</p>
-        </div>
-        <div class="stats-card cpm">
-            <p class="text-sm font-medium opacity-90 mb-1">CPM</p>
-            <p class="text-3xl font-bold" id="cpm">0</p>
+        <div class="flex items-center gap-2 action-buttons">
+            <button id="reset-btn" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Qayta boshlash (Ctrl+R)">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            </button>
+            <a href="?mode={{ mode }}&words_count={{ words_count }}&time_limit={{ time_limit }}&text_length={{ text_length }}&action=random" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Random matn">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            </a>
+            <a href="?mode={{ mode }}&words_count={{ words_count }}&time_limit={{ time_limit }}&text_length={{ text_length }}&action=next&text_id={{ text.id }}" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Keyingi matn">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
         </div>
     </div>
 
-    <!-- Achievements small panel -->
-    <div id="achievements-panel" class="mb-4 text-sm text-gray-700"></div>
-
-    <!-- Main Content - Text and Typing Area -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <div class="mb-4 practice-header">
-            <div>
-                <h2 class="text-xl font-bold text-primary mb-1">{{ text.title }}</h2>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {% if difficulty == 'easy' %}bg-gray-200 text-primary{% else %}bg-gray-200 text-primary{% endif %}">
-                    {% if difficulty == 'easy' %}🌱{% else %}🔥{% endif %}
-                    <span class="ml-1">{{ difficulty|title }}</span>
-                </span>
-            </div>
-            <div class="flex flex-wrap gap-2 action-buttons">
-                <button id="reset-btn" class="flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    <span>Qayta</span>
-                </button>
-                <a href="?mode={{ mode }}&words_count={{ words_count }}&time_limit={{ time_limit }}&text_length={{ text_length }}&action=random" class="flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    <span>Random</span>
-                </a>
-                <a href="?mode={{ mode }}&words_count={{ words_count }}&time_limit={{ time_limit }}&text_length={{ text_length }}&action=next&text_id={{ text.id }}" class="flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-md">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                    <span>Keyingi</span>
-                </a>
-                <button id="finish-btn" class="flex items-center space-x-2 gradient-secondary text-primary px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Tugatish</span>
-                </button>
-            </div>
+    <!-- Kompakt Stats (1 qator) -->
+    <div class="stats-compact mb-4" id="stats-compact">
+        <div class="stat-item">
+            <p class="stat-label">WPM</p>
+            <p class="stat-value text-primary" id="wpm">0</p>
         </div>
-        
-        <!-- Instructions -->
-        <div class="practice-instructions" id="practice-instructions">
-            Boshlash uchun yozishni boshlang — matn uzun bo'lsa ichki maydonda skroll qiling. <strong>Ctrl+R</strong> — qayta boshlash, <strong>?</strong> — yordamni ko'rsatish/yo'qotish.
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <p class="stat-label">Aniqlik</p>
+            <p class="stat-value text-green-600" id="accuracy">100%</p>
         </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <p class="stat-label">Vaqt</p>
+            <p class="stat-value text-blue-600" id="timer">0s</p>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <p class="stat-label">CPM</p>
+            <p class="stat-value text-purple-600" id="cpm">0</p>
+        </div>
+    </div>
 
-        <!-- Text Display - Larger and more prominent (scrolls internally) -->
-        <div id="text-display" role="region" aria-label="Practice text" class="text-base leading-relaxed bg-gray-50 rounded-lg border-2 border-gray-200 mb-6 font-sans text-primary" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
+    <!-- Main Focus Area - KATTA va MARKAZDA -->
+    <div class="bg-white rounded-xl shadow-xl p-6 sm:p-8">
+        <!-- Text Display - KATTA va MARKAZDA -->
+        <div id="text-display" 
+             role="region" 
+             aria-label="Practice text" 
+             class="text-lg sm:text-xl leading-relaxed bg-gray-50 rounded-xl border-3 border-primary/20 mb-6 font-sans text-primary shadow-inner"
+             style="border: 3px solid rgba(41, 41, 41, 0.15);"
+             style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.02em; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
             <!-- Text will be loaded here -->
         </div>
-        <div class="mb-4">
+        
+        <!-- Progress Bar - kattalashtirilgan -->
+        <div class="mb-6">
             <div class="progress-wrap">
                 <div id="progress-bar" class="progress-bar"></div>
             </div>
         </div>
         
-        <!-- Typing Input - Larger and more prominent -->
+        <!-- Typing Input - KATTA va FOCUS -->
         <textarea 
             id="typing-input" 
-            class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary font-sans text-primary placeholder-gray-400 transition-all duration-300" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.01em;"
-            rows="4"
+            class="w-full bg-white rounded-xl border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/20 font-sans text-primary placeholder-gray-400 transition-all duration-300 shadow-lg resize-none"
+            style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; letter-spacing: 0.02em; border: 3px solid rgba(41, 41, 41, 0.2);"
+            rows="6"
             placeholder="Bu yerga yozishni boshlang..."
             autofocus
             spellcheck="false"
             aria-label="Typing input"
         ></textarea>
+        
+        <!-- Minimal Instructions -->
+        <div class="mt-4 text-center text-xs text-gray-500">
+            <kbd class="px-2 py-1 bg-gray-100 rounded text-xs">Ctrl+R</kbd> qayta boshlash
+        </div>
     </div>
     
     <!-- Results -->
@@ -307,8 +424,9 @@ typingInput.addEventListener('input', (e) => {
 
 function updateDisplay() {
     const typed = typingInput.value;
+    const typedTrimmed = typed.trim();
     const words = originalText.trim().split(/\s+/);
-    const typedWords = typed.trim().split(/\s+/);
+    const typedWords = typedTrimmed.split(/\s+/);
     const original = originalText.trim();
     
     let html = '';
@@ -317,14 +435,14 @@ function updateDisplay() {
     
     // Calculate character-level mistakes first (for accurate accuracy)
     let charMistakes = 0;
-    const minLen = Math.min(typed.length, original.length);
+    const minLen = Math.min(typedTrimmed.length, original.length);
     for (let i = 0; i < minLen; i++) {
-        if (typed[i] !== original[i]) {
+        if (typedTrimmed[i] !== original[i]) {
             charMistakes++;
         }
     }
     // Add extra or missing characters as mistakes
-    charMistakes += Math.abs(typed.length - original.length);
+    charMistakes += Math.abs(typedTrimmed.length - original.length);
     
     // Also track word-level mistakes for mistakesList
     words.forEach((word, i) => {
@@ -354,7 +472,7 @@ function updateDisplay() {
     
     // Prefer per-character rendering if available for finer feedback
     if(window.TP_utils && window.TP_utils.renderPerChar){
-        textDisplay.innerHTML = window.TP_utils.renderPerChar(original, typed);
+        textDisplay.innerHTML = window.TP_utils.renderPerChar(original, typedTrimmed);
     } else {
         textDisplay.innerHTML = html;
     }
@@ -362,7 +480,7 @@ function updateDisplay() {
     // Calculate stats
     if (startTime) {
         const elapsed = (Date.now() - startTime) / 1000;
-        const typedChars = typed.length;
+        const typedChars = typedTrimmed.length;
         const correctChars = typedChars - mistakes;
         const wpm = (typedWords.length / elapsed) * 60;
         const cpm = (typedChars / elapsed) * 60;
@@ -377,10 +495,10 @@ function updateDisplay() {
         // progress bar (by chars)
         const progressBar = document.getElementById('progress-bar');
         if(progressBar){
-            if(window.TP_utils) window.TP_utils.updateProgressBar(progressBar, originalText.trim(), typed);
+            if(window.TP_utils) window.TP_utils.updateProgressBar(progressBar, original, typedTrimmed);
             else {
-                const total = originalText.trim().length || 1;
-                const pct = Math.min(100, Math.round((typed.length/total)*100));
+                const total = original.length || 1;
+                const pct = Math.min(100, Math.round((typedTrimmed.length/total)*100));
                 progressBar.style.width = pct + '%';
             }
         }
@@ -389,7 +507,7 @@ function updateDisplay() {
         let canFinish = false;
         if (mode === 'time' && timeLimit > 0 && elapsed >= timeLimit) {
             canFinish = true;
-        } else if (typedWords.length >= words.length && typed.trim().length >= originalText.trim().length) {
+        } else if (typedWords.length >= words.length && typedTrimmed.length >= original.length) {
             canFinish = true;
         }
         finishBtn.disabled = !canFinish;
@@ -405,6 +523,12 @@ function startTyping() {
     if (!startTime) {
         startTime = Date.now();
         timerInterval = setInterval(updateDisplay, 100);
+        
+        // Focus mode - minimize distractions
+        document.querySelector('.practice-container')?.classList.add('focus-mode');
+        
+        // Focus on input
+        typingInput.focus();
     }
 }
 
@@ -504,6 +628,10 @@ function reset() {
     timerInterval = null;
     finishBtn.disabled = true;
     resultsDiv.classList.add('hidden');
+    
+    // Remove focus mode
+    document.querySelector('.practice-container')?.classList.remove('focus-mode');
+    
     initTextDisplay();
     document.getElementById('wpm').textContent = '0';
     document.getElementById('accuracy').textContent = '100%';
@@ -518,9 +646,9 @@ if (finishBtn) {
     finishBtn.addEventListener('click', () => {
         if (!startTime) return;
         
-        const typed = typingInput.value;
+        const typed = typingInput.value.trim();
         const words = originalText.trim().split(/\s+/);
-        const typedWords = typed.trim().split(/\s+/);
+        const typedWords = typed.split(/\s+/);
         const original = originalText.trim();
         
         // Calculate character-level mistakes (same as updateDisplay)
@@ -548,7 +676,8 @@ if (finishBtn) {
 resetBtn.addEventListener('click', reset);
 
 initTextDisplay();
-// Remove the visible finish button — sessions finish automatically when complete or time expires
+
+// Remove finish button - auto-finish is enabled
 if (finishBtn && finishBtn.parentNode) {
     finishBtn.parentNode.removeChild(finishBtn);
 }
