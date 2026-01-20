@@ -85,6 +85,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Allauth middleware
     'typing_platform.middleware.ActiveUserMiddleware',
+    'typing_platform.middleware.NoCacheMiddleware',  # HTML sahifalar uchun cache'ni o'chirish
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
