@@ -13,9 +13,14 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file
+load_dotenv(BASE_DIR / '.env')
+
 # Ensure log directory exists
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -317,9 +322,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'OAUTH_PKCE_ENABLED': True,  # Security uchun
         'APP': {
-            # NOTE: Static qiymatlar (env o‘rniga). Prod uchun real credentiallarni kiriting.
-            'client_id': '202337754756-lttbmrnmh2i5sj7a5cj0p28hstib40gq.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': get_env_variable('GOOGLE_CLIENT_ID', ''),
+            'secret': get_env_variable('GOOGLE_CLIENT_SECRET', ''),
             'key': ''
         }
     }
