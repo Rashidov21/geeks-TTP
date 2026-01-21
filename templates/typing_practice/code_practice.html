@@ -319,9 +319,25 @@ function animateCounter(el, from, to, duration=800){
 const codeId = {{ code.id }};
 const originalCode = `{{ code.code_body|escapejs }}`;
 let startTime = null;
+let startPerformanceTime = null; // performance.now() vaqtini saqlash
 let timerInterval = null;
+let animationFrameId = null;
 let isFinished = false;
 let mistakesList = [];
+
+// localStorage dan vaqtni tiklash (agar reload bo'lsa)
+const savedStartTime = localStorage.getItem('codePracticeStartTime');
+const savedStartPerformanceTime = localStorage.getItem('codePracticeStartPerformanceTime');
+if (savedStartTime && savedStartPerformanceTime) {
+    const elapsed = performance.now() - parseFloat(savedStartPerformanceTime);
+    if (elapsed < 3600000) { // 1 soatdan kam bo'lsa
+        startTime = parseFloat(savedStartTime);
+        startPerformanceTime = parseFloat(savedStartPerformanceTime);
+    } else {
+        localStorage.removeItem('codePracticeStartTime');
+        localStorage.removeItem('codePracticeStartPerformanceTime');
+    }
+}
 
 const codeDisplay = document.getElementById('code-display');
 const typingInput = document.getElementById('typing-input');
@@ -486,8 +502,9 @@ function updateDisplay() {
     hljs.highlightAll();
     
     // Calculate stats
-    if (startTime) {
-        const elapsed = (Date.now() - startTime) / 1000;
+    if (startTime && startPerformanceTime) {
+        // performance.now() ishlatish - browser busy bo'lganda ham to'g'ri ishlaydi
+        const elapsed = (performance.now() - startPerformanceTime) / 1000;
         const typedChars = typed.length;
         const correctChars = typedChars - mistakes;
         const wpm = (typedChars / 5 / elapsed) * 60;
@@ -509,8 +526,8 @@ function updateDisplay() {
                 }
             }
         
-        // Check if finished
-        if (typed.trim() === originalCode.trim()) {
+        // Auto-finish when text is completed
+        if (typed.trim() === originalCode.trim() && !isFinished) {
             finishTyping(wpm, accuracy, mistakes);
         }
     }
@@ -522,11 +539,30 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function updateDisplayAnimation() {
+    updateDisplay();
+    if (!isFinished && startTime) {
+        animationFrameId = requestAnimationFrame(updateDisplayAnimation);
+    }
+}
+
 function startTyping() {
     if (!startTime) {
         startTime = Date.now();
-        timerInterval = setInterval(updateDisplay, 100);
-        finishBtn.disabled = false;
+        startPerformanceTime = performance.now();
+        
+        // localStorage ga saqlash (reload qilganda ham ishlashi uchun)
+        localStorage.setItem('codePracticeStartTime', startTime.toString());
+        localStorage.setItem('codePracticeStartPerformanceTime', startPerformanceTime.toString());
+        
+        // requestAnimationFrame ishlatish - smooth va accurate
+        animationFrameId = requestAnimationFrame(updateDisplayAnimation);
+        // Fallback uchun setInterval ham qo'shamiz (kamdan-kam hollarda)
+        timerInterval = setInterval(updateDisplay, 500);
+        
+        if (finishBtn) {
+            finishBtn.disabled = false;
+        }
         
         // Focus mode - minimize distractions
         document.querySelector('.practice-container')?.classList.add('focus-mode');
@@ -540,11 +576,24 @@ function finishTyping(wpm, accuracy, mistakes) {
     if (isFinished) return;
     isFinished = true;
     
+    // Timer'ni to'xtatish
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
     clearInterval(timerInterval);
-    typingInput.disabled = true;
-    finishBtn.disabled = true;
+    timerInterval = null;
     
-    const duration = (Date.now() - startTime) / 1000;
+    // localStorage dan o'chirish
+    localStorage.removeItem('codePracticeStartTime');
+    localStorage.removeItem('codePracticeStartPerformanceTime');
+    
+    typingInput.disabled = true;
+    if (finishBtn) {
+        finishBtn.disabled = true;
+    }
+    
+    const duration = startPerformanceTime ? (performance.now() - startPerformanceTime) / 1000 : 0;
     
     document.getElementById('result-wpm').textContent = Math.round(wpm);
     document.getElementById('result-accuracy').textContent = Math.round(accuracy) + '%';
@@ -632,13 +681,27 @@ function reset() {
     typingInput.value = '';
     typingInput.disabled = false;
     startTime = null;
+    startPerformanceTime = null;
     isFinished = false;
     mistakesList = [];
     lastTypedLength = 0;
     expectedNextChar = originalCode[0] || null;
+    
+    // Timer'ni to'xtatish
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
     clearInterval(timerInterval);
     timerInterval = null;
-    finishBtn.disabled = true;
+    
+    // localStorage dan o'chirish
+    localStorage.removeItem('codePracticeStartTime');
+    localStorage.removeItem('codePracticeStartPerformanceTime');
+    
+    if (finishBtn) {
+        finishBtn.disabled = true;
+    }
     resultsDiv.classList.add('hidden');
     
     // Remove focus mode
@@ -672,7 +735,7 @@ if (finishBtn) {
         // Add extra or missing characters as mistakes
         charMistakes += Math.abs(typed.length - original.length);
         
-        const elapsed = (Date.now() - startTime) / 1000;
+        const elapsed = startPerformanceTime ? (performance.now() - startPerformanceTime) / 1000 : 0;
         const typedChars = typed.length;
         const mistakes = charMistakes;
         const correctChars = typedChars - mistakes;

@@ -23,5 +23,6 @@ urlpatterns = [
 
 # Custom error handlers
 handler404 = 'typing_platform.views.custom_404'
+handler500 = 'typing_platform.views.custom_500'
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

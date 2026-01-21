@@ -329,9 +329,25 @@ const originalText = container.getAttribute('data-text-body') || '';
 const mode = container.getAttribute('data-mode') || 'full';
 const timeLimit = parseInt(container.getAttribute('data-time-limit') || '0', 10);
 let startTime = null;
+let startPerformanceTime = null; // performance.now() vaqtini saqlash
 let timerInterval = null;
+let animationFrameId = null;
 let isFinished = false;
 let mistakesList = [];
+
+// localStorage dan vaqtni tiklash (agar reload bo'lsa)
+const savedStartTime = localStorage.getItem('textPracticeStartTime');
+const savedStartPerformanceTime = localStorage.getItem('textPracticeStartPerformanceTime');
+if (savedStartTime && savedStartPerformanceTime) {
+    const elapsed = performance.now() - parseFloat(savedStartPerformanceTime);
+    if (elapsed < 3600000) { // 1 soatdan kam bo'lsa
+        startTime = parseFloat(savedStartTime);
+        startPerformanceTime = parseFloat(savedStartPerformanceTime);
+    } else {
+        localStorage.removeItem('textPracticeStartTime');
+        localStorage.removeItem('textPracticeStartPerformanceTime');
+    }
+}
 
 const textDisplay = document.getElementById('text-display');
 const typingInput = document.getElementById('typing-input');
@@ -478,8 +494,9 @@ function updateDisplay() {
     }
     
     // Calculate stats
-    if (startTime) {
-        const elapsed = (Date.now() - startTime) / 1000;
+    if (startTime && startPerformanceTime) {
+        // performance.now() ishlatish - browser busy bo'lganda ham to'g'ri ishlaydi
+        const elapsed = (performance.now() - startPerformanceTime) / 1000;
         const typedChars = typedTrimmed.length;
         const correctChars = typedChars - mistakes;
         const wpm = (typedWords.length / elapsed) * 60;
@@ -507,10 +524,13 @@ function updateDisplay() {
         let canFinish = false;
         if (mode === 'time' && timeLimit > 0 && elapsed >= timeLimit) {
             canFinish = true;
-        } else if (typedWords.length >= words.length && typedTrimmed.length >= original.length) {
+        } else if (typedTrimmed === original) {
+            // Matn to'liq yozilgan (trim qilingan holatda mos keladi)
             canFinish = true;
         }
-        finishBtn.disabled = !canFinish;
+        if (finishBtn) {
+            finishBtn.disabled = !canFinish;
+        }
 
         // Auto-finish when allowed (time-mode or completed text)
         if (canFinish && !isFinished) {
@@ -519,10 +539,26 @@ function updateDisplay() {
     }
 }
 
+function updateDisplayAnimation() {
+    updateDisplay();
+    if (!isFinished && startTime) {
+        animationFrameId = requestAnimationFrame(updateDisplayAnimation);
+    }
+}
+
 function startTyping() {
     if (!startTime) {
         startTime = Date.now();
-        timerInterval = setInterval(updateDisplay, 100);
+        startPerformanceTime = performance.now();
+        
+        // localStorage ga saqlash (reload qilganda ham ishlashi uchun)
+        localStorage.setItem('textPracticeStartTime', startTime.toString());
+        localStorage.setItem('textPracticeStartPerformanceTime', startPerformanceTime.toString());
+        
+        // requestAnimationFrame ishlatish - smooth va accurate
+        animationFrameId = requestAnimationFrame(updateDisplayAnimation);
+        // Fallback uchun setInterval ham qo'shamiz (kamdan-kam hollarda)
+        timerInterval = setInterval(updateDisplay, 500);
         
         // Focus mode - minimize distractions
         document.querySelector('.practice-container')?.classList.add('focus-mode');
@@ -536,9 +572,22 @@ function finishTyping(wpm, cpm, accuracy, mistakes) {
     if (isFinished) return;
     isFinished = true;
     
+    // Timer'ni to'xtatish
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
     clearInterval(timerInterval);
+    timerInterval = null;
+    
+    // localStorage dan o'chirish
+    localStorage.removeItem('textPracticeStartTime');
+    localStorage.removeItem('textPracticeStartPerformanceTime');
+    
     typingInput.disabled = true;
-    finishBtn.disabled = true;
+    if (finishBtn) {
+        finishBtn.disabled = true;
+    }
     
     document.getElementById('result-wpm').textContent = Math.round(wpm);
     document.getElementById('result-cpm').textContent = Math.round(cpm);
@@ -547,7 +596,7 @@ function finishTyping(wpm, cpm, accuracy, mistakes) {
     resultsDiv.classList.remove('hidden');
     
     // Save result
-    const duration = (Date.now() - startTime) / 1000;
+    const duration = startPerformanceTime ? (performance.now() - startPerformanceTime) / 1000 : 0;
     // determine if incomplete result is allowed (time mode)
     const elapsed = duration;
     const allow_incomplete = (mode === 'time' && timeLimit > 0 && elapsed >= timeLimit);
@@ -620,13 +669,27 @@ function reset() {
     typingInput.value = '';
     typingInput.disabled = false;
     startTime = null;
+    startPerformanceTime = null;
     isFinished = false;
     mistakesList = [];
     lastTypedLength = 0;
     expectedNextChar = originalText.trim()[0] || null;
+    
+    // Timer'ni to'xtatish
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
     clearInterval(timerInterval);
     timerInterval = null;
-    finishBtn.disabled = true;
+    
+    // localStorage dan o'chirish
+    localStorage.removeItem('textPracticeStartTime');
+    localStorage.removeItem('textPracticeStartPerformanceTime');
+    
+    if (finishBtn) {
+        finishBtn.disabled = true;
+    }
     resultsDiv.classList.add('hidden');
     
     // Remove focus mode
@@ -662,7 +725,7 @@ if (finishBtn) {
         // Add extra or missing characters as mistakes
         charMistakes += Math.abs(typed.length - original.length);
         
-        const elapsed = (Date.now() - startTime) / 1000;
+        const elapsed = startPerformanceTime ? (performance.now() - startPerformanceTime) / 1000 : 0;
         const typedChars = typed.length;
         const mistakes = charMistakes;
         const correctChars = typedChars - mistakes;
