@@ -19,6 +19,7 @@ urlpatterns = [
     path('competitions/', include('competitions.urls')),
     path('leaderboard/', include('leaderboard.urls')),
     path('battles/', include('battles.urls')),
+    path('captcha/', include('captcha.urls')),
 ]
 
 # Custom error handlers

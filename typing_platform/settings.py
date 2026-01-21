@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
-    # captcha (Google reCAPTCHA)
+    # captcha (django-simple-captcha)
     'captcha',
     
     'accounts',
