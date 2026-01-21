@@ -19,14 +19,9 @@ from typing_practice.models import UserResult
 from competitions.models import CompetitionParticipant
 
 
-def google_login_redirect(request):
-    """
-    Allauth ning standart URL'iga redirect qilish
-    process='login' parametri bilan to'g'ridan-to'g'ri Google ga o'tish
-    """
-    # Allauth'ning standart Google login URL'iga redirect
-    # /accounts/google/login/?process=login
-    return redirect('/accounts/google/login/?process=login')
+# google_login_redirect funksiyasi o'chirildi
+# Allauth allaqachon /accounts/google/login/ URL'ini ta'minlaydi
+# Template'larda {% provider_login_url 'google' process='login' %} ishlatiladi
 
 
 def register_view(request):

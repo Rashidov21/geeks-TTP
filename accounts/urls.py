@@ -5,8 +5,8 @@ from . import views
 app_name = 'accounts'
 
 urlpatterns = [
-    # Google login - allauth dan oldin, to'g'ridan-to'g'ri Google ga o'tish uchun
-    path('google/login/', views.google_login_redirect, name='google_login_redirect'),
+    # Google login allauth tomonidan ta'minlanadi (/accounts/google/login/)
+    # Shuning uchun bu yerda alohida path kerak emas
     
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
