@@ -351,21 +351,47 @@ EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', 'django.core.mail.backends.con
 
 # SMTP sozlamalari (Production uchun)
 # Quyidagilarni .env faylga qo'shing:
+# Gmail misoli:
 # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 # EMAIL_HOST=smtp.gmail.com
 # EMAIL_PORT=587
 # EMAIL_USE_TLS=True
+# EMAIL_USE_SSL=False
 # EMAIL_HOST_USER=your-email@gmail.com
 # EMAIL_HOST_PASSWORD=your-app-password
 # DEFAULT_FROM_EMAIL=your-email@gmail.com
+# SERVER_EMAIL=your-email@gmail.com
+#
+# Yandex misoli:
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.yandex.ru
+# EMAIL_PORT=465
+# EMAIL_USE_TLS=False
+# EMAIL_USE_SSL=True
+# EMAIL_HOST_USER=your-email@ya.ru
+# EMAIL_HOST_PASSWORD=your-app-password
+# DEFAULT_FROM_EMAIL=your-email@ya.ru
+# SERVER_EMAIL=your-email@ya.ru
 
 if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     EMAIL_HOST = get_env_variable('EMAIL_HOST', 'smtp.gmail.com')
     EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '587'))
+    
+    # TLS yoki SSL - environment variable orqali
     EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_USE_SSL = get_env_variable('EMAIL_USE_SSL', 'False') == 'True'
+    
+    # Agar ikkalasi ham True bo'lsa, faqat TLS ishlatiladi (Django default)
+    # Yandex uchun port 465 va SSL kerak
+    if EMAIL_USE_SSL:
+        EMAIL_USE_TLS = False
+    
     EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '')
+    
+    # DEFAULT_FROM_EMAIL va SERVER_EMAIL
     DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+    SERVER_EMAIL = get_env_variable('SERVER_EMAIL', EMAIL_HOST_USER)
 
 # HTTPS uchun (production)
 if not DEBUG:
