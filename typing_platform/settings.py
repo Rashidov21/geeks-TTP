@@ -394,5 +394,5 @@ if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     SERVER_EMAIL = get_env_variable('SERVER_EMAIL', EMAIL_HOST_USER)
 
 # HTTPS uchun (production)
-if not DEBUG:
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+# if not DEBUG:
+#     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

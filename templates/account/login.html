@@ -64,6 +64,11 @@
                 <span>{{ form.password.errors.0 }}</span>
             </p>
             {% endif %}
+            <div class="mt-2 text-right">
+                <a href="{% url 'accounts:password_reset' %}" class="text-sm text-primary hover:text-primary-dark hover:underline transition-colors duration-300">
+                    Parolni unutdingizmi?
+                </a>
+            </div>
         </div>
 
         <div class="flex items-center">

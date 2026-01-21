@@ -294,7 +294,10 @@ class CustomPasswordResetView(PasswordResetView):
     """Password reset so'rov sahifasi"""
     form_class = PasswordResetRequestForm
     template_name = 'accounts/password_reset.html'
-    email_template_name = 'accounts/password_reset_email.html'
+    # Text version (fallback)
+    email_template_name = 'accounts/password_reset_email.txt'
+    # HTML version
+    html_email_template_name = 'accounts/password_reset_email.html'
     subject_template_name = 'accounts/password_reset_subject.txt'
     success_url = reverse_lazy('accounts:password_reset_done')
     
