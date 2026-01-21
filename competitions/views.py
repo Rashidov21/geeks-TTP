@@ -92,7 +92,7 @@ def competition_detail(request, competition_id):
 @login_required
 def competition_create(request):
     if not request.user.userprofile.is_manager:
-        messages.error(request, 'Only managers can create competitions')
+        messages.error(request, 'Faqat menejerlar musobaqa yarata oladi')
         return redirect('competitions:list')
     
     if request.method == 'POST':
@@ -193,7 +193,7 @@ def competition_create(request):
             users = User.objects.filter(id__in=user_ids)
             competition.participants.set(users)
         
-        messages.success(request, f'Competition "{name}" created with 3 stages!')
+        messages.success(request, f'Musobaqa "{name}" 3 bosqich bilan yaratildi!')
         return redirect('competitions:detail', competition_id=competition.id)
     
     # GET request
@@ -215,7 +215,7 @@ def competition_join(request, competition_id):
         # only allow join if the user was pre-added or is a manager.
         if competition.access_code:
             if access_code != competition.access_code:
-                messages.error(request, 'Invalid access code')
+                messages.error(request, 'Noto\'g\'ri kirish kodi')
                 return redirect('competitions:detail', competition_id=competition.id)
         else:
             if not competition.is_public:
@@ -230,9 +230,9 @@ def competition_join(request, competition_id):
         )
         
         if created:
-            messages.success(request, 'You have joined the competition!')
+            messages.success(request, 'Musobaqaga qo\'shildingiz!')
         else:
-            messages.info(request, 'You are already in this competition')
+            messages.info(request, 'Siz allaqachon bu musobaqadasiz')
         
         return redirect('competitions:detail', competition_id=competition.id)
     
@@ -244,13 +244,13 @@ def competition_start(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
     
     if competition.created_by != request.user:
-        messages.error(request, 'Only the creator can start the competition')
+        messages.error(request, 'Faqat musobaqa yaratuvchisi uni boshlashi mumkin')
         return redirect('competitions:detail', competition_id=competition.id)
     
     competition.status = 'active'
     competition.save()
     
-    messages.success(request, 'Competition started!')
+    messages.success(request, 'Musobaqa boshlandi!')
     return redirect('competitions:detail', competition_id=competition.id)
 
 
@@ -259,7 +259,7 @@ def competition_finish(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
     
     if competition.created_by != request.user:
-        messages.error(request, 'Only the creator can finish the competition')
+        messages.error(request, 'Faqat musobaqa yaratuvchisi uni tugatishi mumkin')
         return redirect('competitions:detail', competition_id=competition.id)
     
     competition.status = 'finished'
@@ -269,7 +269,7 @@ def competition_finish(request, competition_id):
     if competition.enable_certificates:
         Certificate.objects.get_or_create(competition=competition)
     
-    messages.success(request, 'Competition finished!')
+    messages.success(request, 'Musobaqa tugallandi!')
     return redirect('competitions:results', competition_id=competition.id)
 
 

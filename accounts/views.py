@@ -36,7 +36,8 @@ def register_view(request):
             UserProfile.objects.get_or_create(user=user, defaults={'is_manager': False})
             username = form.cleaned_data.get('username')
             messages.success(request, f'Hisob muvaffaqiyatli yaratildi, {username}!')
-            login(request, user)
+            # Backend'ni ko'rsatish (multiple backends bo'lganda majburiy)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('dashboard')
         else:
             # Convert form errors to Uzbek
@@ -77,7 +78,8 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 if user.is_active:
-                    login(request, user)
+                    # Backend'ni ko'rsatish (multiple backends bo'lganda majburiy)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     messages.success(request, f'Xush kelibsiz, {username}!')
                     return redirect('dashboard')
                 else:
@@ -250,6 +252,8 @@ def profile_edit(request):
             user = request.user
             user.first_name = form.cleaned_data.get('first_name', '')
             user.last_name = form.cleaned_data.get('last_name', '')
+            user.username = form.cleaned_data.get('username', user.username)
+            user.email = form.cleaned_data.get('email', user.email)
             user.save()
             messages.success(request, 'Profil muvaffaqiyatli yangilandi!')
             return redirect('accounts:profile')
@@ -283,7 +287,7 @@ def mark_notification_read(request, notification_id):
         notification.save()
         return JsonResponse({'success': True})
     except Notification.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Bildirishnoma topilmadi'}, status=404)
 
 
 @login_required

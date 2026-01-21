@@ -496,7 +496,7 @@ def battle_invite(request):
         time_limit = int(request.POST.get('time_limit', 300))
         
         if not username:
-            messages.error(request, 'Username kiritilmadi.')
+            messages.error(request, 'Foydalanuvchi nomi kiritilmadi.')
             return redirect('battles:list')
         
         try:
@@ -621,7 +621,7 @@ def battle_opponent_progress(request, battle_id):
     battle = get_object_or_404(Battle, id=battle_id)
     
     if battle.creator != request.user and battle.opponent != request.user:
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        return JsonResponse({'error': 'Ruxsat berilmagan'}, status=403)
     
     opponent = battle.opponent if battle.creator == request.user else battle.creator
     participant = BattleParticipant.objects.filter(battle=battle, user=opponent).first()

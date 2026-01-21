@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from .models import UserProfile
 import re
 from captcha.fields import CaptchaField
@@ -87,6 +88,23 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    username = forms.CharField(
+        label='Foydalanuvchi nomi',
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-primary',
+            'placeholder': 'Foydalanuvchi nomi'
+        })
+    )
+    email = forms.EmailField(
+        label='Email',
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-primary',
+            'placeholder': 'Email'
+        })
+    )
     first_name = forms.CharField(
         label='Ism',
         max_length=150,
@@ -140,6 +158,20 @@ class UserProfileForm(forms.ModelForm):
         if self.instance and self.instance.user:
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['username'].initial = self.instance.user.username
+            self.fields['email'].initial = self.instance.user.email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username__iexact=username).exclude(id=self.instance.user.id).exists():
+            raise ValidationError('Bu foydalanuvchi nomi allaqachon mavjud.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        if User.objects.filter(email__iexact=email).exclude(id=self.instance.user.id).exists():
+            raise ValidationError('Bu email allaqachon mavjud.')
+        return email
 
 
 class PasswordResetRequestForm(PasswordResetForm):

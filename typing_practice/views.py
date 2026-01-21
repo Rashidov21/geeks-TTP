@@ -190,7 +190,7 @@ def save_result(request):
         
         # Validate that only one ID is provided
         if not (text_id or code_id) or (text_id and code_id):
-            return JsonResponse({'error': 'Invalid request: provide either text_id or code_id'}, status=400)
+            return JsonResponse({'error': 'Noto\'g\'ri so\'rov: text_id yoki code_id dan birini kiriting'}, status=400)
         
         # Validate and sanitize input
         try:
@@ -203,7 +203,7 @@ def save_result(request):
             duration_seconds = max(0, int(data.get('duration_seconds', 0)))
         except (ValueError, TypeError) as e:
             logger.warning(f"Invalid data in save_result: {e}")
-            return JsonResponse({'error': 'Invalid data format'}, status=400)
+            return JsonResponse({'error': 'Noto\'g\'ri ma\'lumot formati'}, status=400)
         
         # Validate text/code exists and perform server-side normalization/validation
         typed_text = data.get('typed_text', '')
@@ -230,7 +230,7 @@ def save_result(request):
             try:
                 text = Text.objects.get(id=text_id)
             except Text.DoesNotExist:
-                return JsonResponse({'error': 'Text not found'}, status=404)
+                return JsonResponse({'error': 'Matn topilmadi'}, status=404)
 
             original_norm = normalize_text(text.body)
             typed_norm = normalize_text(typed_text)
@@ -238,7 +238,7 @@ def save_result(request):
             # If not time-mode allowed, require full match
             if not (allow_incomplete and mode == 'time' and duration_seconds >= time_limit_sent):
                 if typed_norm != original_norm:
-                    return JsonResponse({'error': 'Text not fully typed'}, status=400)
+                    return JsonResponse({'error': 'Matn to\'liq yozilmagan'}, status=400)
 
             # compute server-side metrics
             typed_chars = len(typed_norm)
@@ -264,7 +264,7 @@ def save_result(request):
             try:
                 code = CodeSnippet.objects.get(id=code_id)
             except CodeSnippet.DoesNotExist:
-                return JsonResponse({'error': 'Code snippet not found'}, status=404)
+                return JsonResponse({'error': 'Kod namunasi topilmadi'}, status=404)
 
             original_norm = normalize_code(code.code_body)
             typed_norm = normalize_code(typed_text)
@@ -272,7 +272,7 @@ def save_result(request):
             # If not time-mode allowed, require full match
             if not (allow_incomplete and mode == 'time' and duration_seconds >= time_limit_sent):
                 if typed_norm != original_norm:
-                    return JsonResponse({'error': 'Code not fully typed'}, status=400)
+                    return JsonResponse({'error': 'Kod to\'liq yozilmagan'}, status=400)
 
             # compute server-side metrics for code (chars based)
             typed_chars = len(typed_norm)
@@ -330,10 +330,10 @@ def save_result(request):
     
     except json.JSONDecodeError:
         logger.error("Invalid JSON in save_result request")
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({'error': 'Noto\'g\'ri JSON formati'}, status=400)
     except Exception as e:
         logger.error(f"Error saving result: {e}", exc_info=True)
-        return JsonResponse({'error': 'Server error occurred'}, status=500)
+        return JsonResponse({'error': 'Server xatosi yuz berdi'}, status=500)
 
 
 @login_required
@@ -439,4 +439,4 @@ def telemetry(request):
         return JsonResponse({'success': True})
     except Exception as e:
         logger.warning(f"Telemetry error: {e}")
-        return JsonResponse({'error': 'Bad telemetry'}, status=400)
+        return JsonResponse({'error': 'Noto\'g\'ri telemetriya ma\'lumoti'}, status=400)
