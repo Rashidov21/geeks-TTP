@@ -226,3 +226,8 @@ python manage.py dumpdata > backups/data_$(date +%Y%m%d_%H%M%S).json
 - **System logs:** `journalctl -u typing-platform -f`
 - **Nginx logs:** `/var/log/nginx/access.log` va `/var/log/nginx/error.log`
 
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py shell -c "from django.core.cache import cache; cache.clear()"
+sudo systemctl restart typing-platform nginx

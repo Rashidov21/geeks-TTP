@@ -9,6 +9,7 @@ from allauth.account.adapter import DefaultAccountAdapter
 from django.contrib.auth.models import User
 from django.shortcuts import resolve_url
 from django.conf import settings
+from django.db import transaction
 from .models import UserProfile
 
 
@@ -43,34 +44,46 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     
     def save_user(self, request, sociallogin, form=None):
         """User saqlash va UserProfile yaratish"""
+        # Provider'ni saqlash (account saqlanishidan oldin)
+        # sociallogin.account mavjud bo'lishi yoki bo'lmasligi mumkin
+        provider = None
+        if hasattr(sociallogin, 'account') and sociallogin.account:
+            provider = sociallogin.account.provider
+        elif hasattr(sociallogin, 'provider'):
+            provider = sociallogin.provider
+        
+        # User'ni saqlash
         user = super().save_user(request, sociallogin, form)
         
-        # Google orqali ro'yxatdan o'tganligini aniqlash
-        is_google_signup = sociallogin.account.provider == 'google'
-        
-        # Parol generatsiya qilish (Google orqali ro'yxatdan o'tganda)
-        generated_password = None
-        if is_google_signup and not user.has_usable_password():
-            # Xavfsiz parol generatsiya qilish
-            alphabet = string.ascii_letters + string.digits + string.punctuation
-            # 14 belgi uzunlikda parol
-            generated_password = ''.join(secrets.choice(alphabet) for i in range(14))
-            # Parolni user ga o'rnatish
-            user.set_password(generated_password)
-            user.save()
-        
-        # UserProfile yaratish yoki yangilash
-        profile, created = UserProfile.objects.get_or_create(
-            user=user,
-            defaults={'is_manager': False}
-        )
-        
-        # Google orqali ro'yxatdan o'tgan bo'lsa, flag va parolni saqlash
-        if is_google_signup:
-            profile.has_google_account = True
-            if generated_password:
-                profile.generated_password = generated_password
-            profile.save()
+        # Transaction ichida ishlash (race condition'ni oldini olish uchun)
+        with transaction.atomic():
+            # Google orqali ro'yxatdan o'tganligini aniqlash
+            is_google_signup = provider == 'google'
+            
+            # Parol generatsiya qilish (Google orqali ro'yxatdan o'tganda)
+            generated_password = None
+            if is_google_signup and not user.has_usable_password():
+                # Xavfsiz parol generatsiya qilish
+                alphabet = string.ascii_letters + string.digits + string.punctuation
+                # 14 belgi uzunlikda parol
+                generated_password = ''.join(secrets.choice(alphabet) for i in range(14))
+                # Parolni user ga o'rnatish
+                user.set_password(generated_password)
+                user.save()
+            
+            # UserProfile yaratish yoki yangilash
+            # Signal allaqachon yaratgan bo'lishi mumkin, shuning uchun get_or_create ishlatamiz
+            profile, created = UserProfile.objects.get_or_create(
+                user=user,
+                defaults={'is_manager': False}
+            )
+            
+            # Google orqali ro'yxatdan o'tgan bo'lsa, flag va parolni saqlash
+            if is_google_signup:
+                profile.has_google_account = True
+                if generated_password:
+                    profile.generated_password = generated_password
+                profile.save()
         
         return user
     
@@ -88,10 +101,11 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         user = super().save_user(request, user, form, commit)
         
         # UserProfile yaratish (agar mavjud bo'lmasa)
-        if commit and not UserProfile.objects.filter(user=user).exists():
-            UserProfile.objects.create(
+        # Signal allaqachon yaratgan bo'lishi mumkin, shuning uchun get_or_create ishlatamiz
+        if commit:
+            UserProfile.objects.get_or_create(
                 user=user,
-                is_manager=False,
+                defaults={'is_manager': False}
             )
         
         return user
