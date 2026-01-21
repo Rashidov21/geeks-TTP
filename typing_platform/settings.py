@@ -69,6 +69,9 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+
+    # captcha (Google reCAPTCHA)
+    'captcha',
     
     'accounts',
     'typing_practice',
@@ -392,6 +395,11 @@ if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     # DEFAULT_FROM_EMAIL va SERVER_EMAIL
     DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
     SERVER_EMAIL = get_env_variable('SERVER_EMAIL', EMAIL_HOST_USER)
+
+# Google reCAPTCHA sozlamalari (env'dan o'qing)
+RECAPTCHA_PUBLIC_KEY = get_env_variable('RECAPTCHA_PUBLIC_KEY', '')
+RECAPTCHA_PRIVATE_KEY = get_env_variable('RECAPTCHA_PRIVATE_KEY', '')
+RECAPTCHA_REQUIRED_SCORE = float(get_env_variable('RECAPTCHA_REQUIRED_SCORE', '0.5')) if get_env_variable('RECAPTCHA_REQUIRED_SCORE', None) else None
 
 # HTTPS uchun (production)
 # if not DEBUG:

@@ -3,6 +3,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, Pass
 from django.core.exceptions import ValidationError
 from .models import UserProfile
 import re
+from captcha.fields import ReCaptchaField
+from captcha.widgets import ReCaptchaV2Checkbox
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -76,6 +78,7 @@ class CustomAuthenticationForm(AuthenticationForm):
             'placeholder': 'Parolni kiriting'
         })
     )
+    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox)
     
     error_messages = {
         'invalid_login': 'Foydalanuvchi nomi yoki parol noto\'g\'ri.',

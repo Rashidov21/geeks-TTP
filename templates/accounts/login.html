@@ -58,6 +58,12 @@
                 </a>
             </div>
         </div>
+        <div>
+            {{ form.captcha }}
+            {% if form.captcha.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.captcha.errors.0 }}</p>
+            {% endif %}
+        </div>
         {% if form.non_field_errors %}
         <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg flex items-center space-x-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -101,5 +107,7 @@
         Hisobingiz yo'qmi? <a href="{% url 'accounts:register' %}" class="text-primary font-semibold hover:text-primary-dark hover:underline transition-colors duration-300">Ro'yxatdan o'ting</a>
     </p>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}
 

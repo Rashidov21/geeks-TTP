@@ -70,6 +70,12 @@
                 </a>
             </div>
         </div>
+        <div>
+            {{ form.captcha }}
+            {% if form.captcha.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.captcha.errors.0 }}</p>
+            {% endif %}
+        </div>
 
         <div class="flex items-center">
             <input type="checkbox" name="remember" id="id_remember" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
@@ -138,4 +144,5 @@ function togglePassword(fieldId, iconId) {
     }
 }
 </script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}
