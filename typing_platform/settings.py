@@ -290,6 +290,11 @@ LOGGING = {
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
+        'allauth': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
     },
 }
 
@@ -338,7 +343,6 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Custom adapters
-# Custom adapters
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Avtomatik ro'yxatdan o'tish (tasdiqlash sahifasini o'tkazib yuborish)
@@ -346,6 +350,8 @@ SOCIALACCOUNT_QUERY_EMAIL = True  # Email so'rash
 SOCIALACCOUNT_EMAIL_REQUIRED = True  # Email majburiy
 SOCIALACCOUNT_STORE_TOKENS = True  # Token'larni saqlash
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+# Continue page'ni o'tkazib yuborish (to'g'ridan-to'g'ri redirect)
+SOCIALACCOUNT_LOGIN_ON_GET = False  # GET request'da avtomatik login qilmaslik
 
 # Email sozlamalari
 # Development uchun console backend (terminal'da ko'rsatadi)

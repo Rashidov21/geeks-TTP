@@ -201,6 +201,13 @@ def profile_view(request, user_id=None):
     wpm_progress = [{'date': date, 'wpm': sum(wpms) / len(wpms)} for date, wpms in wpm_by_date.items()]
     accuracy_progress = [{'date': date, 'accuracy': sum(accs) / len(accs)} for date, accs in accuracy_by_date.items()]
     
+    # Unread notifications (faqat o'z profilida)
+    unread_notifications = []
+    unread_count = 0
+    if profile_user == request.user:
+        unread_notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')[:5]
+        unread_count = Notification.get_unread_count(request.user)
+    
     context = {
         'profile_user': profile_user,
         'profile': profile,
@@ -221,6 +228,9 @@ def profile_view(request, user_id=None):
         'all_badges': all_badges,
         'wpm_progress': wpm_progress,  # Pass as list, not JSON string
         'accuracy_progress': accuracy_progress,  # Pass as list, not JSON string
+        # Notifications
+        'unread_notifications': unread_notifications,
+        'unread_count': unread_count,
     }
     
     return render(request, 'accounts/profile.html', context)

@@ -4,6 +4,42 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
+    <!-- Unread Notifications (faqat o'z profilida) -->
+    {% if is_own_profile and unread_notifications %}
+    <div class="mb-6 space-y-3">
+        {% for notification in unread_notifications %}
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3 flex-1">
+                    <div class="text-2xl">{{ notification.icon }}</div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-blue-900 mb-1">{{ notification.title }}</h3>
+                        <p class="text-blue-800 text-sm">{{ notification.message }}</p>
+                        {% if notification.link %}
+                        <a href="{{ notification.link }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 inline-block">
+                            Batafsil →
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <button onclick="markNotificationRead({{ notification.id }})" class="text-blue-600 hover:text-blue-800 ml-4" title="Yopish">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        {% if unread_count > unread_notifications|length %}
+        <div class="text-center">
+            <a href="{% url 'accounts:notifications' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Barcha {{ unread_count }} ta bildirishnomani ko'rish →
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
@@ -376,6 +412,31 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function markNotificationRead(notificationId) {
+    fetch(`/accounts/notifications/${notificationId}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Notification card'ni yashirish
+            const card = event.target.closest('.bg-blue-50');
+            if (card) {
+                card.style.transition = 'opacity 0.3s';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
 
 {% endblock %}
 
