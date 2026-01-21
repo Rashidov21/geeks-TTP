@@ -11,10 +11,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    # Custom accounts URL'lar - allauth dan oldin (google/login uchun)
-    path('accounts/', include('accounts.urls')),  
-    # Allauth URL'lar - callback uchun
+    # Allauth URL'lar - allauth dan oldin (standart Google login URL'ini ishlatish uchun)
     path('accounts/', include('allauth.urls')),
+    # Custom accounts URL'lar - allauth dan keyin
+    path('accounts/', include('accounts.urls')),
     path('practice/', include('typing_practice.urls')),
     path('competitions/', include('competitions.urls')),
     path('leaderboard/', include('leaderboard.urls')),

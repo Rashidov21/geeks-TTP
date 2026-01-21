@@ -21,22 +21,12 @@ from competitions.models import CompetitionParticipant
 
 def google_login_redirect(request):
     """
-    Allauth ning 'Continue' sahifasini o'tkazib yuborib,
-    to'g'ridan-to'g'ri Google OAuth ga redirect qilish
+    Allauth ning standart URL'iga redirect qilish
+    process='login' parametri bilan to'g'ridan-to'g'ri Google ga o'tish
     """
-    try:
-        from allauth.socialaccount.views import login as socialaccount_login
-        from django.http import QueryDict
-        
-        # process='login' parametrini o'tkazish
-        # Bu allauth sahifasini o'tkazib yuboradi va to'g'ridan-to'g'ri Google ga o'tadi
-        mutable_get = request.GET.copy()
-        mutable_get['process'] = 'login'
-        request.GET = mutable_get
-        return socialaccount_login(request, 'google')
-    except Exception as e:
-        messages.error(request, f'Google OAuth xatosi: {str(e)}')
-        return redirect('accounts:login')
+    # Allauth'ning standart Google login URL'iga redirect
+    # /accounts/google/login/?process=login
+    return redirect('/accounts/google/login/?process=login')
 
 
 def register_view(request):
