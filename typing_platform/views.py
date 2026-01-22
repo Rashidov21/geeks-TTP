@@ -120,3 +120,18 @@ def custom_500(request):
     """Custom 500 page"""
     return render(request, '500.html', status=500)
 
+
+def privacy_policy(request):
+    """Privacy Policy sahifasi"""
+    return render(request, 'legal/privacy_policy.html')
+
+
+def terms_of_service(request):
+    """Terms of Service sahifasi"""
+    return render(request, 'legal/terms_of_service.html')
+
+
+def contact(request):
+    """Contact sahifasi"""
+    return render(request, 'legal/contact.html')
+

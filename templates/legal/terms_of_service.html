@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Foydalanish shartlari - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Foydalanish shartlari</h1>
+        <p class="text-sm text-gray-600 mb-6">Oxirgi yangilanish: {{ "now"|date:"d.m.Y" }}</p>
+        
+        <div class="prose prose-lg max-w-none text-primary space-y-6">
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">1. Qabul qilish</h2>
+                <p class="mb-4">
+                    Typing Trainer platformasidan (typing.rashidevs.uz) foydalanish orqali siz ushbu foydalanish shartlarini 
+                    qabul qilasiz. Agar siz shartlarga rozi bo'lmasangiz, platformadan foydalanmang.
+                </p>
+                <p class="mb-4">
+                    Ushbu platforma <strong>Geeks Andijan o'quv markazi</strong> tomonidan yaratilgan va boshqariladi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">2. Hisob yaratish</h2>
+                <p class="mb-4">Hisob yaratish uchun quyidagi talablar bajarilishi kerak:</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>To'g'ri va aniq ma'lumotlar kiritish</li>
+                    <li>Xavfsiz parol tanlash</li>
+                    <li>18 yoshdan katta bo'lish (yoki ota-ona ruxsati bilan)</li>
+                    <li>Bir nechta hisob yaratmaslik</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">3. Foydalanish qoidalari</h2>
+                <p class="mb-4">Platformadan foydalanishda quyidagilarni qilish taqiqlanadi:</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>Qonunlarga zid harakatlar</li>
+                    <li>Boshqa foydalanuvchilarga zarar yetkazish</li>
+                    <li>Spam yoki reklama yuborish</li>
+                    <li>Platforma xavfsizligini buzishga urinish</li>
+                    <li>Bot yoki avtomatlashtirilgan dasturlardan foydalanish</li>
+                    <li>Boshqalarning hisoblariga ruxsatsiz kirish</li>
+                    <li>Platforma kodini ko'chirish yoki tahlil qilish</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">4. Intellektual mulk</h2>
+                <p class="mb-4">
+                    Platforma va uning barcha kontenti (dizayn, kod, matnlar, logotiplar) 
+                    Geeks Andijan o'quv markazining intellektual mulki hisoblanadi. Kontentni ko'chirish, 
+                    tarqatish yoki tijorat maqsadida ishlatish taqiqlanadi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">5. Foydalanuvchi kontenti</h2>
+                <p class="mb-4">
+                    Siz platformaga yuklagan kontent (rasmlar, matnlar) sizning javobgarligingizda. 
+                    Biz sizning kontentingizni ko'rib chiqish va zarur bo'lganda o'chirish huquqiga egamiz.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">6. Xizmatlar</h2>
+                <p class="mb-4">
+                    Biz platforma xizmatlarini doimiy ravishda yaxshilashga harakat qilamiz, 
+                    lekin xizmatlarning uzilishi yoki xatoliklardan javobgar emasmiz. 
+                    Biz xizmatlarni oldindan xabar berilmasdan o'zgartirish yoki to'xtatish huquqiga egamiz.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">7. Javobgarlik cheklovi</h2>
+                <p class="mb-4">
+                    Typing Trainer platforma foydalanishdan kelib chiqadigan to'g'ridan-to'g'ri, 
+                    bilvosita yoki tasodifiy zararlar uchun javobgar emas. Platforma "boricha" 
+                    taqdim etiladi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">8. Hisobni to'xtatish</h2>
+                <p class="mb-4">
+                    Biz quyidagi hollarda sizning hisobingizni to'xtatish yoki o'chirish huquqiga egamiz:
+                </p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>Foydalanish shartlarini buzganingizda</li>
+                    <li>Qonunlarga zid harakatlar qilganingizda</li>
+                    <li>Uzoq vaqt davomida faoliyat ko'rsatmaganingizda</li>
+                    <li>Boshqa foydalanuvchilarga zarar yetkazganingizda</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">9. O'zgarishlar</h2>
+                <p class="mb-4">
+                    Biz ushbu foydalanish shartlarini vaqt-vaqt bilan yangilashimiz mumkin. 
+                    O'zgarishlar haqida sizni xabardor qilamiz. O'zgarishlardan keyin 
+                    platformadan foydalanish shartlarni qabul qilishni anglatadi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">10. Aloqa</h2>
+                <p class="mb-4">
+                    Foydalanish shartlari yoki platforma bilan bog'liq savollar bo'lsa, 
+                    biz bilan bog'laning:
+                </p>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <p class="mb-2"><strong>Email:</strong> <a href="mailto:rashidovabdurakhmon@gmail.com" class="text-primary hover:underline">rashidovabdurakhmon@gmail.com</a></p>
+                    <p class="mb-2"><strong>Telefon:</strong> <a href="tel:+998902113123" class="text-primary hover:underline">90 211 31 23</a></p>
+                    <p class="mb-2"><strong>Manzil:</strong> Andijon shahar, Boburshox ko'chasi 92-uy</p>
+                    <p class="mb-2"><strong>Veb-sayt:</strong> <a href="https://typing.rashidevs.uz" class="text-primary hover:underline">typing.rashidevs.uz</a></p>
+                </div>
+            </section>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <a href="{% url 'home' %}" class="inline-flex items-center space-x-2 text-primary hover:text-primary-dark transition-colors duration-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Bosh sahifaga qaytish</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

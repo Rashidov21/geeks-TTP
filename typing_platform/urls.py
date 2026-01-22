@@ -11,6 +11,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    # Legal pages
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
+    path('contact/', views.contact, name='contact'),
     # Allauth URL'lar - allauth dan oldin (standart Google login URL'ini ishlatish uchun)
     path('accounts/', include('allauth.urls')),
     # Custom accounts URL'lar - allauth dan keyin

@@ -231,3 +231,35 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py shell -c "from django.core.cache import cache; cache.clear()"
 sudo systemctl restart typing-platform nginx
+
+
+#!/bin/bash
+# To'liq restart script
+
+echo "1. Nginx cache tozalash..."
+sudo rm -rf /var/cache/nginx/* /var/lib/nginx/cache/*
+
+echo "2. Django cache tozalash..."
+cd /root/geeks-TTP
+sudo -u www-data /root/.venv/bin/python manage.py shell -c "from django.core.cache import cache; cache.clear(); print('OK')" 2>/dev/null || echo "Cache clear failed"
+
+echo "3. Service'ni qayta ishga tushirish..."
+sudo systemctl daemon-reload
+sudo systemctl restart typing-platform.service
+sleep 2
+
+echo "4. Nginx'ni qayta ishga tushirish..."
+sudo systemctl restart nginx
+sleep 1
+
+echo "5. Status tekshirish..."
+echo "=== typing-platform.service ==="
+sudo systemctl is-active typing-platform.service
+echo "=== nginx ==="
+sudo systemctl is-active nginx
+
+echo "6. Portlarni tekshirish..."
+echo "Port 8001:"
+sudo ss -tlnp | grep 8001 || echo "Port 8001 ishlamayapti!"
+
+echo "Done!"

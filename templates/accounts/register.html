@@ -150,6 +150,25 @@
     <p class="mt-6 text-center text-sm text-gray-600">
         Allaqachon hisobingiz bormi? <a href="{% url 'accounts:login' %}" class="text-primary font-semibold hover:text-primary-dark hover:underline transition-colors duration-300">Kirish</a>
     </p>
+    
+    <!-- Legal links -->
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <p class="text-xs text-center text-gray-500 mb-2">
+            Ro'yxatdan o'tish orqali siz bizning
+        </p>
+        <div class="flex flex-wrap justify-center gap-3 text-xs">
+            <a href="{% url 'terms_of_service' %}" class="text-primary hover:text-primary-dark hover:underline transition-colors duration-300" target="_blank">
+                Foydalanish shartlari
+            </a>
+            <span class="text-gray-400">•</span>
+            <a href="{% url 'privacy_policy' %}" class="text-primary hover:text-primary-dark hover:underline transition-colors duration-300" target="_blank">
+                Maxfiylik siyosati
+            </a>
+        </div>
+        <p class="text-xs text-center text-gray-400 mt-1">
+            ni qabul qilasiz va ularga rozi bo'lasiz.
+        </p>
+    </div>
 </div>
 
 <script>

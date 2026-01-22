@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maxfiylik siyosati - Typing Trainer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Maxfiylik siyosati</h1>
+        <p class="text-sm text-gray-600 mb-6">Oxirgi yangilanish: {{ "now"|date:"d.m.Y" }}</p>
+        
+        <div class="prose prose-lg max-w-none text-primary space-y-6">
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">1. Umumiy ma'lumotlar</h2>
+                <p class="mb-4">
+                    Typing Trainer platformasi (typing.rashidevs.uz) Geeks Andijan o'quv markazi tomonidan 
+                    yaratilgan va foydalanuvchilarning shaxsiy ma'lumotlarini himoya qilishga jiddiy yondashadi. 
+                    Ushbu maxfiylik siyosati sizning ma'lumotlaringizni qanday to'plash, ishlatish va himoya qilishimizni tushuntiradi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">2. To'plangan ma'lumotlar</h2>
+                <p class="mb-4">Biz quyidagi ma'lumotlarni to'playmiz:</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li><strong>Shaxsiy ma'lumotlar:</strong> Ism, familiya, email manzil, foydalanuvchi nomi</li>
+                    <li><strong>Hisob ma'lumotlari:</strong> Parol (xavfsiz shifrlangan holda), profil rasmi, bio</li>
+                    <li><strong>Faoliyat ma'lumotlari:</strong> Yozish tezligi (WPM), aniqlik, mashq natijalari, statistika</li>
+                    <li><strong>Texnik ma'lumotlar:</strong> IP manzil, brauzer turi, qurilma ma'lumotlari</li>
+                    <li><strong>Google OAuth ma'lumotlari:</strong> Agar Google orqali ro'yxatdan o'tgan bo'lsangiz</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">3. Ma'lumotlardan foydalanish</h2>
+                <p class="mb-4">To'plangan ma'lumotlardan quyidagi maqsadlarda foydalanamiz:</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>Platforma xizmatlarini taqdim etish va yaxshilash</li>
+                    <li>Foydalanuvchi hisobini boshqarish va himoya qilish</li>
+                    <li>Shaxsiylashtirilgan tajriba yaratish</li>
+                    <li>Statistika va progressni ko'rsatish</li>
+                    <li>Xavfsizlikni ta'minlash va firibgarlikni oldini olish</li>
+                    <li>Foydalanuvchilar bilan aloqa o'rnatish (xabarlar, bildirishnomalar)</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">4. Ma'lumotlarni saqlash</h2>
+                <p class="mb-4">
+                    Sizning ma'lumotlaringiz xavfsiz serverlarda saqlanadi. Biz ma'lumotlarni 
+                    xavfsizlik standartlariga muvofiq himoya qilamiz. Ma'lumotlar faqat zarur 
+                    vaqt davomida saqlanadi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">5. Ma'lumotlarni baham ko'rish</h2>
+                <p class="mb-4">
+                    Biz sizning shaxsiy ma'lumotlaringizni uchinchi shaxslarga sotmaymiz yoki 
+                    baham ko'rmaymiz. Ma'lumotlar faqat quyidagi hollarda baham ko'rilishi mumkin:
+                </p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>Qonuniy talab bo'lganda</li>
+                    <li>Xavfsizlikni ta'minlash uchun</li>
+                    <li>Sizning ruxsatingiz bilan</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">6. Cookie'lar</h2>
+                <p class="mb-4">
+                    Platforma cookie'lardan foydalanadi. Bu cookie'lar sessiyani saqlash, 
+                    foydalanuvchi tajribasini yaxshilash va platforma funksionalligini ta'minlash 
+                    uchun ishlatiladi.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">7. Foydalanuvchi huquqlari</h2>
+                <p class="mb-4">Siz quyidagi huquqlarga egasiz:</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li>O'z ma'lumotlaringizni ko'rish va o'zgartirish</li>
+                    <li>Hisobingizni o'chirish</li>
+                    <li>Ma'lumotlarni eksport qilish</li>
+                    <li>Cookie'larni boshqarish</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">8. Xavfsizlik</h2>
+                <p class="mb-4">
+                    Biz sizning ma'lumotlaringizni himoya qilish uchun zamonaviy xavfsizlik 
+                    texnologiyalaridan foydalanamiz, jumladan shifrlash, xavfsiz ulanishlar 
+                    va muntazam xavfsizlik tekshiruvlari.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">9. O'zgarishlar</h2>
+                <p class="mb-4">
+                    Biz ushbu maxfiylik siyosatini vaqt-vaqt bilan yangilashimiz mumkin. 
+                    O'zgarishlar haqida sizni xabardor qilamiz. Ushbu sahifani muntazam 
+                    tekshirib turishingizni tavsiya qilamiz.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold mb-4 text-primary">10. Aloqa</h2>
+                <p class="mb-4">
+                    Maxfiylik siyosati yoki ma'lumotlaringiz bilan bog'liq savollar bo'lsa, 
+                    biz bilan bog'laning:
+                </p>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <p class="mb-2"><strong>Email:</strong> <a href="mailto:rashidovabdurakhmon@gmail.com" class="text-primary hover:underline">rashidovabdurakhmon@gmail.com</a></p>
+                    <p class="mb-2"><strong>Telefon:</strong> <a href="tel:+998902113123" class="text-primary hover:underline">90 211 31 23</a></p>
+                    <p class="mb-2"><strong>Manzil:</strong> Andijon shahar, Boburshox ko'chasi 92-uy</p>
+                    <p class="mb-2"><strong>Veb-sayt:</strong> <a href="https://typing.rashidevs.uz" class="text-primary hover:underline">typing.rashidevs.uz</a></p>
+                </div>
+            </section>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <a href="{% url 'home' %}" class="inline-flex items-center space-x-2 text-primary hover:text-primary-dark transition-colors duration-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Bosh sahifaga qaytish</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
