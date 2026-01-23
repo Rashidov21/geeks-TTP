@@ -351,7 +351,7 @@ SOCIALACCOUNT_EMAIL_REQUIRED = True  # Email majburiy
 SOCIALACCOUNT_STORE_TOKENS = True  # Token'larni saqlash
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 # Continue page'ni o'tkazib yuborish (to'g'ridan-to'g'ri redirect)
-SOCIALACCOUNT_LOGIN_ON_GET = False  # GET request'da avtomatik login qilmaslik
+SOCIALACCOUNT_LOGIN_ON_GET = True  # GET request'da avtomatik login qilish (sahifani o'tkazib yuborish)
 
 # Email sozlamalari
 # Development uchun console backend (terminal'da ko'rsatadi)
