@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load socialaccount %}
+{% load captcha %}
 
 {% block title %}Register - Typing Trainer{% endblock %}
-<script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
 {% block extra_css %}
 <style>
     .form-container {
@@ -107,6 +107,18 @@
             <div id="password-match" class="mt-1 hidden">
                 <p id="match-text" class="text-xs flex items-center space-x-1"></p>
             </div>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-primary mb-2">Tekshiruv kodi</label>
+            {{ form.captcha }}
+            {% if form.captcha.errors %}
+            <p class="text-red-500 text-sm mt-1 flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>{{ form.captcha.errors.0 }}</span>
+            </p>
+            {% endif %}
         </div>
         {% if form.non_field_errors %}
         <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg flex items-center space-x-2">

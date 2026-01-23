@@ -35,6 +35,13 @@ class CustomUserCreationForm(UserCreationForm):
         }),
         help_text='Tasdiqlash uchun parolni qayta kiriting.'
     )
+    captcha = CaptchaField(
+        label='Tekshiruv kodi',
+        error_messages={
+            'invalid': 'Tekshiruv kodi noto\'g\'ri. Qayta urinib ko\'ring.',
+            'required': 'Tekshiruv kodini kiriting.'
+        }
+    )
     
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
