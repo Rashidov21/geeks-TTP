@@ -120,10 +120,6 @@
             </p>
             {% endif %}
         </div>
-        <script>
-            let el =  document.getElementById("id_captcha_1")
-           el.classList.add("w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 hover:bg-white hover:border-gray-400 placeholder:text-gray-400 text-primary");
-        </script>
         {% if form.non_field_errors %}
         <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg flex items-center space-x-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -304,6 +300,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 matchText.innerHTML = '<svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg><span class="text-red-600">Parollar mos kelmaydi</span>';
             }
         });
+    }
+    
+    // Captcha input stillari
+    const captchaInput = document.getElementById('id_captcha_1');
+    if (captchaInput) {
+        // Barcha stillarni qo'shish
+        const captchaClasses = [
+            'w-full',
+            'px-4',
+            'py-3',
+            'pr-12',
+            'bg-gray-50',
+            'border',
+            'border-gray-300',
+            'rounded-lg',
+            'focus:outline-none',
+            'focus:ring-2',
+            'focus:ring-primary',
+            'focus:border-primary',
+            'transition-all',
+            'duration-300',
+            'hover:bg-white',
+            'hover:border-gray-400',
+            'placeholder:text-gray-400',
+            'text-primary'
+        ];
+        
+        captchaInput.classList.add(...captchaClasses);
+        
+        // Placeholder qo'shish (agar yo'q bo'lsa)
+        if (!captchaInput.placeholder) {
+            captchaInput.placeholder = 'Tekshiruv kodini kiriting';
+        }
+        
+        // Inline styles (agar class'lar ishlamasa)
+        captchaInput.style.width = '100%';
+        captchaInput.style.padding = '0.75rem 1rem';
+        captchaInput.style.paddingRight = '3rem';
+        captchaInput.style.backgroundColor = '#f9fafb';
+        captchaInput.style.border = '1px solid #d1d5db';
+        captchaInput.style.borderRadius = '0.5rem';
+    }
+    
+    // Captcha image container stillari
+    const captchaImage = document.querySelector('img[src*="captcha"], .captcha-image');
+    if (captchaImage) {
+        captchaImage.style.marginBottom = '0.5rem';
+        captchaImage.style.borderRadius = '0.5rem';
     }
 });
 </script>
