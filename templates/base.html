@@ -25,7 +25,7 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
-    <meta property="og:title" content="{% block og_title %}{% block title %}Typing Trainer Platform{% endblock %}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Typing Trainer Platform{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{% block meta_description %}Professional yozish tezligini oshirish platformasi{% endblock %}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'favicon-512x512.png' %}{% endblock %}">
     <meta property="og:site_name" content="Typing Trainer">
@@ -34,7 +34,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock %}">
-    <meta name="twitter:title" content="{% block twitter_title %}{% block title %}Typing Trainer Platform{% endblock %}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Typing Trainer Platform{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{% block meta_description %}Professional yozish tezligini oshirish platformasi{% endblock %}{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'favicon-512x512.png' %}{% endblock %}">
     {% endblock %}
