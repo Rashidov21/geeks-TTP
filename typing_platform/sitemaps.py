@@ -36,7 +36,7 @@ class CompetitionSitemap(Sitemap):
     priority = 0.8
     
     def items(self):
-        return Competition.objects.filter(is_public=True, status=True)
+        return Competition.objects.filter(is_public=True, status='active')
     
     def lastmod(self, obj):
         return obj.updated_at if hasattr(obj, 'updated_at') else obj.created_at
