@@ -152,3 +152,79 @@ def robots_txt(request):
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
 
+
+def sitemap_xml(request):
+    """Custom sitemap.xml view"""
+    from django.http import HttpResponse
+    from django.urls import reverse
+    from .sitemaps import StaticViewSitemap, CompetitionSitemap
+    from datetime import datetime
+    
+    base_url = f"{request.scheme}://{request.get_host()}"
+    
+    # Static pages
+    static_sitemap = StaticViewSitemap()
+    static_items = static_sitemap.items()
+    
+    # Competitions
+    competition_sitemap = CompetitionSitemap()
+    competition_items = competition_sitemap.items()
+    
+    # XML yaratish
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    
+    # Static pages
+    for item in static_items:
+        try:
+            url = reverse(item)
+            full_url = f"{base_url}{url}"
+            lastmod = datetime.now().strftime('%Y-%m-%d')
+            priority = static_sitemap.priority
+            changefreq = static_sitemap.changefreq
+            
+            xml_lines.extend([
+                '  <url>',
+                f'    <loc>{full_url}</loc>',
+                f'    <lastmod>{lastmod}</lastmod>',
+                f'    <changefreq>{changefreq}</changefreq>',
+                f'    <priority>{priority}</priority>',
+                '  </url>',
+            ])
+        except Exception as e:
+            continue
+    
+    # Competitions
+    for comp in competition_items:
+        try:
+            url = reverse('competitions:detail', args=[comp.id])
+            full_url = f"{base_url}{url}"
+            lastmod = competition_sitemap.lastmod(comp)
+            if lastmod:
+                if hasattr(lastmod, 'strftime'):
+                    lastmod_str = lastmod.strftime('%Y-%m-%d')
+                else:
+                    lastmod_str = datetime.now().strftime('%Y-%m-%d')
+            else:
+                lastmod_str = datetime.now().strftime('%Y-%m-%d')
+            
+            priority = competition_sitemap.priority
+            changefreq = competition_sitemap.changefreq
+            
+            xml_lines.extend([
+                '  <url>',
+                f'    <loc>{full_url}</loc>',
+                f'    <lastmod>{lastmod_str}</lastmod>',
+                f'    <changefreq>{changefreq}</changefreq>',
+                f'    <priority>{priority}</priority>',
+                '  </url>',
+            ])
+        except Exception as e:
+            continue
+    
+    xml_lines.append('</urlset>')
+    
+    return HttpResponse('\n'.join(xml_lines), content_type='application/xml')
+
