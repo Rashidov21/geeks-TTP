@@ -171,12 +171,12 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
-    """Oddiy ro'yxatdan o'tish uchun adapter"""
-    
+    """Oddiy ro'yxatdan o'tish uchun adapter + allauth xabarlarini o'zbekchaga o'girish"""
+
     def save_user(self, request, user, form, commit=True):
         """User saqlash va UserProfile yaratish"""
         user = super().save_user(request, user, form, commit)
-        
+
         # UserProfile yaratish (agar mavjud bo'lmasa)
         # Signal allaqachon yaratgan bo'lishi mumkin, shuning uchun get_or_create ishlatamiz
         if commit:
@@ -187,9 +187,32 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 )
             except Exception as e:
                 logger.error(f"UserProfile yaratishda xato: {e}")
-        
+
         return user
-    
+
     def get_login_redirect_url(self, request):
         """Login dan keyin qayerga o'tish"""
         return resolve_url(settings.LOGIN_REDIRECT_URL)
+
+    def add_message(self, request, level, message_template, message_context=None, extra_tags=''):
+        """
+        django-allauth xabarlarini o'zbekchaga tarjima qilish
+        Masalan: 'You have signed out.' -> 'Siz tizimdan chiqdingiz.'
+        """
+        translations = {
+            "You have signed out.": "Siz tizimdan chiqdingiz.",
+            "You have signed out": "Siz tizimdan chiqdingiz.",
+            "Successfully signed in as %(user)s.": "%(user)s sifatida tizimga kirdingiz.",
+            "Successfully signed in": "Tizimga muvaffaqiyatli kirdingiz.",
+            "You have confirmed your email address.": "Email manzilingiz tasdiqlandi.",
+            "Your password has been changed.": "Parolingiz muvaffaqiyatli o'zgartirildi.",
+            "Password successfully reset.": "Parol muvaffaqiyatli tiklandi.",
+            "Your account has been created.": "Profilingiz muvaffaqiyatli yaratildi.",
+        }
+
+        # message_template ko'pincha lazily evaluated bo'ladi, matnini olib ishlaymiz
+        text = str(message_template)
+        if text in translations:
+            message_template = translations[text]
+
+        return super().add_message(request, level, message_template, message_context, extra_tags)
