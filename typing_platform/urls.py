@@ -2,10 +2,18 @@
 URL configuration for typing_platform project.
 """
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from .sitemaps import StaticViewSitemap, CompetitionSitemap
+
+# Sitemap configuration
+sitemaps = {
+    'static': StaticViewSitemap,
+    'competitions': CompetitionSitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,6 +23,9 @@ urlpatterns = [
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
     path('contact/', views.contact, name='contact'),
+    # SEO
+    path('robots.txt', views.robots_txt, name='robots_txt'),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     # Allauth URL'lar - allauth dan oldin (standart Google login URL'ini ishlatish uchun)
     path('accounts/', include('allauth.urls')),
     # Custom accounts URL'lar - allauth dan keyin

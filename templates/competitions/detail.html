@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ competition.name }} - Typing Trainer{% endblock %}
+{% block meta_description %}{{ competition.description|truncatewords:30|default:"Typing musobaqasi. Qatnashing va o'z mahoratingizni sinab ko'ring." }}{% endblock %}
+{% block og_title %}{{ competition.name }} - Typing Trainer{% endblock %}
+{% block og_description %}{{ competition.description|truncatewords:30|default:"Typing musobaqasi" }}{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto">

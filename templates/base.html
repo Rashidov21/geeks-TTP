@@ -1,10 +1,62 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Typing Trainer Platform{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    {% block meta %}
+    <meta name="description" content="{% block meta_description %}Professional yozish tezligini oshirish platformasi. Typing practice, musobaqalar, janglar va ko'p narsalar. Geeks Andijan o'quv markazi.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}typing, yozish tezligi, klaviatura, mashq, musobaqa, typing trainer, geeks andijan, klaviatura mashqi, yozish tezligini oshirish{% endblock %}">
+    <meta name="author" content="Geeks Andijan">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{% block title %}Typing Trainer Platform{% endblock %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{% block meta_description %}Professional yozish tezligini oshirish platformasi{% endblock %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'favicon-512x512.png' %}{% endblock %}">
+    <meta property="og:site_name" content="Typing Trainer">
+    <meta property="og:locale" content="uz_UZ">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}{% block title %}Typing Trainer Platform{% endblock %}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{% block meta_description %}Professional yozish tezligini oshirish platformasi{% endblock %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'favicon-512x512.png' %}{% endblock %}">
+    {% endblock %}
+    
+    <!-- Structured Data (JSON-LD) -->
+    {% block structured_data %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Typing Trainer",
+      "description": "Professional yozish tezligini oshirish platformasi",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "UZS"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "Geeks Andijan",
+        "url": "https://geeksandijan.uz"
+      },
+      "inLanguage": "uz"
+    }
+    </script>
+    {% endblock %}
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">

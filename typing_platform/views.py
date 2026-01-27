@@ -135,3 +135,20 @@ def contact(request):
     """Contact sahifasi"""
     return render(request, 'legal/contact.html')
 
+
+def robots_txt(request):
+    """robots.txt faylini yaratish"""
+    from django.http import HttpResponse
+    from django.conf import settings
+    
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /accounts/profile/edit/",
+        "Disallow: /api/",
+        "",
+        f"Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
